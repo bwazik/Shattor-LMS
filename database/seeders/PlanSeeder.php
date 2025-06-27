@@ -147,7 +147,7 @@ class PlanSeeder extends Seeder
         // ];
 
         $plan1 = [
-            'name' => ['en' => 'Basic Plan', 'ar' => 'الخطة الأولي'],
+            'name' => ['en' => 'Basic Enhanced Plan', 'ar' => 'الخطة الأولي المحسنة'],
             'description' => [
                 'en' => 'A basic plan to get started, with essential features and limited reports.',
                 'ar' => 'خطة بسيطة للبداية، فيها المميزات الأساسية مع عدد محدود من التقارير.'
@@ -180,7 +180,7 @@ class PlanSeeder extends Seeder
         ];
 
         $plan2 = [
-            'name' => ['en' => 'Elite Plan', 'ar' => 'الخطة الثانية'],
+            'name' => ['en' => 'Elite Enhanced Plan', 'ar' => 'الخطة الثانية المحسنة'],
             'description' => [
                 'en' => 'The ultimate plan with unlimited features for complete control and management.',
                 'ar' => 'خطة نهائية فيها مميزات غير محدودة للتحكم الكامل في الإدارة.'
