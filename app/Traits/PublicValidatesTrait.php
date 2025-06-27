@@ -539,7 +539,7 @@ trait PublicValidatesTrait
     {
         $plan = Plan::findOrFail($planId);
 
-        if ($plan->inactive()->exists()) {
+        if (!$plan->is_active) {
             return $this->errorResponse(trans('toasts.validatePlanStatus'));
         }
 
