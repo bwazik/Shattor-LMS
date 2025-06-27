@@ -64,7 +64,7 @@
                                     @endif
                                     <div class="{{ $plan->id === 3 ? 'my-5 pt-6' : 'mt-3 mb-5' }} text-center">
                                         @if ($plan->id === 1)
-                                            <img src="{{ asset('assets/img/illustrations/pricing-basic.png') }}"
+                                            <img src="{{ asset('assets/img/illustrations/pricing-standard.png') }}"
                                                 alt="{{ $plan->name }}" height="100" />
                                         @elseif($plan->id === 2)
                                             <img src="{{ asset('assets/img/illustrations/pricing-standard.png') }}"
