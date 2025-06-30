@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Teacher\Tools;
 use App\Models\Grade;
 use App\Models\Group;
 use App\Models\Lesson;
+use App\Models\Student;
+use App\Models\MyParent;
 use Illuminate\Http\Request;
 use App\Services\PlanLimitService;
 use App\Traits\ValidatesExistence;
@@ -14,6 +16,7 @@ use App\Traits\ServiceResponseTrait;
 use Illuminate\Support\Facades\Cache;
 use App\Services\Teacher\Tools\GroupService;
 use App\Services\Teacher\Tools\LessonService;
+use App\Services\Teacher\Users\StudentService;
 use App\Http\Requests\Admin\Tools\GroupsRequest;
 
 class GroupsController extends Controller
@@ -23,13 +26,15 @@ class GroupsController extends Controller
     protected $teacherId;
     protected $groupService;
     protected $lessonService;
+    protected $studentService;
     protected $planLimitService;
 
-    public function __construct(GroupService $groupService, LessonService $lessonService)
+    public function __construct(GroupService $groupService, LessonService $lessonService, StudentService $studentService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
         $this->groupService = $groupService;
         $this->lessonService = $lessonService;
+        $this->studentService = $studentService;
         $this->planLimitService = new PlanLimitService($this->teacherId);
     }
 
@@ -113,7 +118,8 @@ class GroupsController extends Controller
 
     public function lessons(Request $request, $uuid)
     {
-        $group = Group::select('id', 'uuid', 'name', 'teacher_id')
+        $group = Group::with(['grade:id,name'])
+            ->select('id', 'uuid', 'name', 'grade_id')
             ->uuid($uuid)
             ->where('teacher_id', $this->teacherId)
             ->firstOrFail();
@@ -122,10 +128,60 @@ class GroupsController extends Controller
             ->select('id', 'uuid', 'title', 'group_id', 'date', 'time', 'status')
             ->where('group_id', $group->id);
 
+        $groups = Group::query()
+            ->select('uuid', 'name', 'grade_id')
+            ->where('teacher_id', $this->teacherId)
+            ->with('grade:id,name')
+            ->orderBy('grade_id')
+            ->get()
+            ->mapWithKeys(fn($group) => [$group->uuid => $group->name . ' - ' . $group->grade->name]);
+
         if ($request->ajax()) {
             return $this->lessonService->getLessonsForDatatable($lessonsQuery);
         }
 
-        return view('teacher.tools.groups.lessons', compact('group'));
+        return view('teacher.tools.groups.lessons', compact('group', 'groups'));
+    }
+
+    public function students(Request $request, $uuid)
+    {
+        $group = Group::with(['grade:id,name'])
+            ->select('id', 'uuid', 'name', 'grade_id')
+            ->uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $studentsQuery = Student::query()->with(['grade:id,name', 'parent:id,uuid,name'])
+            ->select('id', 'uuid', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'parent_id', 'is_active', 'profile_pic')
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->whereHas('groups', fn($query) => $query->where('group_id', $group->id));
+
+        $grades = Grade::whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->select('id', 'name')
+            ->whereHas('groups', fn($query) => $query->where('groups.id', $group->id))
+            ->orderBy('id')
+            ->pluck('name', 'id')
+            ->toArray();
+
+        $parents = MyParent::whereHas('students.teachers', fn($query) => $query->where('teachers.id', $this->teacherId))
+            ->select('id', 'uuid', 'name')
+            ->orderBy('id')
+            ->pluck('name', 'uuid')
+            ->toArray();
+
+        $groups = Group::query()
+            ->select('id', 'uuid', 'name', 'grade_id')
+            ->where('id', $group->id)
+            ->where('teacher_id', $this->teacherId)
+            ->with('grade:id,name')
+            ->orderBy('grade_id')
+            ->get()
+            ->mapWithKeys(fn($group) => [$group->uuid => $group->name . ' - ' . $group->grade->name]);
+
+        if ($request->ajax()) {
+            return $this->studentService->getStudentsForDatatable($studentsQuery);
+        }
+
+        return view('teacher.tools.groups.students', compact('group', 'grades', 'parents', 'groups'));
     }
 }

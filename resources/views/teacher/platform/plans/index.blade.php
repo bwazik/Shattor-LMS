@@ -55,14 +55,14 @@
                 <div class="pricing-plans row mx-4 gy-3 px-lg-12">
                     @foreach ($plans as $plan)
                         <div class="col-lg mb-lg-0 mb-3">
-                            <div class="card border {{ $plan->id === 3 ? 'border-primary' : 'shadow-none' }}">
-                                <div class="card-body {{ $plan->id === 3 ? 'position-relative pt-4' : 'pt-12' }}">
-                                    @if ($plan->id === 3)
+                            <div class="card border {{ $plan->id === 4 ? 'border-primary' : 'shadow-none' }}">
+                                <div class="card-body {{ $plan->id === 4 ? 'position-relative pt-4' : 'pt-12' }}">
+                                    @if ($plan->id === 4)
                                         <div class="position-absolute end-0 me-6 top-0 mt-6">
                                             <span class="badge bg-label-primary rounded-pill">{{ trans('admin/plans.popular') }}</span>
                                         </div>
                                     @endif
-                                    <div class="{{ $plan->id === 3 ? 'my-5 pt-6' : 'mt-3 mb-5' }} text-center">
+                                    <div class="{{ $plan->id === 4 ? 'my-5 pt-6' : 'mt-3 mb-5' }} text-center">
                                         @if ($plan->id === 1)
                                             <img src="{{ asset('assets/img/illustrations/pricing-standard.png') }}"
                                                 alt="{{ $plan->name }}" height="100" />
@@ -118,7 +118,7 @@
 
                                     <button type="button" tabindex="0" data-bs-toggle="offcanvas" data-bs-target="#add-modal"
                                         id="add-button" data-plan_id="{{ $plan->id }}" data-plan_name="{{ $plan->name }}"
-                                        class="btn {{ $plan->id === Auth::guard('teacher')->user()->plan_id || ($subscription && $plan->id === $subscription->plan_id) ? 'btn-success' : ($plan->id === 3 ? 'btn-primary' : 'btn-outline-primary') }} d-grid w-100">
+                                        class="btn {{ $plan->id === Auth::guard('teacher')->user()->plan_id || ($subscription && $plan->id === $subscription->plan_id) ? 'btn-success' : ($plan->id === 4 ? 'btn-primary' : 'btn-outline-primary') }} d-grid w-100">
                                         {{ $plan->id === Auth::guard('teacher')->user()->plan_id || ($subscription && $plan->id === $subscription->plan_id) ? trans('admin/plans.current_plan') : trans('admin/plans.subscripe_now') }}
                                     </button>
                                 </div>

@@ -28,6 +28,7 @@ class GroupService
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->uuid))
             ->editColumn('name', fn($row) => $row->name)
             ->addColumn('lessons', fn($row) => formatSpanUrl(route('teacher.groups.lessons', $row->uuid), trans('admin/groups.lessonsLink')))
+            ->addColumn('students', fn($row) => formatSpanUrl(route('teacher.groups.students', $row->uuid), trans('admin/groups.studentsLink')))
             ->editColumn('grade_id', fn($row) => $row->grade_id ? $row->grade->name : '-')
             ->editColumn('day_1', fn($row) => $row->day_1 ? getDayName($row->day_1) : '-')
             ->editColumn('day_2', fn($row) => $row->day_2 ? getDayName($row->day_2) : '-')
@@ -35,7 +36,7 @@ class GroupService
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
             ->filterColumn('is_active', fn($query, $keyword) => filterByStatus($query, $keyword))
-            ->rawColumns(['selectbox', 'lessons', 'is_active', 'actions'])
+            ->rawColumns(['selectbox', 'lessons', 'students', 'is_active', 'actions'])
             ->make(true);
     }
 
@@ -143,11 +144,12 @@ class GroupService
             ->addIndexColumn()
             ->editColumn('name', fn($row) => $row->name)
             ->addColumn('lessons', fn($row) => formatSpanUrl(route('teacher.groups.lessons', $row->uuid), trans('admin/groups.lessonsLink')))
+            ->addColumn('students', fn($row) => formatSpanUrl(route('teacher.groups.students', $row->uuid), trans('admin/groups.studentsLink')))
             ->editColumn('day_1', fn($row) => $row->day_1 ? getDayName($row->day_1) : '-')
             ->editColumn('day_2', fn($row) => $row->day_2 ? getDayName($row->day_2) : '-')
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
-            ->rawColumns(['selectbox', 'lessons', 'is_active', 'actions'])
+            ->rawColumns(['selectbox', 'lessons', 'students', 'is_active', 'actions'])
             ->make(true);
     }
 }

@@ -45,6 +45,7 @@
                                                         <th>#</th>
                                                         <th>{{ trans('main.name') }}</th>
                                                         <th>{{ trans('admin/lessons.lessons') }}</th>
+                                                        <th>{{ trans('admin/students.students') }}</th>
                                                         <th>{{ trans('admin/groups.day_1') }}</th>
                                                         <th>{{ trans('admin/groups.day_2') }}</th>
                                                         <th>{{ trans('admin/groups.time') }}</th>
@@ -93,6 +94,7 @@
                             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                             { data: 'name', name: 'name' },
                             { data: 'lessons', name: 'lessons', orderable: false, searchable: false },
+                            { data: 'students', name: 'students', orderable: false, searchable: false },
                             { data: 'day_1', name: 'day_1' },
                             { data: 'day_2', name: 'day_2' },
                             { data: 'time', name: 'time' },

@@ -8,7 +8,7 @@
 
 @section('content')
     <!-- DataTable with Buttons -->
-    <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/lessons.lessons')]) }} - {!! $group->name !!}"
+    <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/lessons.lessons')]) }} - {{ $group->grade->name }} - {!! $group->name !!}"
         dataToggle="offcanvas" deleteButton addButton="{{ trans('main.addItem', ['item' => trans('admin/lessons.lesson')]) }}">
         <th></th>
         <th class="dt-checkboxes-cell dt-checkboxes-select-all"><input type="checkbox" id="select-all" class="form-check-input"></th>
@@ -24,19 +24,19 @@
     <x-offcanvas offcanvasType="add" offcanvasTitle="{{ trans('main.addItem', ['item' => trans('admin/lessons.lesson')]) }}" action="{{ route('teacher.lessons.insert') }}">
         <x-basic-input context="offcanvas" type="text" name="title_ar" label="{{ trans('main.title_ar') }}" placeholder="{{ trans('admin/lessons.placeholders.title_ar') }}" required/>
         <x-basic-input context="offcanvas" type="text" name="title_en" label="{{ trans('main.title_en') }}" placeholder="{{ trans('admin/lessons.placeholders.title_en') }}" required/>
-        <x-basic-input context="offcanvas" type="hidden" name="group_id" label="{{ trans('main.group') }}" value="{{ $group->uuid }}"  required readonly/>
         <x-basic-input context="offcanvas" type="text" name="date" classes="flatpickr-date" label="{{ trans('main.date') }}" placeholder="YYYY-MM-DD" value="{{ now()->format('Y-m-d') }}" required/>
         <x-basic-input context="offcanvas" type="text" name="time" classes="flatpickr-timeB" label="{{ trans('main.time') }}" placeholder="1:00" required/>
-        <x-select-input context="offcanvas" name="status" label="{{ trans('main.status') }}" :options="[1 => trans('main.scheduled'), 2 => trans('main.completed'), 3 => trans('main.canceled')]"  required/>
+        <x-select-input divClasses="col-12" name="status" label="{{ trans('main.status') }}" :options="[1 => trans('main.scheduled'), 2 => trans('main.completed'), 3 => trans('main.canceled')]"  required/>
+        <x-basic-input divClasses="d-none" type="text" name="group_id" label="{{ trans('main.group') }}" required/>
     </x-offcanvas>
     <!-- Edit Modal -->
     <x-offcanvas offcanvasType="edit" offcanvasTitle="{{ trans('main.editItem', ['item' => trans('admin/lessons.lesson')]) }}" action="{{ route('teacher.lessons.update') }}" id>
         <x-basic-input context="offcanvas" type="text" name="title_ar" label="{{ trans('main.title_ar') }}" placeholder="{{ trans('admin/lessons.placeholders.title_ar') }}" required/>
         <x-basic-input context="offcanvas" type="text" name="title_en" label="{{ trans('main.title_en') }}" placeholder="{{ trans('admin/lessons.placeholders.title_en') }}" required/>
-        <x-basic-input context="offcanvas" type="hidden" name="group_id" label="{{ trans('main.group') }}" value="{{ $group->uuid }}"  required readonly/>
         <x-basic-input context="offcanvas" type="text" name="date" classes="flatpickr-date" label="{{ trans('main.date') }}" placeholder="YYYY-MM-DD" value="{{ now()->format('Y-m-d') }}" required/>
         <x-basic-input context="offcanvas" type="text" name="time" classes="flatpickr-timeB" label="{{ trans('main.time') }}" placeholder="1:00" required/>
-        <x-select-input context="offcanvas" name="status" label="{{ trans('main.status') }}" :options="[1 => trans('main.scheduled'), 2 => trans('main.completed'), 3 => trans('main.canceled')]"  required/>
+        <x-select-input divClasses="col-12" name="status" label="{{ trans('main.status') }}" :options="[1 => trans('main.scheduled'), 2 => trans('main.completed'), 3 => trans('main.canceled')]"  required/>
+        <x-basic-input divClasses="d-none" type="text" name="group_id" label="{{ trans('main.group') }}" required/>
     </x-offcanvas>
     <!-- Delete Modal -->
     <x-modal modalType="delete" modalTitle="{{ trans('main.deleteItem', ['item' => trans('admin/lessons.lesson')]) }}"
@@ -74,6 +74,7 @@
             modalId: '#add-modal',
             fields: {
                 status: () => '',
+                group_id: () => '{{ $group->uuid }}',
             }
         });
         // Setup edit modal

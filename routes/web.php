@@ -231,6 +231,7 @@ Route::group(
             Route::prefix('groups')->controller(GroupsController::class)->name('groups.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('{groupId}/lessons', 'lessons')->name('lessons');
+                Route::get('{groupId}/students', 'students')->name('students');
                 Route::middleware('throttle:10,1')->group(function () {
                     Route::post('insert', 'insert')->name('insert');
                     Route::post('update', 'update')->name('update');

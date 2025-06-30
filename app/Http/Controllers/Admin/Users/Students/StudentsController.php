@@ -27,7 +27,8 @@ class StudentsController extends Controller
 
     public function index(Request $request)
     {
-        $studentsQuery = Student::query()->select('id', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'parent_id', 'is_active', 'profile_pic');
+        $studentsQuery = Student::query()->with(['grade:id,name', 'parent:id,uuid,name'])
+            ->select('id', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'parent_id', 'is_active', 'profile_pic');
 
         if ($request->ajax()) {
             return $this->studentService->getStudentsForDatatable($studentsQuery);

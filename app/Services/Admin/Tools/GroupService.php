@@ -27,6 +27,7 @@ class GroupService
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
             ->editColumn('name', fn($row) => $row->name)
             ->addColumn('lessons', fn($row) => formatSpanUrl(route('admin.groups.lessons', $row->id), trans('admin/groups.lessonsLink')))
+            ->addColumn('students', fn($row) => formatSpanUrl(route('admin.groups.students', $row->id), trans('admin/groups.studentsLink')))
             ->editColumn('teacher_id', fn($row) => formatRelation($row->teacher_id, $row->teacher, 'name', 'admin.teachers.details'))
             ->editColumn('grade_id', fn($row) => $row->grade_id ? $row->grade->name : '-')
             ->editColumn('day_1', fn($row) => $row->day_1 ? getDayName($row->day_1) : '-')
@@ -36,7 +37,7 @@ class GroupService
             ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
             ->filterColumn('is_active', fn($query, $keyword) => filterByStatus($query, $keyword))
-            ->rawColumns(['selectbox', 'lessons', 'teacher_id', 'is_active', 'actions'])
+            ->rawColumns(['selectbox', 'lessons', 'students', 'teacher_id', 'is_active', 'actions'])
             ->make(true);
     }
 
