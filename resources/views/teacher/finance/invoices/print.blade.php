@@ -104,9 +104,9 @@
             </div>
             <div class="my-2">
                 <h6>{{ trans('main.parent') }}:</h6>
-                <p class="mb-1">{{ $invoice->student->parent->name }}</p>
-                <p class="mb-1">{{ $invoice->student->parent->phone }}</p>
-                <p class="mb-0">{{ $invoice->student->parent->email }}</p>
+                <p class="mb-1">{{ $invoice->student->parent->name ?? 'N/A' }}</p>
+                <p class="mb-1">{{ $invoice->student->parent->phone ?? 'N/A' }}</p>
+                <p class="mb-0">{{ $invoice->student->parent->email ?? 'N/A' }}</p>
             </div>
         </div>
         <div class="table-responsive border border-bottom-0 rounded">

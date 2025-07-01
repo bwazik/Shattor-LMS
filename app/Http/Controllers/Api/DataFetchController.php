@@ -103,8 +103,8 @@ class DataFetchController extends Controller
                 'phone' => $student->phone,
                 'email' => $student->email ?? 'N/A',
                 'parent' => [
-                    'name' => $student->parent->name,
-                    'phone' => $student->parent->phone,
+                    'name' => $student->parent->name ?? 'N/A',
+                    'phone' => $student->parent->phone ?? 'N/A',
                     'email' => $student->parent->email ?? 'N/A',
                 ]
             ];
