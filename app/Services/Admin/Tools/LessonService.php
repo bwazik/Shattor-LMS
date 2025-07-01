@@ -39,8 +39,9 @@ class LessonService
 
                 $lessonTransAr = trans('admin/lessons.theLesson', [], 'ar');
                 $lessonTransEn = trans('admin/lessons.theLesson', [], 'en');
-                $titleAr = "{$lessonTransAr} {$currentLessonNumber} - {$group->getTranslation('name', 'ar')}";
-                $titleEn = "{$lessonTransEn} {$currentLessonNumber} - {$group->getTranslation('name', 'en')}";
+                $dateString = $date->format('m-d');
+                $titleAr = "{$lessonTransAr} {$currentLessonNumber} - {$dateString} - {$group->getTranslation('name', 'ar')}";
+                $titleEn = "{$lessonTransEn} {$currentLessonNumber} - {$dateString} - {$group->getTranslation('name', 'en')}";
 
                 $lessonData = [
                     'title' => ['ar' => $titleAr, 'en' => $titleEn],

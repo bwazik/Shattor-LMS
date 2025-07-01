@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
 use App\Traits\PublicValidatesTrait;
+use Illuminate\Support\Facades\Cache;
 use App\Services\Teacher\Tools\LessonService;
 use App\Http\Requests\Admin\Tools\LessonsRequest;
 use App\Services\Teacher\Activities\AttendanceService;
@@ -40,6 +41,17 @@ class LessonsController extends Controller
             return $this->lessonService->getLessonsForDatatable($lessonsQuery);
         }
 
+        $baseStatsQuery = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId));
+
+        $pageStatistics = Cache::remember("lessons:teacher:{$this->teacherId}:stats", 3600, function () use ($baseStatsQuery) {
+            return [
+                'totalLessons' => (clone $baseStatsQuery)->count(),
+                'scheduledLessons' => (clone $baseStatsQuery)->scheduled()->count(),
+                'completedLessons' => (clone $baseStatsQuery)->completed()->count(),
+                'canceledLessons' => (clone $baseStatsQuery)->canceled()->count(),
+            ];
+        });
+
         $grades = Grade::whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->select('id', 'name')
             ->orderBy('id')
@@ -54,14 +66,14 @@ class LessonsController extends Controller
             ->get()
             ->mapWithKeys(fn($group) => [$group->uuid => $group->name . ' - ' . $group->grade->name]);
 
-        return view('teacher.tools.lessons.index', compact('grades', 'groups'));
+        return view('teacher.tools.lessons.index', compact('grades', 'groups', 'pageStatistics'));
     }
 
     public function insert(LessonsRequest $request)
     {
         $result = $this->lessonService->insertLesson($request->validated());
 
-        return $this->conrtollerJsonResponse($result);
+        return $this->conrtollerJsonResponse($result, "lessons:teacher:{$this->teacherId}:stats");
     }
 
     public function update(LessonsRequest $request)
@@ -70,7 +82,7 @@ class LessonsController extends Controller
 
         $result = $this->lessonService->updateLesson($id, $request->validated());
 
-        return $this->conrtollerJsonResponse($result);
+        return $this->conrtollerJsonResponse($result, "lessons:teacher:{$this->teacherId}:stats");
     }
 
     public function delete(Request $request)
@@ -82,7 +94,7 @@ class LessonsController extends Controller
 
         $result = $this->lessonService->deleteLesson($request->id);
 
-        return $this->conrtollerJsonResponse($result);
+        return $this->conrtollerJsonResponse($result, "lessons:teacher:{$this->teacherId}:stats");
     }
 
     public function deleteSelected(Request $request)
@@ -94,7 +106,7 @@ class LessonsController extends Controller
 
         $result = $this->lessonService->deleteSelectedLessons($request->ids);
 
-        return $this->conrtollerJsonResponse($result);
+        return $this->conrtollerJsonResponse($result, "lessons:teacher:{$this->teacherId}:stats");
     }
 
     public function attendances(Request $request, $uuid)

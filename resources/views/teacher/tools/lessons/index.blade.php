@@ -7,6 +7,7 @@
 @section('title', pageTitle('admin/lessons.lessons'))
 
 @section('content')
+    @include('admin.tools.lessons.statistics')
     <!-- DataTable with Buttons -->
     <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/lessons.lessons')]) }}"
         dataToggle="offcanvas" deleteButton addButton="{{ trans('main.addItem', ['item' => trans('admin/lessons.lesson')]) }}">

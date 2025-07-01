@@ -36,6 +36,13 @@ class LessonsController extends Controller
             return $this->lessonService->getLessonsForDatatable($lessonsQuery);
         }
 
+        $pageStatistics = [
+            'totalLessons' => Lesson::count(),
+            'scheduledLessons' => Lesson::scheduled()->count(),
+            'completedLessons' => Lesson::completed()->count(),
+            'canceledLessons' => Lesson::canceled()->count(),
+        ];
+
         $teachers = Teacher::query()->select('id', 'name')->orderBy('id')->pluck('name', 'id')->toArray();
         $groups = Group::query()->select('id', 'name', 'teacher_id', 'grade_id')
             ->with(['teacher:id,name', 'grade:id,name'])
@@ -48,7 +55,7 @@ class LessonsController extends Controller
                 return [$group->id => $group->name . ' - ' . $gradeName . ' - ' . $teacherName];
             });
 
-        return view('admin.tools.lessons.index', compact('teachers', 'groups'));
+        return view('admin.tools.lessons.index', compact('teachers', 'groups', 'pageStatistics'));
     }
 
     public function insert(LessonsRequest $request)
