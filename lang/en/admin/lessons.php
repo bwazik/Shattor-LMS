@@ -18,4 +18,5 @@ return [
         'title_ar' => 'حصة مراجعة',
         'title_en' => 'Review Lesson',
     ],
+    'generate' => 'Generate Lessons',
 ];

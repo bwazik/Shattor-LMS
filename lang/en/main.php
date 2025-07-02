@@ -233,6 +233,7 @@ return [
     'validateTeacherZoomAccount' => 'The teacher must have a Zoom account to be able to add zooms.',
     'warning' => 'Warning!',
     'error' => 'Error!',
+    'generated' => 'Lessons have been generated successfully!',
 
     # Other
     'mr' => 'Mr',

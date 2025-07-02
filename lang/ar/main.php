@@ -234,6 +234,7 @@ return [
     'validateTeacherZoomAccount' => 'لازم يكون المدرس عنده حساب زوم عشان يقدر يضيف حصص.',
     'warning' => 'تحذير!',
     'error' => 'خطأ!',
+    'generated' => 'تم إنشاء الحصص بنجاح!',
 
     # Other
     'mr' => 'مستر',

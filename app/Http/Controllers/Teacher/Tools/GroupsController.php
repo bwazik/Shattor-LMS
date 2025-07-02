@@ -18,6 +18,7 @@ use App\Services\Teacher\Tools\GroupService;
 use App\Services\Teacher\Tools\LessonService;
 use App\Services\Teacher\Users\StudentService;
 use App\Http\Requests\Admin\Tools\GroupsRequest;
+use App\Http\Requests\Admin\Tools\GenerateLessonsRequest;
 
 class GroupsController extends Controller
 {
@@ -114,6 +115,15 @@ class GroupsController extends Controller
         $result = $this->groupService->deleteSelectedGroups($request->ids);
 
         return $this->conrtollerJsonResponse($result, "groups:teacher:{$this->teacherId}:stats");
+    }
+
+    public function generateLessons(GenerateLessonsRequest $request)
+    {
+        $id = Group::uuid($request->id)->value('id');
+
+        $result = $this->groupService->generateLessons($id, $request->validated());
+
+        return $this->conrtollerJsonResponse($result, "lessons:teacher:{$this->teacherId}:stats");
     }
 
     public function lessons(Request $request, $uuid)

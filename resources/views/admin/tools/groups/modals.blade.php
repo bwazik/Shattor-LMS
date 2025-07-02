@@ -29,3 +29,9 @@
     action="{{ route('admin.groups.deleteSelected') }}" ids submitColor="danger" submitButton="{{ trans('main.yes_delete') }}">
     @include('partials.delete-modal-body')
 </x-modal>
+<!-- Lessons Modal -->
+<x-offcanvas offcanvasType="lessons" offcanvasTitle="{{ trans('admin/lessons.generate') }}" action="{{ route('admin.groups.generateLessons') }}" id>
+    <x-basic-input context="offcanvas" type="text" name="name" label="{{ trans('main.name_ar') }}" placeholder="{{ trans('admin/groups.placeholders.name_ar') }}" disabled/>
+    <x-basic-input context="offcanvas" type="text" name="start_date" classes="flatpickr-date" label="{{ trans('main.date') }}" placeholder="YYYY-MM-DD" value="{{ now()->format('Y-m-d') }}" required/>
+    <x-basic-input context="offcanvas" type="text" name="end_date" classes="flatpickr-date" label="{{ trans('main.date') }}" placeholder="YYYY-MM-DD" value="{{ now()->addMonth()->format('Y-m-d') }}" required/>
+</x-offcanvas>

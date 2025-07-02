@@ -17,6 +17,7 @@ use App\Services\Admin\Tools\GroupService;
 use App\Services\Admin\Tools\LessonService;
 use App\Services\Admin\Users\StudentService;
 use App\Http\Requests\Admin\Tools\GroupsRequest;
+use App\Http\Requests\Admin\Tools\GenerateLessonsRequest;
 
 class GroupsController extends Controller
 {
@@ -87,6 +88,13 @@ class GroupsController extends Controller
         $this->validateExistence($request, 'groups');
 
         $result = $this->groupService->deleteSelectedGroups($request->ids);
+
+        return $this->conrtollerJsonResponse($result);
+    }
+
+    public function generateLessons(GenerateLessonsRequest $request)
+    {
+        $result = $this->groupService->generateLessons($request->id, $request->validated());
 
         return $this->conrtollerJsonResponse($result);
     }

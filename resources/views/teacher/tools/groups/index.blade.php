@@ -85,12 +85,23 @@
                 itemToDelete: button => `${button.data('name_ar')} - ${button.data('name_en')}`
             }
         });
+        // Setup lessons modal
+        setupModal({
+            buttonId: '#lessons-button',
+            modalId: '#lessons-modal',
+            fields: {
+                id: button => button.data('id'),
+                name: button => button.data('name'),
+            }
+        });
 
         let fields = ['name_ar', 'name_en', 'grade_id', 'day_1', 'day_2', 'time', 'is_active'];
+        let generateFields = ['start_date', 'end_date'];
         handleFormSubmit('#add-form', fields, '#add-modal', 'offcanvas', '#datatable');
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'offcanvas', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
+        handleFormSubmit('#lessons-form', generateFields, '#lessons-modal', 'offcanvas');
 
         $('#day_1, #day_2, #grade_id, #time').on('change', function () {
             updateGroupNames();

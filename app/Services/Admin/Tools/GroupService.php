@@ -44,33 +44,48 @@ class GroupService
     private function generateActionButtons($row): string
     {
         return
-            '<div class="align-items-center">' .
-                '<span class="text-nowrap">' .
-                    '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
-                        'tabindex="0" type="button" ' .
-                        'data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
-                        'id="edit-button" ' .
-                        'data-id="' . $row->id . '" ' .
-                        'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
-                        'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
-                        'data-is_active="' . ($row->is_active ? '1' : '0') . '" ' .
-                        'data-teacher_id="' . $row->teacher_id . '" ' .
-                        'data-grade_id="' . $row->grade_id . '" ' .
-                        'data-day_1="' . $row->day_1 . '" ' .
-                        'data-day_2="' . $row->day_2 . '" ' .
-                        'data-time="' . $row->time . '">' .
-                        '<i class="ri-edit-box-line ri-20px"></i>' .
-                    '</button>' .
-                '</span>' .
-                '<button class="btn btn-sm btn-icon btn-text-danger rounded-pill text-body waves-effect waves-light me-1" ' .
-                    'id="delete-button" ' .
-                    'data-id="' . $row->id . '" ' .
-                    'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
-                    'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
-                    'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                    '<i class="ri-delete-bin-7-line ri-20px text-danger"></i>' .
-                '</button>' .
-            '</div>';
+            '<div class="d-inline-block">' .
+                '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
+                    '<i class="ri-more-2-line"></i>' .
+                '</a>' .
+                '<ul class="dropdown-menu dropdown-menu-end m-0">' .
+                    '<li>' .
+                        '<a href="javascript:;" class="dropdown-item" ' .
+                            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#lessons-modal" ' .
+                            'id="lessons-button" ' .
+                            'data-id="' . $row->id . '" ' .
+                            'data-name="' . $row->name . '" ' .
+                            'data-bs-target="#lessons-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+                            trans('admin/lessons.generate').
+                        '</a>' .
+                    '</li>' .
+                    '<div class="dropdown-divider"></div>' .
+                    '<li>' .
+                        '<a href="javascript:;" class="dropdown-item text-danger" ' .
+                            'id="delete-button" ' .
+                            'data-id="' . $row->id . '" ' .
+                            'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
+                            'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
+                            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+                            trans('main.delete').
+                        '</a>' .
+                    '</li>' .
+                '</ul>' .
+            '</div>' .
+            '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
+                'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
+                'id="edit-button" ' .
+                'data-id="' . $row->id . '" ' .
+                'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
+                'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
+                'data-is_active="' . ($row->is_active ? '1' : '0') . '" ' .
+                'data-teacher_id="' . $row->teacher_id . '" ' .
+                'data-grade_id="' . $row->grade_id . '" ' .
+                'data-day_1="' . $row->day_1 . '" ' .
+                'data-day_2="' . $row->day_2 . '" ' .
+                'data-time="' . $row->time . '">' .
+                '<i class="ri-edit-box-line ri-20px"></i>' .
+            '</button>';
     }
 
     public function insertGroup(array $request)
@@ -89,7 +104,7 @@ class GroupService
                 'time' => $request['time'],
             ]);
 
-            $this->lessonService->generateLessonsForGroup($group->id);
+            // $this->lessonService->generateLessonsForGroup($group->id);
 
             return $this->successResponse(trans('main.added', ['item' => trans('admin/groups.group')]));
         });
@@ -149,6 +164,16 @@ class GroupService
             Group::whereIn('id', $ids)->delete();
 
             return $this->successResponse(trans('main.deletedSelected', ['item' => strtolower(trans('admin/groups.groups'))]));
+        });
+    }
+
+    public function generateLessons($id, array $request)
+    {
+        return $this->executeTransaction(function () use ($id, $request)
+        {
+            $this->lessonService->generateLessonsForGroup($id, $request['start_date'], $request['end_date']);
+
+            return $this->successResponse(trans('main.generated'));
         });
     }
 
