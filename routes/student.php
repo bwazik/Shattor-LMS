@@ -36,6 +36,16 @@ Route::group(
             });
 
             # Start Activities
+                # Compensatories
+                Route::prefix('compensatories')->controller(CompensatoriesController::class)->name('compensatories.')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::middleware('throttle:10,1')->group(function () {
+                        Route::post('insert', 'insert')->name('insert');
+                        Route::post('update', 'update')->name('update');
+                        Route::post('delete', 'delete')->name('delete');
+                    });
+                });
+
                 # Quizzes
                 Route::prefix('quizzes')->controller(QuizzesController::class)->name('quizzes.')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -48,6 +58,7 @@ Route::group(
                         Route::post('/{uuid}/violation', 'violation')->name('violation');
                     });
                 });
+
                 # Assignments
                 Route::prefix('assignments')->controller(AssignmentsController::class)->name('assignments.')->group(function () {
                     Route::get('/', 'index')->name('index');
