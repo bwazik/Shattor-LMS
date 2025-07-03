@@ -87,6 +87,24 @@
         .status-btn.active[data-status="4"] {
             background-color: #17a2b8;
         }
+
+        #qr-video {
+            display: none;
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        #qr-video.active {
+            display: block;
+        }
+
+        .scan-tab-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 50vh;
+        }
     </style>
 @endsection
 
@@ -122,96 +140,45 @@
             </div>
         </div>
     </div>
-    <!-- DataTable with Buttons -->
-    <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/attendance.attendance')]) }}"
-        dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-checkbox-circle-line">
-        <th></th>
-        <th>#</th>
-        <th>{{ trans('main.student') }}</th>
-        <th>{{ trans('main.description') }}</th>
-        <th>{{ trans('main.actions') }}</th>
-    </x-datatable>
-    <!--/ DataTable with Buttons -->
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link active waves-effect" role="tab" data-bs-toggle="tab"
+                data-bs-target="#datatable-tab" aria-controls="datatable-tab"
+                aria-selected="true">{{ trans('admin/attendance.attendanceDatatable') }}</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link waves-effect" role="tab" data-bs-toggle="tab"
+                data-bs-target="#scan-tab" aria-controls="scan-tab"
+                aria-selected="false">{{ trans('admin/attendance.qrScan') }}</button>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane fade active show" id="datatable-tab" role="tabpanel">
+            <x-datatable
+                datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/attendance.attendance')]) }}"
+                dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-checkbox-circle-line">
+                <th></th>
+                <th>#</th>
+                <th>{{ trans('main.student') }}</th>
+                <th>{{ trans('main.description') }}</th>
+                <th>{{ trans('main.actions') }}</th>
+            </x-datatable>
+        </div>
+        <div class="tab-pane fade" id="scan-tab" role="tabpanel">
+            <div class="scan-tab-container">
+                <div class="text-center">
+                    <video id="qr-video" class="mb-3 rounded" style="overflow: hidden;"></video>
+                    <button id="start-scanner" class="btn btn-success">{{ trans('admin/attendance.startScanner') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('page-js')
+    @include('admin.activities.attendance.js')
     <script>
-        $(document).ready(function() {
-            let dataTable = null;
-            const form = $('#students-form');
-            const formId = '#students-form';
-            const url = form.attr('action');
-
-            form.on('submit', function(e) {
-                e.preventDefault();
-                submitButton = $(this).find('button[type="submit"]');
-                submitButton.prop('disabled', true);
-
-                const fields = ['teacher_id', 'grade_id', 'group_id', 'lesson_id'];
-                // Clear previous error states
-                $.each(fields, function(_, field) {
-                    $(formId + ' #' + field).removeClass('is-invalid');
-                    $(formId + ' #' + field + '_error').text('').addClass('d-none').removeClass(
-                        'd-block');
-                });
-
-                const formData = {
-                    teacher_id: $(formId + ' #teacher_id').val(),
-                    grade_id: $(formId + ' #grade_id').val(),
-                    group_id: $(formId + ' #group_id').val(),
-                    lesson_id: $(formId + ' #lesson_id').val(),
-                };
-
-                if (!formData.teacher_id || !formData.grade_id || !formData.group_id || !formData.lesson_id) {
-                    toastr.error('Please select a teacher, grade, group, and lesson');
-                    setTimeout(function() {
-                        submitButton.prop('disabled', false);
-                    }, 1500);
-                    return;
-                }
-
-                if (dataTable) {
-                    dataTable.destroy();
-                }
-
-                datatable = initializePostDataTable('#datatable', url, [2, 3, 4],
-                    [{
-                            data: "",
-                            orderable: false,
-                            searchable: false
-                        },
-                        {
-                            data: 'id',
-                            name: 'id',
-                        },
-                        {
-                            data: 'name',
-                            name: 'name',
-                            orderable: false,
-                            searchable: false
-                        },
-                        {
-                            data: 'note',
-                            name: 'note',
-                            orderable: false,
-                            searchable: false
-                        },
-                        {
-                            data: 'actions',
-                            name: 'actions',
-                            orderable: false,
-                            searchable: false
-                        }
-                    ], {
-                        teacher_id: $('#students-form #teacher_id').val(),
-                        grade_id: $('#students-form #grade_id').val(),
-                        group_id: $('#students-form #group_id').val(),
-                        lesson_id: $('#students-form #lesson_id').val(),
-                    },
-                    '#students-form'
-                );
-            });
-        });
         initializeDataTable('#datatable', "{{ route('admin.lessons.attendances', $lesson->id) }}", [2, 3, 4],
             [
                 { data: "", orderable: false, searchable: false },
@@ -221,157 +188,6 @@
                 { data: 'actions', name: 'actions', orderable: false, searchable: false }
             ],
         );
-
-        function gatherAttendanceData() {
-            let attendanceData = [];
-
-            $('#datatable tbody tr').each(function() {
-                let $row = $(this);
-
-                let studentId = $row.find('.status-container').data('student-id');
-                let note = $row.find('.note-input').val();
-                let activeButton = $row.find('.status-container .status-btn.active');
-                let status = activeButton.length > 0 ? activeButton.data('status') : null;
-
-                if (studentId) {
-                    attendanceData.push({
-                        student_id: studentId,
-                        status: status,
-                        note: note || null
-                    });
-                }
-            });
-
-            return attendanceData;
-        }
-
-        $(document).ready(function() {
-            $('#other-button').on('click', function() {
-                let submitButton = $(this);
-                submitButton.prop('disabled', true);
-
-                let form = $('#students-form');
-                let data = gatherAttendanceData();
-
-                let payload = {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    teacher_id: form.find('#teacher_id').val(),
-                    grade_id: form.find('#grade_id').val(),
-                    group_id: form.find('#group_id').val(),
-                    lesson_id: form.find('#lesson_id').val(),
-                    attendance: data
-                };
-
-                $.ajax({
-                    url: "{{ route('admin.attendance.insert') }}",
-                    type: 'POST',
-                    dataType: "json",
-                    contentType: "application/json",
-                    data: JSON.stringify(payload),
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.success)
-                            setTimeout(function() {
-                                submitButton.prop('disabled', false);
-                            }, 1500);
-                            refreshDataTable("#datatable");
-                        } else {
-                            toastr.error(response.error || errorMessage);
-                            setTimeout(function() {
-                                submitButton.prop('disabled', false);
-                            }, 1500);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        if (xhr.status === 429) {
-                            toastr.error(tooManyRequestsMessage);
-                        } else if (xhr.responseJSON) {
-                            if (xhr.responseJSON.errors) {
-                                $.each(xhr.responseJSON.errors, function(key, val) {
-                                    toastr.error(val[0]);
-                                });
-                            } else if (xhr.responseJSON.error) {
-                                toastr.error(xhr.responseJSON.error);
-                            } else {
-                                toastr.error(errorMessage);
-                            }
-                        } else {
-                            toastr.error(errorMessage);
-                        }
-
-                        setTimeout(function() {
-                            submitButton.prop('disabled', false);
-                        }, 1500);
-                    },
-                });
-            });
-        });
-
-        $(document).on('click', '.status-btn', function() {
-            let $button = $(this);
-            let $statusContainer = $button.closest('.status-container');
-
-            $statusContainer.find('.status-btn').removeClass('active')
-                // .css('background-color', 'white')
-                .css('color', function() {
-                    return $(this).css('border-color');
-                });
-
-            $button.addClass('active')
-                // .css('background-color', $button.css('border-color'))
-                .css('color', 'white');
-
-            checkAllStatusSelected();
-        });
-
-        function checkDateAndUpdateButton() {
-            let selectedDate = document.getElementById('date').value;
-            let today = "{{ now()->toDateString() }}";
-            let submitButton = document.getElementById('other-button');
-
-            submitButton.disabled = selectedDate !== today;
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            checkDateAndUpdateButton();
-        });
-        document.getElementById('date').addEventListener('change', function() {
-            checkDateAndUpdateButton();
-        });
-
-        $('#mark-all').on('click', function () {
-            let allMarked = true;
-
-            $('.status-container').each(function () {
-                const activeStatus = $(this).find('.status-btn.active').data('status');
-                if (activeStatus !== 1) {
-                    allMarked = false;
-                    return false;
-                }
-            });
-
-            if (allMarked) {
-                $('.status-btn').removeClass('active')
-                    .css('color', function () {
-                        return $(this).css('border-color');
-                    });
-            } else {
-                $('.status-container').each(function () {
-                    const $presentBtn = $(this).find('.status-btn[data-status="1"]');
-                    $presentBtn.click();
-                });
-            }
-        });
-
-        function checkAllStatusSelected() {
-            let allSelected = true;
-            $('.status-container').each(function () {
-                if (!$(this).find('.active').length) {
-                    allSelected = false;
-                }
-            });
-
-            $('#other-button').prop('disabled', !allSelected);
-        }
 
         initializeSelect2('students-form', 'grade_id', {{ $lesson->group->grade_id }}, true);
         initializeSelect2('students-form', 'teacher_id', {{ $lesson->group->teacher_id }}, true);

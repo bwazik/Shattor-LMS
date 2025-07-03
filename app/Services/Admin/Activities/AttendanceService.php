@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin\Activities;
 
+use App\Models\Group;
 use App\Models\Lesson;
 use App\Models\Student;
 use App\Models\Attendance;
@@ -54,15 +55,17 @@ class AttendanceService
         $html = '<div class="status-container" data-student-id="' . $student->id . '">';
         foreach ($statuses as $status => $config) {
             $isActive = $student->status == $status ? 'active' : '';
+            $opacity = $isActive ? '1' : '0.5';
             $html .= sprintf(
                 '<button type="button"
                     class="btn btn-outline-%s btn-sm status-btn mx-1 %s"
-                    data-status="%d">
+                    data-status="%d" style="opacity:%s;">
                     <span class="status-indicator">%s</span>
                 </button>',
                 $config['color'],
                 $isActive,
                 $status,
+                $opacity,
                 $config['label']
             );
         }
@@ -95,9 +98,9 @@ class AttendanceService
             if ($validationResult = $this->validateTeacherGradeAndGroups($teacherId, $groupId, $gradeId, true))
                 return $validationResult;
 
-            if ($lesson->date !== now()->toDateString()) {
-                return $this->errorResponse(trans('admin/attendance.dateRestriction'));
-            }
+            // if ($lesson->date !== now()->toDateString()) {
+            //     return $this->errorResponse(trans('admin/attendance.dateRestriction'));
+            // }
 
             $studentIds = collect($attendanceData)->pluck('student_id')->toArray();
 
@@ -123,5 +126,41 @@ class AttendanceService
 
             return $this->successResponse(trans('main.added', ['item' => trans('admin/attendance.attendance')]));
         });
+    }
+
+    public function scanAttendance(array $request)
+    {
+        return $this->executeTransaction(function () use ($request)
+        {
+            $student = Student::uuid($request['uuid'])->firstOrFail();
+            $teacherId = $request['teacher_id'];
+            $lesson = Lesson::select('id', 'date', 'group_id')->findOrFail($request['lesson_id']);
+            $groupId = Group::findOrFail($request['group_id'])->id;
+
+            if ($validationResult = $this->validateTeacherGradeAndGroups($teacherId, $groupId, $request['grade_id'], true)) {
+                return $validationResult;
+            }
+
+            if ($validationResult = $this->verifyStudents([$student->id], $request['grade_id'], $groupId)) {
+                return $validationResult;
+            }
+
+            Attendance::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'date' => $lesson->date,
+                    'lesson_id' => $lesson->id,
+                    'teacher_id' => $teacherId,
+                ],
+                [
+                    'grade_id' => $request['grade_id'],
+                    'group_id' => $groupId,
+                    'status' => 1, // Present
+                    'note' => null,
+                ]
+            );
+
+            return $this->successResponse(trans('admin/attendance.added', ['name' => $student->name]));
+        }, trans('toasts.ownershipError'));
     }
 }

@@ -12,7 +12,7 @@
             submitButton = $(this).find('button[type="submit"]');
             submitButton.prop('disabled', true);
 
-            const fields = ['grade_id', 'group_id', 'lesson_id'];
+            const fields = ['teacher_id', 'grade_id', 'group_id', 'lesson_id'];
             // Clear previous error states
             $.each(fields, function(_, field) {
                 $(formId + ' #' + field).removeClass('is-invalid');
@@ -21,13 +21,15 @@
             });
 
             const formData = {
+                teacher_id: $(formId + ' #teacher_id').val(),
                 grade_id: $(formId + ' #grade_id').val(),
                 group_id: $(formId + ' #group_id').val(),
                 lesson_id: $(formId + ' #lesson_id').val(),
             };
 
-            if (!formData.grade_id || !formData.group_id || !formData.lesson_id) {
-                toastr.error('Please select a grade, group, and lesson');
+            if (!formData.teacher_id || !formData.grade_id || !formData.group_id || !formData
+                .lesson_id) {
+                toastr.error('Please select a teacher, grade, group, and lesson');
                 setTimeout(function() {
                     submitButton.prop('disabled', false);
                 }, 1500);
@@ -46,7 +48,7 @@
                     },
                     {
                         data: 'id',
-                        name: 'id'
+                        name: 'id',
                     },
                     {
                         data: 'name',
@@ -67,6 +69,7 @@
                         searchable: false
                     }
                 ], {
+                    teacher_id: $('#students-form #teacher_id').val(),
                     grade_id: $('#students-form #grade_id').val(),
                     group_id: $('#students-form #group_id').val(),
                     lesson_id: $('#students-form #lesson_id').val(),
@@ -109,6 +112,7 @@
 
             let payload = {
                 _token: $('meta[name="csrf-token"]').attr('content'),
+                teacher_id: form.find('#teacher_id').val(),
                 grade_id: form.find('#grade_id').val(),
                 group_id: form.find('#group_id').val(),
                 lesson_id: form.find('#lesson_id').val(),
@@ -116,7 +120,7 @@
             };
 
             $.ajax({
-                url: "{{ route('teacher.attendance.insert') }}",
+                url: "{{ route('admin.attendance.insert') }}",
                 type: 'POST',
                 dataType: "json",
                 contentType: "application/json",
@@ -218,7 +222,6 @@
         }
     });
 
-
     function checkAllStatusSelected() {
         let allSelected = true;
         $('.status-container').each(function() {
@@ -234,18 +237,19 @@
         const video = document.getElementById('qr-video');
         const startScanner = document.getElementById('start-scanner');
         const form = $('#students-form');
-        const scanUrl = "{{ route('teacher.attendance.scan') }}";
+        const scanUrl = "{{ route('admin.attendance.scan') }}";
         let isScanning = true;
         let lastScanTime = 0;
         let lastInvalidScanTime = 0;
 
         startScanner.addEventListener('click', function() {
+            const teacherId = form.find('#teacher_id').val();
             const gradeId = form.find('#grade_id').val();
             const groupId = form.find('#group_id').val();
             const lessonId = form.find('#lesson_id').val();
 
-            if (!gradeId || !groupId || !lessonId) {
-                toastr.error('Please select a grade, group, and lesson');
+            if (!teacherId || !gradeId || !groupId || !lessonId) {
+                toastr.error('Please select a teacger, grade, group, and lesson');
                 return;
             }
 
@@ -314,6 +318,7 @@
                                             _token: $('meta[name="csrf-token"]').attr(
                                                 'content'),
                                             uuid: uuid,
+                                            teacher_id: teacherId,
                                             grade_id: gradeId,
                                             group_id: groupId,
                                             lesson_id: lessonId
@@ -337,7 +342,7 @@
                                                         });
                                                 } else if (xhr.responseJSON.error) {
                                                     toastr.error(xhr.responseJSON
-                                                    .error);
+                                                        .error);
                                                 } else {
                                                     toastr.error(errorMessage);
                                                 }

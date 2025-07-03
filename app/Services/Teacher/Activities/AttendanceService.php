@@ -65,15 +65,17 @@ class AttendanceService
         $html = '<div class="status-container" data-student-id="' . $student->id . '">';
         foreach ($statuses as $status => $config) {
             $isActive = $student->status == $status ? 'active' : '';
+            $opacity = $isActive ? '1' : '0.5';
             $html .= sprintf(
                 '<button type="button"
                     class="btn btn-outline-%s btn-sm status-btn mx-1 %s"
-                    data-status="%d">
+                    data-status="%d" style="opacity:%s;">
                     <span class="status-indicator">%s</span>
                 </button>',
                 $config['color'],
                 $isActive,
                 $status,
+                $opacity,
                 $config['label']
             );
         }
@@ -107,6 +109,10 @@ class AttendanceService
             if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true))
                 return $validationResult;
 
+            // if ($lesson->date !== now()->toDateString()) {
+            //     return $this->errorResponse(trans('admin/attendance.dateRestriction'));
+            // }
+            
             $studentIds = collect($attendanceData)->pluck('student_id')->toArray();
 
             if ($validationResult2 = $this->verifyStudents($studentIds, $gradeId, $groupId))

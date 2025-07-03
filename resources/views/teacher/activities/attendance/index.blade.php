@@ -112,7 +112,6 @@
 
 @section('content')
     @include('teacher.activities.attendance.form')
-
     <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button type="button" class="nav-link active waves-effect" role="tab" data-bs-toggle="tab"

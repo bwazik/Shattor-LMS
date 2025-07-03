@@ -4,12 +4,16 @@ namespace App\Http\Controllers\Admin\Activities;
 
 use App\Models\Teacher;
 use App\Http\Controllers\Controller;
+use App\Traits\ServiceResponseTrait;
 use App\Services\Admin\Activities\AttendanceService;
-use App\Http\Requests\Admin\Activities\StudentSearchRequest;
 use App\Http\Requests\Admin\Activities\AttendanceRequest;
+use App\Http\Requests\Admin\Activities\StudentSearchRequest;
+use App\Http\Requests\Admin\Activities\ScanAttendanceRequest;
 
 class AttendanceController extends Controller
 {
+    use ServiceResponseTrait;
+
     protected $attendanceService;
 
     public function __construct(AttendanceService $attendanceService)
@@ -45,10 +49,13 @@ class AttendanceController extends Controller
     {
         $result = $this->attendanceService->insertAttendance($request->validated());
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
+        return $this->conrtollerJsonResponse($result);
+    }
 
-        return response()->json(['error' => $result['message']], 500);
+    public function scanAttendance(ScanAttendanceRequest $request)
+    {
+        $result = $this->attendanceService->scanAttendance($request->validated());
+
+        return $this->conrtollerJsonResponse($result);
     }
 }
