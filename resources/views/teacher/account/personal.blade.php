@@ -102,7 +102,7 @@
 
             <!-- Teacher Data -->
             <div class="card mb-6">
-                <x-account.profile-picture action="{{ route('teacher.account.updateProfilePic') }}" guard="teachers"/>
+                <x-account.profile-picture action="{{ route('teacher.account.updateProfilePic') }}" guard="teachers" qrcode="{{ $qrcode }}"/>
                 <div class="card-body pt-0">
                     <form id="edit-form" action="{{ route('teacher.account.personal.update') }}" method="POST"
                         autocomplete="off">

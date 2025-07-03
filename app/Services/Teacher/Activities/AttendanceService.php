@@ -132,4 +132,41 @@ class AttendanceService
             return $this->successResponse(trans('main.added', ['item' => trans('admin/attendance.attendance')]));
         }, trans('toasts.ownershipError'));
     }
+
+    public function scanAttendance(array $request)
+    {
+        return $this->executeTransaction(function () use ($request)
+        {
+            $student = Student::uuid($request['uuid'])->firstOrFail();
+            $lesson = Lesson::uuid($request['lesson_id'])
+                ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
+                ->firstOrFail(['id', 'date', 'group_id']);
+            $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
+
+            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true)) {
+                return $validationResult;
+            }
+
+            if ($validationResult = $this->verifyStudents([$student->id], $request['grade_id'], $groupId)) {
+                return $validationResult;
+            }
+
+            Attendance::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'date' => $lesson->date,
+                    'lesson_id' => $lesson->id,
+                    'teacher_id' => $this->teacherId,
+                ],
+                [
+                    'grade_id' => $request['grade_id'],
+                    'group_id' => $groupId,
+                    'status' => 1, // Present
+                    'note' => null,
+                ]
+            );
+
+            return $this->successResponse(trans('admin/attendance.added', ['name' => $student->name]));
+        }, trans('toasts.ownershipError'));
+    }
 }

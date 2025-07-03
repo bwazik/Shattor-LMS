@@ -1,5 +1,8 @@
 <div class="card-body">
     <div class="d-flex align-items-start align-items-sm-center gap-6">
+        <a href="{{ $qrcode }}" download="shattor-qr-code.png">
+            <img src="{{ $qrcode }}" alt="QR Code" class="d-block w-px-100 h-px-100 rounded-4" id="QRCode" />
+        </a>
         <img src="{{ asset(Auth::user()->profile_pic ? 'storage/profiles/' . $guard . '/' . Auth::user()->profile_pic : 'assets/img/avatars/default.jpg') }}"
             alt="profile-picture" class="d-block w-px-100 h-px-100 rounded-4" id="uploadedAvatar" />
         <div class="button-wrapper">

@@ -25,6 +25,7 @@ Route::group(
 
             # Account
             Route::prefix('account')->controller(AccountController::class)->name('account.')->group(function () {
+                Route::get('/qr/{uuid}', 'scanQRCode')->name('qr.scan');
                 Route::get('personal', 'editPersonalInfo')->name('personal.edit');
                 Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                 Route::post('personal', 'updatePersonalInfo')->name('personal.update')->middleware('throttle:5,1');

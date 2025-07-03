@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\Teacher\Tools\LessonService;
 use App\Http\Requests\Admin\Tools\LessonsRequest;
 use App\Services\Teacher\Activities\AttendanceService;
+use App\Http\Requests\Admin\Activities\ScanAttendanceRequest;
 
 class LessonsController extends Controller
 {
@@ -144,5 +145,12 @@ class LessonsController extends Controller
         }
 
         return view('teacher.tools.lessons.attendances', compact('lesson'));
+    }
+
+    public function scanAttendance(ScanAttendanceRequest $request)
+    {
+        $result = $this->lessonService->scanAttendance($request->validated());
+
+        return $this->conrtollerJsonResponse($result);
     }
 }

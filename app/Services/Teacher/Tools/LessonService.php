@@ -5,9 +5,11 @@ namespace App\Services\Teacher\Tools;
 use Carbon\Carbon;
 use App\Models\Group;
 use App\Models\Lesson;
+use App\Models\Student;
 use App\Traits\PublicValidatesTrait;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
+use App\Services\Teacher\Activities\AttendanceService;
 
 class LessonService
 {
@@ -16,10 +18,12 @@ class LessonService
     protected $relationships = [];
     protected $transModelKey = 'admin/lessons.lessons';
     protected $teacherId;
+    protected $attendanceService;
 
-    public function __construct()
+    public function __construct(AttendanceService $attendanceService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
+        $this->attendanceService = $attendanceService;
     }
 
     public function getLessonsForDatatable($lessonsQuery)
@@ -42,36 +46,35 @@ class LessonService
     {
         return
             '<div class="align-items-center">' .
-                '<span class="text-nowrap">' .
-                    '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
-                        'tabindex="0" type="button" ' .
-                        'data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
-                        'id="edit-button" ' .
-                        'data-id="' . $row->uuid . '" ' .
-                        'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
-                        'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
-                        'data-group_id="' . $row->group->uuid . '" ' .
-                        'data-date="' . $row->date . '" ' .
-                        'data-time="' . $row->time . '" ' .
-                        'data-status="' . $row->status . '">' .
-                        '<i class="ri-edit-box-line ri-20px"></i>' .
-                    '</button>' .
-                '</span>' .
-                '<button class="btn btn-sm btn-icon btn-text-danger rounded-pill text-body waves-effect waves-light me-1" ' .
-                    'id="delete-button" ' .
-                    'data-id="' . $row->uuid . '" ' .
-                    'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
-                    'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
-                    'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                    '<i class="ri-delete-bin-7-line ri-20px text-danger"></i>' .
-                '</button>' .
+            '<span class="text-nowrap">' .
+            '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
+            'tabindex="0" type="button" ' .
+            'data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
+            'id="edit-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
+            'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
+            'data-group_id="' . $row->group->uuid . '" ' .
+            'data-date="' . $row->date . '" ' .
+            'data-time="' . $row->time . '" ' .
+            'data-status="' . $row->status . '">' .
+            '<i class="ri-edit-box-line ri-20px"></i>' .
+            '</button>' .
+            '</span>' .
+            '<button class="btn btn-sm btn-icon btn-text-danger rounded-pill text-body waves-effect waves-light me-1" ' .
+            'id="delete-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
+            'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
+            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            '<i class="ri-delete-bin-7-line ri-20px text-danger"></i>' .
+            '</button>' .
             '</div>';
     }
 
     public function insertLesson(array $request)
     {
-        return $this->executeTransaction(function () use ($request)
-        {
+        return $this->executeTransaction(function () use ($request) {
             $groupId = Group::uuid($request['group_id'])->where('teacher_id', $this->teacherId)->firstOrFail('id')->id;
 
             Lesson::create([
@@ -88,8 +91,7 @@ class LessonService
 
     public function updateLesson($id, array $request)
     {
-        return $this->executeTransaction(function () use ($id, $request)
-        {
+        return $this->executeTransaction(function () use ($id, $request) {
             $groupId = Group::uuid($request['group_id'])->where('teacher_id', $this->teacherId)->firstOrFail('id')->id;
             $lesson = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))->findOrFail($id);
 
@@ -107,8 +109,7 @@ class LessonService
 
     public function deleteLesson($id): array
     {
-        return $this->executeTransaction(function () use ($id)
-        {
+        return $this->executeTransaction(function () use ($id) {
             $lesson = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))->select('id', 'title')->findOrFail($id);
 
             if ($dependencyCheck = $this->checkDependenciesForSingleDeletion($lesson)) {
@@ -126,8 +127,7 @@ class LessonService
         if ($validationResult = $this->validateSelectedItems((array) $ids))
             return $validationResult;
 
-        return $this->executeTransaction(function () use ($ids)
-        {
+        return $this->executeTransaction(function () use ($ids) {
             $lessons = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))->whereIn('id', $ids)->select('id', 'title')->orderBy('id')->get();
 
             if ($dependencyCheck = $this->checkDependenciesForMultipleDeletion($lessons)) {
@@ -137,6 +137,35 @@ class LessonService
             Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))->whereIn('id', $ids)->delete();
 
             return $this->successResponse(trans('main.deletedSelected', ['item' => strtolower(trans('admin/lessons.lessons'))]));
+        }, trans('toasts.ownershipError'));
+    }
+
+    public function scanAttendance(array $request)
+    {
+        return $this->executeTransaction(function () use ($request)
+        {
+            $student = Student::uuid($request['uuid'])->firstOrFail();
+            $lesson = Lesson::uuid($request['lesson_id'])
+                ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
+                ->firstOrFail(['id', 'date', 'group_id']);
+            $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
+
+            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true)) {
+                return $validationResult;
+            }
+
+            return $this->attendanceService->insertAttendance([
+                'grade_id' => $request['grade_id'],
+                'group_id' => $request['group_id'],
+                'lesson_id' => $request['lesson_id'],
+                'attendance' => [
+                    [
+                        'student_id' => $student->id,
+                        'status' => 1,
+                        'note' => null,
+                    ]
+                ]
+            ]);
         }, trans('toasts.ownershipError'));
     }
 

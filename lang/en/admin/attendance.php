@@ -17,4 +17,11 @@ return [
     'studentsNotValid' => 'Some of the selected students do not belong to the specified grade or group.',
     'missingStatuses' => 'There are :count students without a status. Please set it before submitting.',
     'dateRestriction' => 'You can only record or modify attendance for today.',
+    'attendanceDatatable' => 'Attendance Datatable',
+    'qrScan' => 'QR Scanner',
+    'startScanner' => 'Start Scanner',
+    'stopScanner' => 'Stop Scanner',
+    'invalidQR' => 'Invalid QR code or it does not contain student data.',
+    'cameraError' => 'Camera error. Please ensure the camera is connected and functioning properly.',
+    'added' => 'Student attendance for :name has been added successfully!',
 ];

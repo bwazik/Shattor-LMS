@@ -96,7 +96,7 @@
     @include('admin.activities.attendance.form')
     <!-- DataTable with Buttons -->
     <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/attendance.attendance')]) }}"
-        dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-add-line">
+        dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-checkbox-circle-line">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.student') }}</th>

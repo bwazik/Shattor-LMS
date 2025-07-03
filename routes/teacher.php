@@ -75,6 +75,7 @@ Route::group(
 
             # Account
             Route::prefix('account')->controller(AccountController::class)->name('account.')->group(function () {
+                Route::post('/qr/{uuid}', 'scanQRCode')->name('qr.scan');
                 Route::get('personal', 'editPersonalInfo')->name('personal.edit');
                 Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                 Route::post('personal', 'updatePersonalInfo')->name('personal.update')->middleware('throttle:5,1');
@@ -202,6 +203,7 @@ Route::group(
                 Route::prefix('attendance')->controller(AttendanceController::class)->name('attendance.')->group(function() {
                     Route::get('/', 'index')->name('index');
                     Route::post('students', 'getStudentsByFilter')->name('students');
+                    Route::post('scan', 'scanAttendance')->name('scan');
                     Route::middleware('throttle:10,1')->group(function() {
                         Route::post('insert', 'insert')->name('insert');
                     });

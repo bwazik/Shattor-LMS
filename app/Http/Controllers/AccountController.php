@@ -22,17 +22,20 @@ use App\Http\Requests\ZoomAccountRequest;
 use App\Services\Admin\FileUploadService;
 use App\Http\Requests\PersonalDataRequest;
 use App\Http\Requests\PasswordUpdateRequest;
+use App\Services\QRCodeService;
 
 class AccountController extends Controller
 {
     use DatabaseTransactionTrait, ServiceResponseTrait;
 
+    protected $qrCodeService;
     protected $profilePicService;
     protected $accountService;
     protected $sessionService;
     protected $guard;
     protected $mapping;
     protected $userId;
+    protected $userUuid;
     protected $guardMappings = [
         'teacher' => [
             'model' => Teacher::class,
@@ -46,14 +49,22 @@ class AccountController extends Controller
         ],
     ];
 
-    public function __construct(FileUploadService $profilePicService, AccountService $accountService, SessionService $sessionService)
+    public function __construct(QRCodeService $qrCodeService, FileUploadService $profilePicService, AccountService $accountService, SessionService $sessionService)
     {
+        $this->qrCodeService = $qrCodeService;
         $this->profilePicService = $profilePicService;
         $this->accountService = $accountService;
         $this->sessionService = $sessionService;
         $this->guard = Auth::getDefaultDriver();
         $this->mapping = $this->guardMappings[$this->guard];
         $this->userId = Auth::guard($this->guard)->id();
+        $this->userUuid = optional(Auth::guard($this->guard)->user())->uuid;
+    }
+
+    public function scanQRCode($uuid, Request $request)
+    {
+        $student = Student::select('uuid')->where('uuid', $uuid)->firstOrFail();
+        return response()->json(['uuid' => $student->uuid]);
     }
 
     public function editPersonalInfo()
@@ -61,6 +72,8 @@ class AccountController extends Controller
         $model = $this->mapping['model'];
         $cacheKey = "account:{$this->guard}:{$this->userId}:personal";
         $ttl = 3600; // 1 hour
+
+        $qrcode = $this->qrCodeService->generateQRCode('student', $this->userUuid);
 
         $data = Cache::remember($cacheKey, $ttl, function () use ($model) {
             if ($this->guard === 'teacher') {
@@ -112,7 +125,7 @@ class AccountController extends Controller
             }
         });
 
-        return view("{$this->mapping['view_prefix']}.personal", compact('data'));
+        return view("{$this->mapping['view_prefix']}.personal", compact('qrcode', 'data'));
     }
 
     public function updateProfilePic(ProfilePicRequest $request)
