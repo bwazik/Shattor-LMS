@@ -24,4 +24,5 @@ return [
     'invalidQR' => 'Invalid QR code or it does not contain student data.',
     'cameraError' => 'Camera error. Please ensure the camera is connected and functioning properly.',
     'added' => 'Student attendance for :name has been added successfully!',
+    'alreadyRecorded' => 'Attendance for student :name has already been recorded.',
 ];

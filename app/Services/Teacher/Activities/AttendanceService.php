@@ -2,6 +2,7 @@
 
 namespace App\Services\Teacher\Activities;
 
+use Carbon\Carbon;
 use App\Models\Group;
 use App\Models\Lesson;
 use App\Models\Student;
@@ -112,7 +113,7 @@ class AttendanceService
             // if ($lesson->date !== now()->toDateString()) {
             //     return $this->errorResponse(trans('admin/attendance.dateRestriction'));
             // }
-            
+
             $studentIds = collect($attendanceData)->pluck('student_id')->toArray();
 
             if ($validationResult2 = $this->verifyStudents($studentIds, $gradeId, $groupId))
@@ -146,8 +147,20 @@ class AttendanceService
             $student = Student::uuid($request['uuid'])->firstOrFail();
             $lesson = Lesson::uuid($request['lesson_id'])
                 ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-                ->firstOrFail(['id', 'date', 'group_id']);
+                ->firstOrFail(['id', 'date', 'time', 'group_id']);
             $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
+
+            // Check for existing attendance record
+            $existingAttendance = Attendance::where([
+                'student_id' => $student->id,
+                'date' => $lesson->date,
+                'lesson_id' => $lesson->id,
+                'teacher_id' => $this->teacherId,
+            ])->first();
+
+            if ($existingAttendance) {
+                return $this->successResponse(trans('admin/attendance.alreadyRecorded', ['name' => $student->name]));
+            }
 
             if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true)) {
                 return $validationResult;
@@ -155,6 +168,16 @@ class AttendanceService
 
             if ($validationResult = $this->verifyStudents([$student->id], $request['grade_id'], $groupId)) {
                 return $validationResult;
+            }
+
+            // Determine attendance status (Present or Late)
+            $status = 1;
+            $lessonDateTime = Carbon::parse($lesson->date . ' ' . $lesson->time);
+            $currentTime = Carbon::now();
+
+            // Consider the student late if scanned after lesson start time
+            if ($currentTime->greaterThan($lessonDateTime)) {
+                $status = 3; // Late
             }
 
             Attendance::updateOrCreate(
@@ -167,7 +190,7 @@ class AttendanceService
                 [
                     'grade_id' => $request['grade_id'],
                     'group_id' => $groupId,
-                    'status' => 1, // Present
+                    'status' => $status,
                     'note' => null,
                 ]
             );
