@@ -174,6 +174,11 @@ return [
     'text' => 'Text',
     'image' => 'Image',
     'content' => 'Content',
+    'approved' => 'Approved',
+    'rejected' => 'Rejected',
+    'reason' => 'Reason',
+    'compensatory' => 'Compensatory',
+    'original' => 'Original',
 
     # Modals
     'items' => 'Items Count',

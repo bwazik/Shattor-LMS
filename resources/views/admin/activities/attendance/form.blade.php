@@ -7,7 +7,7 @@
                     <div><span class="status-present rounded"></span> {{ trans('admin/attendance.present') }}</div>
                     <div><span class="status-absent rounded"></span> {{ trans('admin/attendance.absent') }}</div>
                     <div><span class="status-late rounded"></span> {{ trans('admin/attendance.late') }}</div>
-                    <div><span class="status-excused rounded"></span> {{ trans('admin/attendance.excused') }}</div>
+                    <div><span class="status-compensatory rounded"></span> {{ trans('admin/attendance.compensatory') }}</div>
                 </div>
             </div>
         </div>

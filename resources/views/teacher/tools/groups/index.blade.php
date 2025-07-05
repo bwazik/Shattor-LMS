@@ -101,7 +101,7 @@
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'offcanvas', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
-        handleFormSubmit('#lessons-form', generateFields, '#lessons-modal', 'offcanvas');
+        handleFormSubmit('#lessons-form', generateFields, '#lessons-modal', 'offcanvas', '#datatable');
 
         $('#day_1, #day_2, #grade_id, #time').on('change', function () {
             updateGroupNames();

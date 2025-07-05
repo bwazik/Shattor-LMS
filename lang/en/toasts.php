@@ -84,4 +84,6 @@ return [
     'zoomAccountUpdated' => 'Zoom account has been updated successfully.',
     'messageSent' => 'Message has been sent successfully.',
     'imageUploaded' => 'Image has been uploaded successfully.',
+    'noGroupsFound' => 'No groups found for you. Please contact with your teacher.',
+    'noLessonsFoundForStudent' => 'No lessons found for this group. Please contact with your teacher.',
 ];

@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
-class CompensatoryRequest extends Model
+class Compensatory extends Model
 {
-    protected $table = 'compensatory_requests';
+    protected $table = 'compensatories';
 
     protected static function boot()
     {

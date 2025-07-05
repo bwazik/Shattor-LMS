@@ -106,7 +106,7 @@
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
         fetchMultipleDataByAjax('#add-form #teacher_id', "{{ route('admin.teachers.getGrades', '__ID__') }}", '#add-form #grade_id', 'teacher_id', 'GET');
-        handleFormSubmit('#lessons-form', generateFields, '#lessons-modal', 'offcanvas');
+        handleFormSubmit('#lessons-form', generateFields, '#lessons-modal', 'offcanvas', '#datatable');
 
         $('#day_1, #day_2, #grade_id, #time').on('change', function () {
             updateGroupNames();

@@ -30,6 +30,7 @@ return [
     'resources' => 'Resources',
 
     # Activities
+    'compensatories' => 'Compensatories',
     'activities' => 'Student Activities',
     'attendance' => 'Attendance',
     'zooms' => 'Zooms',

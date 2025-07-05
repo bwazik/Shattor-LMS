@@ -1,14 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AccountController;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
-use App\Http\Controllers\Student\Activities\QuizzesController;
-use App\Http\Controllers\Student\Activities\AssignmentsController;
+use App\Http\Controllers\Api\DataFetchController;
+
+use App\Http\Controllers\AccountController;
 
 use App\Http\Controllers\Student\Misc\FaqsController;
 use App\Http\Controllers\Student\Misc\HelpCenterController;
+
+use App\Http\Controllers\Student\Activities\QuizzesController;
+use App\Http\Controllers\Student\Activities\AssignmentsController;
+use App\Http\Controllers\Student\Activities\CompensatoriesController;
 
 Route::group(
     [
@@ -22,6 +26,12 @@ Route::group(
             Route::get('/dashboard', function () {
                 return view('student.dashboard');
             })->name('dashboard');
+
+            # Api Responses
+            Route::prefix('fetch')->controller(DataFetchController::class)->name('fetch.')->group(function () {
+                Route::get('teachers/{teacher}/groups', 'getTeacherGroups')->name('teachers.groups');
+                Route::get('groups/{group}/lessons', 'getGroupLessonsForCompensatory')->name('groups.lessons');
+            });
 
             # Account
             Route::prefix('account')->controller(AccountController::class)->name('account.')->group(function () {

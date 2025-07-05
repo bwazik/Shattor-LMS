@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('student_id')->unsigned();
             $table->date('date');
             $table->text('note')->nullable();
-            $table->tinyInteger('status')->default(1)->comment('1 - Present, 2 - Absent, 3 - Late, 4 - Excused');
+            $table->tinyInteger('status')->default(1)->comment('1 - Present, 2 - Absent, 3 - Late, 4 - Compensatory');
             $table->unique(['student_id', 'date', 'lesson_id', 'teacher_id']);
             $table->timestamps();
         });

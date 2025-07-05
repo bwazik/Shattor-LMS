@@ -57,6 +57,12 @@
                         searchable: false
                     },
                     {
+                        data: 'type',
+                        name: 'type',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
                         data: 'note',
                         name: 'note',
                         orderable: false,

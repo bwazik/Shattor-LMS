@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('compensatory_requests', function (Blueprint $table) {
+        Schema::create('compensatories', function (Blueprint $table) {
             $table->increments('id');
             $table->uuid('uuid')->unique();
             $table->integer('student_id')->unsigned();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::table('compensatory_requests', function (Blueprint $table) {
+        Schema::table('compensatories', function (Blueprint $table) {
             $table->foreign('student_id')->references('id')->on('students')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
@@ -40,12 +40,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('compensatory_requests');
+        Schema::dropIfExists('compensatories');
 
-        Schema::table('compensatory_requests', function (Blueprint $table) {
-            $table->dropForeign('compensatory_requests_student_id_foreign');
-            $table->dropForeign('compensatory_requests_original_lesson_id_foreign');
-            $table->dropForeign('compensatory_requests_makeup_lesson_id_foreign');
+        Schema::table('compensatories', function (Blueprint $table) {
+            $table->dropForeign('compensatories_student_id_foreign');
+            $table->dropForeign('compensatories_original_lesson_id_foreign');
+            $table->dropForeign('compensatories_makeup_lesson_id_foreign');
         });
     }
 };

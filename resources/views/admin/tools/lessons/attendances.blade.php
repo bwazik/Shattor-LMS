@@ -24,7 +24,7 @@
             background-color: #ffde96;
         }
 
-        .status-excused {
+        .status-compensatory {
             background-color: #91e4ff;
         }
 
@@ -120,7 +120,7 @@
                         <div><span class="status-present rounded"></span> {{ trans('admin/attendance.present') }}</div>
                         <div><span class="status-absent rounded"></span> {{ trans('admin/attendance.absent') }}</div>
                         <div><span class="status-late rounded"></span> {{ trans('admin/attendance.late') }}</div>
-                        <div><span class="status-excused rounded"></span> {{ trans('admin/attendance.excused') }}</div>
+                        <div><span class="status-compensatory rounded"></span> {{ trans('admin/attendance.compensatory') }}</div>
                     </div>
                 </div>
             </div>
@@ -161,6 +161,7 @@
                 <th></th>
                 <th>#</th>
                 <th>{{ trans('main.student') }}</th>
+                <th style="width: 80px;">{{ trans('main.type') }}</th>
                 <th>{{ trans('main.description') }}</th>
                 <th>{{ trans('main.actions') }}</th>
             </x-datatable>
@@ -184,6 +185,7 @@
                 { data: "", orderable: false, searchable: false },
                 { data: 'id', name: 'id' },
                 { data: 'name', name: 'name', orderable: false, searchable: false },
+                { data: 'type', name: 'type', orderable: false, searchable: false },
                 { data: 'note', name: 'note', orderable: false, searchable: false },
                 { data: 'actions', name: 'actions', orderable: false, searchable: false }
             ],

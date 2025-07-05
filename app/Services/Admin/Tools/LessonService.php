@@ -29,19 +29,31 @@ class LessonService
         $start = $startDate ? Carbon::parse($startDate, $timezone)->startOfDay() : now($timezone)->startOfDay();
         $end = $endDate ? Carbon::parse($endDate, $timezone)->startOfDay() : $start->copy()->addMonth();
 
-        $lessonCount = Lesson::where('group_id', $group->id)->count();
+        // $lessonCount = Lesson::where('group_id', $group->id)->count();
 
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             $dayOfWeek = $date->dayOfWeek;
             $day = ($dayOfWeek == 6) ? 1 : $dayOfWeek + 2;
             if (in_array($day, $days)) {
-                $currentLessonNumber = ++$lessonCount;
+                // $currentLessonNumber = ++$lessonCount;
 
-                $lessonTransAr = trans('admin/lessons.theLesson', [], 'ar');
-                $lessonTransEn = trans('admin/lessons.theLesson', [], 'en');
-                $dateString = $date->format('m-d');
-                $titleAr = "{$lessonTransAr} {$currentLessonNumber} - {$dateString} - {$group->getTranslation('name', 'ar')}";
-                $titleEn = "{$lessonTransEn} {$currentLessonNumber} - {$dateString} - {$group->getTranslation('name', 'en')}";
+                // $lessonTransAr = trans('admin/lessons.theLesson', [], 'ar');
+                // $lessonTransEn = trans('admin/lessons.theLesson', [], 'en');
+                // $dateString = $date->format('m-d');
+                // $titleAr = "{$lessonTransAr} {$currentLessonNumber} - {$dateString} - {$group->getTranslation('name', 'ar')}";
+                // $titleEn = "{$lessonTransEn} {$currentLessonNumber} - {$dateString} - {$group->getTranslation('name', 'en')}";
+                // Get day name in both languages
+                $dayNameAr = $date->locale('ar')->isoFormat('dddd');
+                $dayNameEn = $date->locale('en')->isoFormat('dddd');
+                // Get date in "d M" format in both languages
+                $dateStringAr = $date->locale('ar')->isoFormat('D MMM');
+                $dateStringEn = $date->locale('en')->isoFormat('D MMM');
+                // Group name in both languages
+                $groupNameAr = $group->getTranslation('name', 'ar');
+                $groupNameEn = $group->getTranslation('name', 'en');
+
+                $titleAr = "{$dayNameAr} - {$dateStringAr} - {$groupNameAr}";
+                $titleEn = "{$dayNameEn} - {$dateStringEn} - {$groupNameEn}";
 
                 $lessonData = [
                     'title' => ['ar' => $titleAr, 'en' => $titleEn],

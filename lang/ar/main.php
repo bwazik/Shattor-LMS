@@ -175,6 +175,11 @@ return [
     'text' => 'نص',
     'image' => 'صورة',
     'content' => 'المحتوى',
+    'approved' => 'مقبول',
+    'rejected' => 'مرفوض',
+    'reason' => 'السبب',
+    'compensatory' => 'تعويض',
+    'original' => 'الأصلية',
 
     # Modals
     'items' => 'عدد العناصر',

@@ -139,36 +139,7 @@ class LessonService
             return $this->successResponse(trans('main.deletedSelected', ['item' => strtolower(trans('admin/lessons.lessons'))]));
         }, trans('toasts.ownershipError'));
     }
-
-    public function scanAttendance(array $request)
-    {
-        return $this->executeTransaction(function () use ($request)
-        {
-            $student = Student::uuid($request['uuid'])->firstOrFail();
-            $lesson = Lesson::uuid($request['lesson_id'])
-                ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-                ->firstOrFail(['id', 'date', 'group_id']);
-            $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
-
-            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true)) {
-                return $validationResult;
-            }
-
-            return $this->attendanceService->insertAttendance([
-                'grade_id' => $request['grade_id'],
-                'group_id' => $request['group_id'],
-                'lesson_id' => $request['lesson_id'],
-                'attendance' => [
-                    [
-                        'student_id' => $student->id,
-                        'status' => 1,
-                        'note' => null,
-                    ]
-                ]
-            ]);
-        }, trans('toasts.ownershipError'));
-    }
-
+    
     public function checkDependenciesForSingleDeletion($lesson)
     {
         return $this->checkForSingleDependencies($lesson, $this->relationships, $this->transModelKey);

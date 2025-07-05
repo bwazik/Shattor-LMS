@@ -17,6 +17,7 @@ class Attendance extends Authenticatable
         'date',
         'note',
         'status',
+        'is_compensatory',
     ];
 
     protected $hidden = [
@@ -27,7 +28,7 @@ class Attendance extends Authenticatable
     const STATUS_PRESENT = 1;
     const STATUS_ABSENT = 2;
     const STATUS_LATE = 3;
-    const STATUS_EXCUSED = 4;
+    const STATUS_COMPENSATORY = 4;
 
     public static function getStatusList()
     {
@@ -35,7 +36,7 @@ class Attendance extends Authenticatable
             self::STATUS_PRESENT => __('attendance.present'),
             self::STATUS_ABSENT => __('attendance.absent'),
             self::STATUS_LATE => __('attendance.late'),
-            self::STATUS_EXCUSED => __('attendance.excused'),
+            self::STATUS_COMPENSATORY => __('attendance.compensatory'),
         ];
     }
 

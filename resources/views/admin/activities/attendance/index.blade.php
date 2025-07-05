@@ -24,7 +24,7 @@
             background-color: #ffde96;
         }
 
-        .status-excused {
+        .status-compensatory {
             background-color: #91e4ff;
         }
 
@@ -132,6 +132,7 @@
                 <th></th>
                 <th>#</th>
                 <th>{{ trans('main.student') }}</th>
+                <th style="width: 80px;">{{ trans('main.type') }}</th>
                 <th>{{ trans('main.description') }}</th>
                 <th>{{ trans('main.actions') }}</th>
             </x-datatable>

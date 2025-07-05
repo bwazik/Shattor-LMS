@@ -6,16 +6,15 @@ use App\Models\Grade;
 use App\Models\Group;
 use App\Models\Lesson;
 use App\Models\Student;
-use App\Models\Teacher;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Traits\PublicValidatesTrait;
 use Illuminate\Support\Facades\Cache;
 use App\Services\Teacher\Tools\LessonService;
 use App\Http\Requests\Admin\Tools\LessonsRequest;
 use App\Services\Teacher\Activities\AttendanceService;
-use App\Http\Requests\Admin\Activities\ScanAttendanceRequest;
 
 class LessonsController extends Controller
 {
@@ -117,12 +116,12 @@ class LessonsController extends Controller
             ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->uuid($uuid)->firstOrFail();
 
-        if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $lesson->group_id, $lesson->group->grade_id, true)){
+        if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $lesson->group_id, $lesson->group->grade_id, true)) {
             abort(404);
         }
 
-        $attendancesQuery = Student::query()
-            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note')
+        $originalAttendancesQuery = Student::query()
+            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('student_group', 'students.id', '=', 'student_group.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -135,22 +134,34 @@ class LessonsController extends Controller
             ->where('students.grade_id', $lesson->group->grade_id)
             ->where('student_group.group_id', $lesson->group_id);
 
+        $compensatoryAttendancesQuery = Student::query()
+            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
+            ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
+            ->join('compensatories', 'students.id', '=', 'compensatories.student_id')
+            ->leftJoin('attendances', function ($join) use ($lesson) {
+                $join->on('students.id', '=', 'attendances.student_id')
+                    ->where('attendances.teacher_id', '=', $this->teacherId)
+                    ->where('attendances.lesson_id', '=', $lesson->id)
+                    ->where('attendances.date', '=', $lesson->date)
+                    ->where('attendances.is_compensatory', 1);
+            })
+            ->where('student_teacher.teacher_id', $this->teacherId)
+            ->where('students.grade_id', $lesson->group->grade_id)
+            ->where('compensatories.makeup_lesson_id', $lesson->id)
+            ->where('compensatories.status', 2);
+
+        $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
+
         if ($request->ajax()) {
             return datatables()->eloquent($attendancesQuery)
                 ->editColumn('name', fn($row) => $row->name)
+                ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->rawColumns(['selectbox', 'note', 'actions'])
+                ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
         }
 
         return view('teacher.tools.lessons.attendances', compact('lesson'));
-    }
-
-    public function scanAttendance(ScanAttendanceRequest $request)
-    {
-        $result = $this->lessonService->scanAttendance($request->validated());
-
-        return $this->conrtollerJsonResponse($result);
     }
 }

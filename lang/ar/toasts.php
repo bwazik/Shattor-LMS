@@ -85,5 +85,7 @@ return [
     'zoomAccountUpdated' => 'تم تحديث حساب الزوم بنجاح.',
     'messageSent' => 'تم إرسال الرسالة بنجاح.',
     'imageUploaded' => 'تم رفع الصورة بنجاح.',
+    'noGroupsFound' => 'مفيش مجموعات مسجلة ليك، اتواصل مع المستر.',
+    'noLessonsFoundForStudent' => 'مفيش حصص مسجلة للمجموعة دي، اتواصل مع المستر.',
 ];
 

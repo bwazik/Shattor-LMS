@@ -35,14 +35,20 @@
         <li class="menu-header mt-5">
             <span class="menu-header-text">{{ trans('layouts/sidebar.activities') }}</span>
         </li>
-        {{-- <li class="menu-item {{ isActiveRoute('teacher.attendance.index') ? 'active' : '' }}">
-            <a href="{{ route('teacher.attendance.index') }}" class="menu-link">
+        <li class="menu-item {{ isActiveRoute('student.compensatories.index') ? 'active' : '' }}">
+            <a href="{{ route('student.compensatories.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons ri-time-line"></i>
+                <div>{{ trans('layouts/sidebar.compensatories') }}</div>
+            </a>
+        </li>
+        {{-- <li class="menu-item {{ isActiveRoute('student.attendance.index') ? 'active' : '' }}">
+            <a href="{{ route('student.attendance.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-file-list-3-line"></i>
                 <div>{{ trans('layouts/sidebar.attendance') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute('teacher.zooms.index') ? 'active' : '' }}">
-            <a href="{{ route('teacher.zooms.index') }}" class="menu-link">
+        <li class="menu-item {{ isActiveRoute('student.zooms.index') ? 'active' : '' }}">
+            <a href="{{ route('student.zooms.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-video-on-line"></i>
                 <div>{{ trans('layouts/sidebar.zooms') }}</div>
             </a>

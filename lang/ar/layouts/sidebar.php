@@ -31,6 +31,7 @@ return [
     'resources' => 'المستندات',
 
     # Activities
+    'compensatories' => 'التعويضات',
     'activities' => 'الأنشطة الطلابية',
     'attendance' => 'الحضور والغياب',
     'zooms' => 'حصص الزوم',

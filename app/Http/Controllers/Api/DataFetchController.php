@@ -18,10 +18,12 @@ class DataFetchController extends Controller
     use PublicValidatesTrait;
 
     protected $teacherId;
+    protected $studentId;
 
     public function __construct()
     {
         $this->teacherId = auth('teacher')->check() ? auth('teacher')->id() : null;
+        $this->studentId = auth('student')->check() ? auth('student')->id() : null;
     }
 
 
@@ -49,11 +51,11 @@ class DataFetchController extends Controller
 
             $groups = $query->orderBy($isAdminContext ? 'id' : 'grade_id')
                 ->get()
-                ->mapWithKeys(function ($group) use ($isAdminContext){
+                ->mapWithKeys(function ($group) use ($isAdminContext) {
                     $key = $isAdminContext ? $group->id : $group->uuid;
                     $gradeName = $group->grade?->name ?? 'Unknown Grade';
                     return [$key => "{$group->name} - {$gradeName}"];
-            });
+                });
 
             if ($groups->isEmpty()) {
                 return $this->errorResponse(trans('teacher/errors.noGroupsForGrade'));
@@ -95,7 +97,7 @@ class DataFetchController extends Controller
                 }
             }
 
-            $data =  [
+            $data = [
                 'name' => $student->name,
                 'grade' => [
                     'name' => $student->grade->name,
@@ -148,9 +150,11 @@ class DataFetchController extends Controller
                     $feeName = $fee->name ?? 'N/A';
                     $gradeName = $fee->grade->name ?? 'N/A';
                     $teacherName = $fee->teacher->name ?? 'N/A';
-                    return [$key => $isAdminContext
-                        ? sprintf('%s - %s - %s', $feeName, $teacherName, $gradeName)
-                        : sprintf('%s - %s', $feeName, $gradeName)];
+                    return [
+                        $key => $isAdminContext
+                            ? sprintf('%s - %s - %s', $feeName, $teacherName, $gradeName)
+                            : sprintf('%s - %s', $feeName, $gradeName)
+                    ];
                 });
 
             if ($fees->isEmpty()) {
@@ -189,15 +193,17 @@ class DataFetchController extends Controller
                 });
             }
 
-            $studentFees  = $studentFeesQuery->get()
+            $studentFees = $studentFeesQuery->get()
                 ->mapWithKeys(function ($studentFee) use ($isAdminContext) {
                     $key = $isAdminContext ? $studentFee->id : $studentFee->uuid;
                     $feeName = $studentFee->fee->name ?? 'N/A';
                     $gradeName = $studentFee->fee->grade->name ?? 'N/A';
                     $teacherName = $studentFee->fee->teacher->name ?? 'N/A';
-                    return [$key => $isAdminContext
-                        ? sprintf('%s - %s - %s', $feeName, $teacherName, $gradeName)
-                        : sprintf('%s - %s', $feeName, $gradeName)];
+                    return [
+                        $key => $isAdminContext
+                            ? sprintf('%s - %s - %s', $feeName, $teacherName, $gradeName)
+                            : sprintf('%s - %s', $feeName, $gradeName)
+                    ];
                 });
 
             if ($studentFees->isEmpty()) {
@@ -334,7 +340,7 @@ class DataFetchController extends Controller
         try {
             $teacher = Teacher::findOrFail($teacherId);
 
-            $data =  [
+            $data = [
                 'name' => $teacher->name,
                 'phone' => $teacher->phone,
                 'email' => $teacher->email ?? 'N/A',
@@ -417,6 +423,114 @@ class DataFetchController extends Controller
             ];
 
             return response()->json(['status' => 'success', 'data' => $data]);
+        } catch (\Exception $e) {
+            return $this->productionErrorResponse($e);
+        }
+    }
+
+    public function getTeacherGroups($teacherId)
+    {
+        $isAdminContext = isAdmin() ? true : false;
+        $effectiveStudentId = $isAdminContext ? null : $this->studentId;
+
+        try {
+            $teacher = $isAdminContext
+                ? Teacher::findOrFail($teacherId)
+                : Teacher::uuid($teacherId)->firstOrFail();
+
+            if (!$isAdminContext) {
+                $student = Student::findOrFail($effectiveStudentId);
+                $isValidTeacher = $student->teachers()->where('teacher_id', $teacher->id)->exists();
+                if (!$isValidTeacher) {
+                    return $this->errorResponse(trans('toasts.ownershipError'));
+                }
+            }
+
+            $query = Group::select('id', 'uuid', 'name', 'grade_id')
+                ->where('teacher_id', $teacher->id)
+                ->with('grade:id,name');
+
+            $requestType = request()->query('type', 'missed');
+            if (!$isAdminContext) {
+                $student = Student::findOrFail($effectiveStudentId);
+                $query->where('grade_id', $student->grade_id);
+                if ($requestType === 'missed') {
+                    $query->whereIn('id', $student->groups()->pluck('groups.id'));
+                } else {
+                    $query->whereNotIn('id', $student->groups()->pluck('groups.id'));
+                }
+            }
+
+            $groups = $query->orderBy($isAdminContext ? 'id' : 'grade_id')
+                ->get()
+                ->mapWithKeys(function ($group) use ($isAdminContext) {
+                    $key = $isAdminContext ? $group->id : $group->uuid;
+                    $gradeName = $group->grade->name ?? 'N/A';
+                    return [$key => "{$group->name} - {$gradeName}"];
+                });
+
+            if ($groups->isEmpty()) {
+                return $this->errorResponse(trans('toasts.noGroupsFound'));
+            }
+
+            return response()->json(['status' => 'success', 'data' => $groups]);
+        } catch (\Exception $e) {
+            return $this->productionErrorResponse($e);
+        }
+    }
+
+    public function getGroupLessonsForCompensatory($groupId)
+    {
+        try {
+            $group = Group::uuid($groupId)->firstOrFail();
+            $student = Student::findOrFail($this->studentId);
+
+            $requestType = request()->query('type', 'missed');
+            if ($requestType === 'missed') {
+                $isValidGroup = $student->groups()->where('groups.id', $group->id)->exists();
+                if (!$isValidGroup) {
+                    return $this->errorResponse(trans('toasts.ownershipError'));
+                }
+            } else {
+                if ($group->grade_id !== $student->grade_id) {
+                    return $this->errorResponse(trans('toasts.ownershipError'));
+                }
+            }
+
+            $query = Lesson::where('group_id', $group->id)
+                ->select('id', 'uuid', 'title', 'date');
+
+            $requestType = request()->query('type', 'missed');
+            if ($requestType === 'missed') {
+                $query->where(function ($q) use ($student) {
+                    $q->where('date', '>=', now()->subDays(7))
+                        ->where('date', '<', now())
+                        ->where(function ($q2) use ($student) {
+                            $q2->whereDoesntHave('attendances', function ($q3) use ($student) {
+                                $q3->where('student_id', $student->id);
+                            })->orWhereHas('attendances', function ($q3) use ($student) {
+                                $q3->where('student_id', $student->id)->whereIn('status', [2, 4]);
+                            });
+                        });
+                    $q->orWhere('date', '>=', now())
+                        ->where('date', '<=', now()->addDays(7));
+                });
+            } else {
+                $query->where('date', '>=', now())
+                    ->where('date', '<=', now()->addDays(7))
+                    ->whereHas('group', fn($q) => $q->where('grade_id', $student->grade_id));
+            }
+
+            $lessons = $query->get()
+                ->mapWithKeys(function ($lesson) {
+                    return [$lesson->uuid => $lesson->title];
+                });
+
+            if ($lessons->isEmpty()) {
+                return $this->errorResponse(trans('toasts.noLessonsFoundForStudent'));
+            }
+
+            return response()->json(['status' => 'success', 'data' => $lessons]);
         } catch (\Exception $e) {
             return $this->productionErrorResponse($e);
         }
