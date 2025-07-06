@@ -25,4 +25,6 @@ return [
     'cameraError' => 'Camera error. Please ensure the camera is connected and functioning properly.',
     'added' => 'Student attendance for :name has been added successfully!',
     'alreadyRecorded' => 'Attendance for student :name has already been recorded.',
+    'invalidStudents' => 'The selected students are not registered in the same grade or group. Please ensure you select the correct students.',
+    'alreadyAttendedOriginalLesson' => 'Student :name is already registered in their original group.'
 ];

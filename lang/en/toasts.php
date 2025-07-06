@@ -86,4 +86,12 @@ return [
     'imageUploaded' => 'Image has been uploaded successfully.',
     'noGroupsFound' => 'No groups found for you. Please contact with your teacher.',
     'noLessonsFoundForStudent' => 'No lessons found for this group. Please contact with your teacher.',
+    'pendingRequestTeacherLimit' => 'You already have a makeup request pending approval. Please wait for your teacher to approve it before submitting a new one.',
+    'invalidMissedLesson' => 'The lesson is invalid or not recorded.',
+    'invalidMakeupLesson' => 'The lesson is invalid or not available for makeup.',
+    'invalidMakeupLessonGrade' => 'The makeup lesson must be in the same grade as yours.',
+    'invalidMakeupLessonDate' => 'The makeup lesson must be scheduled in the future or within 7 days from now.',
+    'duplicateRequest' => 'You already have a makeup request for this lesson. Please submit a new request after your teacher approves the current one.',
+    'cannotEditNonPending' => 'You cannot edit this request. It must be in pending status.',
+    'cannotDeleteNonPending' => 'You cannot delete this request. It must be in pending status.',
 ];
