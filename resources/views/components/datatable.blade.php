@@ -90,6 +90,28 @@
                         </button>
                         @endif
                     @endisset
+                    @isset($rejectButton)
+                        @if ($rejectButton)
+                        <button id="reject-selected-btn" class="btn btn-danger me-4 waves-effect waves-light" tabindex="0"
+                            data-bs-target="#reject-selected-modal" data-bs-toggle="modal" data-bs-dismiss="modal">
+                            <span>
+                                <i class="ri-close-line ri-16px me-sm-2"></i>
+                                <span class="d-none d-sm-inline-block">{{ trans('main.rejectSelected') }}</span>
+                            </span>
+                        </button>
+                        @endif
+                    @endisset
+                    @isset($acceptButton)
+                        @if ($acceptButton)
+                        <button id="accept-selected-btn" class="btn btn-success me-4 waves-effect waves-light" tabindex="0"
+                            data-bs-target="#accept-selected-modal" data-bs-toggle="modal" data-bs-dismiss="modal">
+                            <span>
+                                <i class="ri-check-line ri-16px me-sm-2"></i>
+                                <span class="d-none d-sm-inline-block">{{ trans('main.acceptSelected') }}</span>
+                            </span>
+                        </button>
+                        @endif
+                    @endisset
                     @isset($addButton)
                         @if ($addButton)
                         <button id="add-button" class="btn btn-primary waves-effect waves-light" tabindex="0"

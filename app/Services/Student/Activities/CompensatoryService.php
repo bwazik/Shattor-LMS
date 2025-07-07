@@ -2,6 +2,7 @@
 
 namespace App\Services\Student\Activities;
 
+use Carbon\Carbon;
 use App\Models\Lesson;
 use App\Models\Student;
 use App\Models\Compensatory;
@@ -130,7 +131,7 @@ class CompensatoryService
             if ($makeupLesson->group->grade_id !== $student->grade_id) {
                 return $this->errorResponse(trans('toasts.invalidMakeupLessonGrade'));
             }
-            if ($makeupLesson->date < now() || $makeupLesson->date > now()->addDays(7)) {
+            if (Carbon::parse($makeupLesson->date)->toDateString() < now()->toDateString() || Carbon::parse($makeupLesson->date)->toDateString() > now()->addDays(7)->toDateString()) {
                 return $this->errorResponse(trans('toasts.invalidMakeupLesson'));
             }
 

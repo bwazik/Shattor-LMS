@@ -3,6 +3,7 @@
 return [
     'compensatory' => 'تعويض',
     'compensatories' => 'التعويضات',
+    'selectedCompensatories' => 'التعويضات المحددة',
     'placeholders' => [
         'reason' => 'ربنا معاك، فضفض برحتك خالص هنا...',
     ],

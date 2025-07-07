@@ -12,8 +12,7 @@
         dataToggle="offcanvas" deleteButton
         addButton="{{ trans('main.addItem', ['item' => trans('admin/studentFees.studentFee')]) }}">
         <th></th>
-        <th class="dt-checkboxes-cell dt-checkboxes-select-all"><input type="checkbox" id="select-all" class="form-check-input">
-        </th>
+        <th class="dt-checkboxes-cell dt-checkboxes-select-all"><input type="checkbox" id="select-all" class="form-check-input"></th>
         <th>#</th>
         <th>{{ trans('main.student') }}</th>
         <th>{{ trans('main.fee') }}</th>

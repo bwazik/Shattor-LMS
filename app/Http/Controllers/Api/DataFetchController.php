@@ -479,6 +479,61 @@ class DataFetchController extends Controller
         }
     }
 
+    public function getStudentGroups($studentId)
+    {
+        $isAdminContext = isAdmin() ? true : false;
+        $effectiveTeacherId = $isAdminContext ? null : $this->teacherId;
+
+        try {
+            $student = $isAdminContext
+                ? Student::findOrFail($studentId)
+                : Student::uuid($studentId)->firstOrFail();
+
+            if (!$isAdminContext) {
+                $isValidTeacher = $student->teachers()->where('teacher_id', $effectiveTeacherId)->exists();
+                if (!$isValidTeacher) {
+                    return $this->errorResponse(trans('toasts.ownershipError'));
+                }
+            }
+
+            $query = $student->groups()->select('groups.id', 'groups.uuid', 'groups.name', 'groups.grade_id')
+                ->with('grade:id,name');
+
+            if (!$isAdminContext) {
+                $query->where('groups.teacher_id', $effectiveTeacherId)
+                    ->where('groups.grade_id', $student->grade_id);
+            }
+
+            $requestType = request()->query('type', 'missed');
+            if ($requestType !== 'missed') {
+                $studentGroupIds = $student->groups()->pluck('groups.id');
+                $query = Group::select('groups.id', 'groups.uuid', 'groups.name', 'groups.grade_id')
+                    ->whereNotIn('id', $studentGroupIds)
+                    ->with('grade:id,name');
+                if (!$isAdminContext) {
+                    $query->where('teacher_id', $effectiveTeacherId)
+                        ->where('grade_id', $student->grade_id);
+                }
+            }
+
+            $groups = $query->orderBy($isAdminContext ? 'id' : 'grade_id')
+                ->get()
+                ->mapWithKeys(function ($group) use ($isAdminContext) {
+                    $key = $isAdminContext ? $group->id : $group->uuid;
+                    $gradeName = $group->grade->name ?? 'N/A';
+                    return [$key => "{$group->name} - {$gradeName}"];
+                });
+
+            if ($groups->isEmpty()) {
+                return $this->errorResponse(trans('toasts.noGroupsFound'));
+            }
+
+            return response()->json(['status' => 'success', 'data' => $groups]);
+        } catch (\Exception $e) {
+            return $this->productionErrorResponse($e);
+        }
+    }
+
     public function getGroupLessonsForCompensatory($groupId)
     {
         try {
@@ -516,7 +571,7 @@ class DataFetchController extends Controller
                         ->where('date', '<=', now()->addDays(7));
                 });
             } else {
-                $query->where('date', '>=', now())
+                $query->where('date', '>=', now()->startOfDay())
                     ->where('date', '<=', now()->addDays(7))
                     ->whereHas('group', fn($q) => $q->where('grade_id', $student->grade_id));
             }

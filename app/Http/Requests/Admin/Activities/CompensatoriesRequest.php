@@ -13,20 +13,27 @@ class CompensatoriesRequest extends FormRequest
 
     public function rules()
     {
-        $rules = [
-            'reason' => 'required|string|max:1000',
-        ];
-
         if (isAdmin()) {
-            $rules['student_id'] = 'required|integer|exists:students,id';
-            $rules['original_lesson_id'] = 'required|integer|exists:lessons,id';
-            $rules['makeup_lesson_id'] = 'required|integer|exists:lessons,id|different:original_lesson_id';
-        } else {
-            $rules['original_lesson_id'] = 'required|string|uuid|exists:lessons,uuid';
-            $rules['makeup_lesson_id'] = 'required|string|uuid|exists:lessons,uuid|different:original_lesson_id';
+            return [
+                'student_id' => 'required|integer|exists:students,id',
+                'original_lesson_id' => 'required|integer|exists:lessons,id',
+                'makeup_lesson_id' => 'required|integer|exists:lessons,id|different:original_lesson_id',
+                'reason' => 'required|string|max:1000',
+            ];
+        } elseif (isTeacher()) {
+            return [
+                'student_id' => 'required|string|uuid|exists:students,uuid',
+                'original_lesson_id' => 'required|string|uuid|exists:lessons,uuid',
+                'makeup_lesson_id' => 'required|string|uuid|exists:lessons,uuid|different:original_lesson_id',
+                'reason' => 'required|string|max:1000',
+            ];
+        } elseif(isStudent()) {
+            return [
+                'original_lesson_id' => 'required|string|uuid|exists:lessons,uuid',
+                'makeup_lesson_id' => 'required|string|uuid|exists:lessons,uuid|different:original_lesson_id',
+                'reason' => 'required|string|max:1000',
+            ];
         }
-
-        return $rules;
     }
 
     public function messages()

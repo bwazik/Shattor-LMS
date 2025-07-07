@@ -16,6 +16,7 @@ use App\Http\Controllers\Teacher\Users\AssistantsController;
 use App\Http\Controllers\Teacher\Users\StudentsController;
 use App\Http\Controllers\Teacher\Users\ParentsController;
 
+use App\Http\Controllers\Teacher\Activities\CompensatoriesController;
 use App\Http\Controllers\Teacher\Activities\AttendanceController;
 use App\Http\Controllers\Teacher\Activities\ZoomsController;
 use App\Http\Controllers\Teacher\Activities\QuizzesController;
@@ -113,6 +114,7 @@ Route::group(
                 Route::get('student-fees/{studentFee}', 'getStudentFeeData')->name('student-fees.data');
                 Route::get('groups/{group}/lessons', 'getGroupLessons')->name('groups.lessons');
                 Route::get('lessons/{lesson}', 'getLessonData')->name('lessons.data');
+                Route::get('students/{student}/groups', 'getStudentGroups')->name('students.groups');
             });
 
             # Start Tools
@@ -199,6 +201,19 @@ Route::group(
             # End Users Managment
 
             # Start Activities
+                # Compensatories
+                Route::prefix('compensatories')->controller(CompensatoriesController::class)->name('compensatories.')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::middleware('throttle:10,1')->group(function () {
+                        Route::post('insert', 'insert')->name('insert');
+                        Route::post('delete', 'delete')->name('delete');
+                        Route::post('accept', 'accept')->name('accept');
+                        Route::post('reject', 'reject')->name('reject');
+                        Route::post('accept-selected', 'acceptSelected')->name('acceptSelected');
+                        Route::post('reject-selected', 'rejectSelected')->name('rejectSelected');
+                    });
+                });
+
                 # Attendance
                 Route::prefix('attendance')->controller(AttendanceController::class)->name('attendance.')->group(function() {
                     Route::get('/', 'index')->name('index');

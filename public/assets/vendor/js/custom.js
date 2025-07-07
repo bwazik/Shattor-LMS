@@ -133,6 +133,54 @@ $(function() {
         }
     });
 });
+$(function() {
+    $('body').on('click', '#accept-selected-btn', function(e) {
+        e.preventDefault();
+
+        $('#accept-selected-form #ids-container').empty();
+        const selected = Array.from($("#datatable td input[type=checkbox]:checked"))
+            .map(
+                checkbox => checkbox.value);
+
+        if (selected.length > 0) {
+            $('#accept-selected-modal').modal('show');
+
+            selected.forEach(id => {
+                $('#accept-selected-form #ids-container').append(
+                    `<input type="hidden" name="ids[]" value="${id}">`
+                );
+            });
+
+            $('input[id="itemToAccept"]').val(window.translations.items + ': ' + selected.length);
+        } else {
+            $('#accept-selected-modal').modal('show');
+        }
+    });
+});
+$(function() {
+    $('body').on('click', '#reject-selected-btn', function(e) {
+        e.preventDefault();
+
+        $('#reject-selected-form #ids-container').empty();
+        const selected = Array.from($("#datatable td input[type=checkbox]:checked"))
+            .map(
+                checkbox => checkbox.value);
+
+        if (selected.length > 0) {
+            $('#reject-selected-modal').modal('show');
+
+            selected.forEach(id => {
+                $('#reject-selected-form #ids-container').append(
+                    `<input type="hidden" name="ids[]" value="${id}">`
+                );
+            });
+
+            $('input[id="itemToReject"]').val(window.translations.items + ': ' + selected.length);
+        } else {
+            $('#reject-selected-modal').modal('show');
+        }
+    });
+});
 
 toastr.options = {
     'closeButton': true,
