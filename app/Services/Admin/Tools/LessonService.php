@@ -87,31 +87,39 @@ class LessonService
     private function generateActionButtons($row): string
     {
         return
-            '<div class="align-items-center">' .
-                '<span class="text-nowrap">' .
-                    '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
-                        'tabindex="0" type="button" ' .
-                        'data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
-                        'id="edit-button" ' .
-                        'data-id="' . $row->id . '" ' .
-                        'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
-                        'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
-                        'data-group_id="' . $row->group_id . '" ' .
-                        'data-date="' . $row->date . '" ' .
-                        'data-time="' . $row->time . '" ' .
-                        'data-status="' . $row->status . '">' .
-                        '<i class="ri-edit-box-line ri-20px"></i>' .
-                    '</button>' .
-                '</span>' .
-                '<button class="btn btn-sm btn-icon btn-text-danger rounded-pill text-body waves-effect waves-light me-1" ' .
-                    'id="delete-button" ' .
-                    'data-id="' . $row->id . '" ' .
-                    'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
-                    'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
-                    'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                    '<i class="ri-delete-bin-7-line ri-20px text-danger"></i>' .
-                '</button>' .
-            '</div>';
+            '<div class="d-inline-block">' .
+                '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
+                    '<i class="ri-more-2-line"></i>' .
+                '</a>' .
+                '<ul class="dropdown-menu dropdown-menu-end m-0">' .
+                    '<li>
+                        <a target="_blank" href="' . route('admin.lessons.compensatories', $row->id) . '" class="dropdown-item">'.trans('admin/compensatories.compensatories').'</a>
+                    </li>' .
+                    '<div class="dropdown-divider"></div>' .
+                    '<li>' .
+                        '<a href="javascript:;" class="dropdown-item text-danger" ' .
+                            'id="delete-button" ' .
+                            'data-id="' . $row->id . '" ' .
+                            'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
+                            'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
+                            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+                            trans('main.delete') .
+                        '</a>' .
+                    '</li>' .
+                '</ul>' .
+            '</div>' .
+            '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
+                'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
+                'id="edit-button" ' .
+                'data-id="' . $row->id . '" ' .
+                'data-title_ar="' . $row->getTranslation('title', 'ar') . '" ' .
+                'data-title_en="' . $row->getTranslation('title', 'en') . '" ' .
+                'data-group_id="' . $row->group_id . '" ' .
+                'data-date="' . $row->date . '" ' .
+                'data-time="' . $row->time . '" ' .
+                'data-status="' . $row->status . '">' .
+                '<i class="ri-edit-box-line ri-20px"></i>' .
+            '</button>';
     }
 
     public function insertLesson(array $request)

@@ -98,6 +98,12 @@
         <li class="menu-header mt-5">
             <span class="menu-header-text">{{ trans('layouts/sidebar.activities') }}</span>
         </li>
+        <li class="menu-item {{ isActiveRoute('teacher.compensatories.index') ? 'active' : '' }}">
+            <a href="{{ route('teacher.compensatories.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons ri-time-line"></i>
+                <div>{{ trans('layouts/sidebar.compensatories') }}</div>
+            </a>
+        </li>
         <li class="menu-item {{ isActiveRoute('teacher.attendance.index') ? 'active' : '' }}">
             <a href="{{ route('teacher.attendance.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-calendar-check-line"></i>

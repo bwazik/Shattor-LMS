@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\Lesson;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Models\Compensatory;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
 use Illuminate\Support\Facades\DB;
@@ -14,17 +15,20 @@ use App\Traits\PublicValidatesTrait;
 use App\Services\Admin\Tools\LessonService;
 use App\Http\Requests\Admin\Tools\LessonsRequest;
 use App\Services\Admin\Activities\AttendanceService;
+use App\Services\Admin\Activities\CompensatoryService;
 
 class LessonsController extends Controller
 {
     use ValidatesExistence, PublicValidatesTrait;
 
     protected $lessonService;
+    protected $compensatoryService;
     protected $attendanceService;
 
-    public function __construct(LessonService $lessonService, AttendanceService $attendanceService)
+    public function __construct(LessonService $lessonService, CompensatoryService $compensatoryService, AttendanceService $attendanceService)
     {
         $this->lessonService = $lessonService;
+        $this->compensatoryService = $compensatoryService;
         $this->attendanceService = $attendanceService;
     }
 
@@ -105,6 +109,35 @@ class LessonsController extends Controller
         }
 
         return response()->json(['error' => $result['message']], 500);
+    }
+
+    public function compensatories(Request $request, $id)
+    {
+        $lesson = Lesson::with(['group:id,name,teacher_id,grade_id', 'group.teacher:id,name'])
+            ->select('id', 'title', 'group_id', 'date')
+            ->findOrFail($id);
+
+        if ($validationResult = $this->validateTeacherGradeAndGroups($lesson->group->teacher_id, $lesson->group_id, $lesson->group->grade_id, true)) {
+            abort(404);
+        }
+
+        $compensatoriesQuery = Compensatory::query()->with(['student:id,name', 'originalLesson:id,title,group_id', 'makeupLesson:id,title,group_id', 'originalLesson.group:id,name,teacher_id', 'makeupLesson.group:id,name', 'originalLesson.group.teacher:id,name'])
+            ->select('id', 'student_id', 'original_lesson_id', 'makeup_lesson_id', 'reason', 'status')
+            ->where('makeup_lesson_id', $lesson->id);
+
+        if ($request->ajax()) {
+            return $this->compensatoryService->getCompensatoriesForDatatable($compensatoriesQuery);
+        }
+
+        $students = Student::whereHas('teachers', fn($query) => $query->where('teacher_id', $lesson->group->teacher_id))
+            ->where('grade_id', $lesson->group->grade_id)
+            ->whereDoesntHave('groups', fn($query) => $query->where('groups.id', $lesson->group_id))
+            ->select('id', 'name')
+            ->orderBy('id')
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return view('admin.tools.lessons.compensatories', compact('lesson', 'students'));
     }
 
     public function attendances(Request $request, $lessonId)

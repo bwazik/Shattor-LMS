@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\Tools\GroupsController;
 use App\Http\Controllers\Admin\Tools\LessonsController;
 use App\Http\Controllers\Admin\Tools\ResourcesController;
 
+use App\Http\Controllers\Admin\Activities\CompensatoriesController;
 use App\Http\Controllers\Admin\Activities\AttendanceController;
 use App\Http\Controllers\Admin\Activities\ZoomsController;
 use App\Http\Controllers\Admin\Activities\QuizzesController;
@@ -84,6 +85,8 @@ Route::group(
                 Route::get('plans/{plan}/{period?}', 'getPlanData')->name('plans.data');
                 Route::get('groups/{group}/lessons', 'getGroupLessons')->name('groups.lessons');
                 Route::get('lessons/{lesson}', 'getLessonData')->name('lessons.data');
+                Route::get('students/{student}/groups', 'getStudentGroups')->name('students.groups');
+                Route::get('teachers/{teacher}/students', 'getTeacherStudents')->name('teachers.students');
             });
 
         # Start Platform Managment
@@ -244,6 +247,7 @@ Route::group(
             # Lessons
             Route::prefix('lessons')->controller(LessonsController::class)->name('lessons.')->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::get('{lessonId}/compensatories', 'compensatories')->name('compensatories');
                 Route::get('{lessonId}/attendances', 'attendances')->name('attendances');
                 Route::middleware('throttle:10,1')->group(function () {
                     Route::post('insert', 'insert')->name('insert');
@@ -269,6 +273,19 @@ Route::group(
         # End Teacher Tools
 
         # Start Activities
+            # Compensatories
+            Route::prefix('compensatories')->controller(CompensatoriesController::class)->name('compensatories.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::middleware('throttle:10,1')->group(function () {
+                    Route::post('insert', 'insert')->name('insert');
+                    Route::post('delete', 'delete')->name('delete');
+                    Route::post('accept', 'accept')->name('accept');
+                    Route::post('reject', 'reject')->name('reject');
+                    Route::post('accept-selected', 'acceptSelected')->name('acceptSelected');
+                    Route::post('reject-selected', 'rejectSelected')->name('rejectSelected');
+                });
+            });
+
             # Attendance
             Route::prefix('attendance')->controller(AttendanceController::class)->name('attendance.')->group(function () {
                 Route::get('/', 'index')->name('index');

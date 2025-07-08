@@ -141,6 +141,7 @@ Route::group(
                 # Lessons
                 Route::prefix('lessons')->controller(LessonsController::class)->name('lessons.')->group(function () {
                     Route::get('/', 'index')->name('index');
+                    Route::get('{uuid}/compensatories', 'compensatories')->name('compensatories');
                     Route::get('{uuid}/attendances', 'attendances')->name('attendances');
                     Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');

@@ -26,7 +26,6 @@ class DataFetchController extends Controller
         $this->studentId = auth('student')->check() ? auth('student')->id() : null;
     }
 
-
     public function getTeacherGroupsByGrade(...$args)
     {
         $isAdminContext = isAdmin() ? true : false;
@@ -496,8 +495,8 @@ class DataFetchController extends Controller
                 }
             }
 
-            $query = $student->groups()->select('groups.id', 'groups.uuid', 'groups.name', 'groups.grade_id')
-                ->with('grade:id,name');
+            $query = $student->groups()->select('groups.id', 'groups.uuid', 'groups.name', 'groups.grade_id', 'groups.teacher_id')
+                ->with(['grade:id,name', 'teacher:id,name']);
 
             if (!$isAdminContext) {
                 $query->where('groups.teacher_id', $effectiveTeacherId)
@@ -507,9 +506,9 @@ class DataFetchController extends Controller
             $requestType = request()->query('type', 'missed');
             if ($requestType !== 'missed') {
                 $studentGroupIds = $student->groups()->pluck('groups.id');
-                $query = Group::select('groups.id', 'groups.uuid', 'groups.name', 'groups.grade_id')
+                $query = Group::select('groups.id', 'groups.uuid', 'groups.name', 'groups.grade_id', 'groups.teacher_id')
                     ->whereNotIn('id', $studentGroupIds)
-                    ->with('grade:id,name');
+                    ->with(['grade:id,name', 'teacher:id,name']);
                 if (!$isAdminContext) {
                     $query->where('teacher_id', $effectiveTeacherId)
                         ->where('grade_id', $student->grade_id);
@@ -521,6 +520,10 @@ class DataFetchController extends Controller
                 ->mapWithKeys(function ($group) use ($isAdminContext) {
                     $key = $isAdminContext ? $group->id : $group->uuid;
                     $gradeName = $group->grade->name ?? 'N/A';
+                    if ($isAdminContext) {
+                        $teacherName = $group->teacher->name ?? 'N/A';
+                        return [$key => "{$teacherName} - {$group->name}  - {$gradeName}"];
+                    }
                     return [$key => "{$group->name} - {$gradeName}"];
                 });
 
@@ -586,6 +589,32 @@ class DataFetchController extends Controller
             }
 
             return response()->json(['status' => 'success', 'data' => $lessons]);
+        } catch (\Exception $e) {
+            return $this->productionErrorResponse($e);
+        }
+    }
+
+    public function getTeacherStudents($teacherId)
+    {
+        try {
+            $teacher = Teacher::findOrFail($teacherId);
+
+            $students = $teacher->students()
+                ->with(['grade:id,name'])
+                ->orderBy('students.grade_id')
+                ->get()
+                ->mapWithKeys(function ($student) {
+                    $gradeName = $student->grade->name ?? 'N/A';
+                    return [
+                        $student->id => "{$student->name} - {$gradeName}"
+                    ];
+                });
+
+            if ($students->isEmpty()) {
+                return $this->errorResponse(trans('toasts.noStudentsFound'));
+            }
+
+            return response()->json(['status' => 'success', 'data' => $students]);
         } catch (\Exception $e) {
             return $this->productionErrorResponse($e);
         }

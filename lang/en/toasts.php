@@ -94,4 +94,5 @@ return [
     'duplicateRequest' => 'You already have a makeup request for this lesson. Please submit a new request after your teacher approves the current one.',
     'cannotEditNonPending' => 'You cannot edit this request. It must be in pending status.',
     'cannotDeleteNonPending' => 'You cannot delete this request. It must be in pending status.',
+    'noStudentsFound' => 'No students registered with you. Please check the data.',
 ];

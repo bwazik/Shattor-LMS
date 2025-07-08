@@ -15,6 +15,7 @@ class CompensatoriesRequest extends FormRequest
     {
         if (isAdmin()) {
             return [
+                'teacher_id' => 'nullable|integer|exists:teachers,id',
                 'student_id' => 'required|integer|exists:students,id',
                 'original_lesson_id' => 'required|integer|exists:lessons,id',
                 'makeup_lesson_id' => 'required|integer|exists:lessons,id|different:original_lesson_id',
