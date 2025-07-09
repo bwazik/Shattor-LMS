@@ -23,10 +23,11 @@ class TransactionsController extends Controller
             ->select('id', 'type', 'student_id', 'invoice_id', 'amount', 'balance_after', 'description', 'payment_method', 'date', 'created_at')
             ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
             ->whereHas('invoice', fn($query) => $query
-                ->fee()
+                ->where('type', 2)
                 ->whereNull('teacher_id')
                 ->whereNull('subscription_id')
-                ->whereHas('fee', fn($q) => $q->where('teacher_id', $this->teacherId)));
+                ->whereHas('fee', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->orderBy('id');
 
         if ($request->ajax()) {
             return datatables()->eloquent($transactionsQuery)

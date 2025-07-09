@@ -266,7 +266,6 @@ class InvoiceService
                 ->whereIn('status', [1, 3])
                 ->findOrFail($id);
 
-
             if ($validationResult = $this->validatePaymentData($id, $request['amount']))
                 return $validationResult;
 

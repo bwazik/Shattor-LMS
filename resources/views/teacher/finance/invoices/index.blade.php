@@ -53,7 +53,10 @@
             onShow: function(modal, button) {
                 const form = modal[0].querySelector('#payment-form');
                 const dueAmount = form.querySelector('#due_amount');
-                form.action = form.action.replace('__ID__', button.data('id'));
+                if (!form.dataset.actionTemplate) {
+                    form.dataset.actionTemplate = form.action;
+                }
+                form.action = form.dataset.actionTemplate.replace('__ID__', button.data('id'));
                 dueAmount.textContent = button.data('due_amount');
             },
         });
@@ -68,7 +71,10 @@
             onShow: function(modal, button) {
                 const form = modal[0].querySelector('#refund-form');
                 const dueAmount = form.querySelector('#due_amount');
-                form.action = form.action.replace('__ID__', button.data('id'));
+                if (!form.dataset.actionTemplate) {
+                    form.dataset.actionTemplate = form.action;
+                }
+                form.action = form.dataset.actionTemplate.replace('__ID__', button.data('id'));
                 dueAmount.textContent = button.data('due_amount');
             },
         });
