@@ -85,6 +85,8 @@ Route::group(
                 Route::post('zoom-account/update', 'updateZoomAccount')->name('zoom.update')->middleware('throttle:5,1');
                 Route::get('coupons', 'getCoupons')->name('coupons.index');
                 Route::post('coupons/redeem', 'redeemCoupon')->name('coupons.redeem')->middleware('throttle:5,1');
+                Route::get('fees-pricing/', 'feesPricingIndex')->name('fees.index');
+                Route::post('fees-pricing/update', 'updateFeesPricing')->name('fees.update')->middleware('throttle:5,1');
             });
 
             Route::get('plans/{plan}/{period?}', [DataFetchController::class, 'getPlanData'])->name('fetch.plans.data');

@@ -33,6 +33,8 @@ class ZoomService
             ->addColumn('duration', fn($row) => formatDuration($row->duration))
             ->editColumn('start_time', fn($row) => isoFormat($row->start_time))
             ->editColumn('join_url', fn($row) => formatSpanUrl($row->join_url, trans('main.join_url')))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
+            ->editColumn('updated_at', fn($row) => isoFormat($row->updated_at))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))

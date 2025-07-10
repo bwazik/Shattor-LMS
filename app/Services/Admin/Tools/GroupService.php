@@ -33,6 +33,8 @@ class GroupService
             ->editColumn('day_1', fn($row) => $row->day_1 ? getDayName($row->day_1) : '-')
             ->editColumn('day_2', fn($row) => $row->day_2 ? getDayName($row->day_2) : '-')
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
+            ->editColumn('updated_at', fn($row) => isoFormat($row->updated_at))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
@@ -186,6 +188,8 @@ class GroupService
             ->editColumn('day_1', fn($row) => $row->day_1 ? getDayName($row->day_1) : '-')
             ->editColumn('day_2', fn($row) => $row->day_2 ? getDayName($row->day_2) : '-')
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
+            ->editColumn('updated_at', fn($row) => isoFormat($row->updated_at))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->rawColumns(['selectbox', 'lessons', 'is_active', 'actions'])
             ->make(true);

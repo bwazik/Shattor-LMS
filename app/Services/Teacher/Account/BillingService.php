@@ -142,6 +142,7 @@ class BillingService
             ->editColumn('description', fn($row) => $row->description ?: '-')
             ->editColumn('payment_method', fn($row) => formatPaymentMethod($row->payment_method))
             ->editColumn('date', fn($row) => formatDate($row->date))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
             ->rawColumns(['selectbox', 'invoice_id', 'type', 'amount', 'payment_method', 'date'])
             ->make(true);
     }

@@ -30,6 +30,7 @@ class TransactionsController extends Controller
             ->editColumn('description', fn($row) => $row->description ?: '-')
             ->editColumn('payment_method', fn($row) => formatPaymentMethod($row->payment_method))
             ->editColumn('date', fn($row) => formatDate($row->date))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
             ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
             ->rawColumns(['selectbox', 'invoice_id', 'type', 'student_id', 'amount', 'balance_after', 'payment_method', 'date'])
             ->make(true);
@@ -60,6 +61,7 @@ class TransactionsController extends Controller
             ->editColumn('description', fn($row) => $row->description ?: '-')
             ->editColumn('payment_method', fn($row) => formatPaymentMethod($row->payment_method))
             ->editColumn('date', fn($row) => formatDate($row->date))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
             ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
             ->rawColumns(['selectbox', 'invoice_id', 'type', 'teacher_id', 'amount', 'balance_after', 'payment_method', 'date'])
             ->make(true);

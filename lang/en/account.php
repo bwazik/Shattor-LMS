@@ -78,4 +78,7 @@ return [
     // Coupons
     'redeemCoupon' => 'Redeem Coupon',
     'redeem' => 'Redeem',
+
+    // Fees
+    'fees' => 'Fees Prices',
 ];

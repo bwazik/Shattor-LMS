@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Plan;
 use App\Models\Grade;
 use App\Models\Coupon;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
+use App\Models\GradeFee;
 use App\Models\ZoomAccount;
 use Illuminate\Http\Request;
+use App\Services\QRCodeService;
 use App\Services\AccountService;
 use App\Services\SessionService;
 use App\Http\Controllers\Controller;
@@ -22,7 +25,6 @@ use App\Http\Requests\ZoomAccountRequest;
 use App\Services\Admin\FileUploadService;
 use App\Http\Requests\PersonalDataRequest;
 use App\Http\Requests\PasswordUpdateRequest;
-use App\Services\QRCodeService;
 
 class AccountController extends Controller
 {
@@ -201,5 +203,95 @@ class AccountController extends Controller
         $result = $this->accountService->redeemCoupon($this->guard, $this->userId, $validated);
 
         return $this->conrtollerJsonResponse($result);
+    }
+
+    public function feesPricingIndex()
+    {
+        $grades = Grade::whereHas('teachers', fn($q) => $q->where('teacher_id', $this->userId))
+            ->select('id', 'name')
+            ->orderBy('id')
+            ->get();
+
+        $startYear = 2025;
+        $endYear = 2026;
+        $gradeFees = GradeFee::where('teacher_id', $this->userId)
+            ->where(function ($query) use ($startYear, $endYear) {
+                $query->whereBetween('month', ["$startYear-08", "$endYear-07"])
+                    ->orWhereNull('month');
+            })
+            ->select('grade_id', 'amount', 'month')
+            ->get()
+            ->groupBy('month');
+
+        $months = collect();
+        for ($i = 0; $i < 12; $i++) {
+            $date = Carbon::create($startYear, 8, 1)->addMonths($i);
+            $months->push([
+                'name' => $date->format('F Y'),
+                'key' => $date->format('Y-m'),
+                'arabic_name' => $this->getArabicMonthName($date->month) . ' ' . $date->year,
+            ]);
+        }
+
+        $year = $startYear;
+
+        return view("{$this->mapping['view_prefix']}.fees", compact('grades', 'gradeFees', 'months', 'year'));
+    }
+
+    public function updateFeesPricing(Request $request)
+    {
+        $validated = $request->validate([
+            'month' => ['required', 'string', 'regex:/^\d{4}-\d{2}$/'],
+            'fees' => ['required', 'array'],
+            'fees.*.grade_id' => ['required', 'integer', 'exists:grades,id'],
+            'fees.*.amount' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        return $this->executeTransaction(function () use ($validated) {
+            $month = $validated['month'];
+            $teacherId = $this->userId;
+
+            $validGradeIds = Grade::whereHas('teachers', fn($q) => $q->where('teacher_id', $teacherId))
+                ->pluck('id')
+                ->toArray();
+
+            foreach ($validated['fees'] as $fee) {
+                if (!in_array($fee['grade_id'], $validGradeIds)) {
+                    return $this->errorResponse(trans('toasts.ownershipError'));
+                }
+
+                GradeFee::updateOrCreate(
+                    [
+                        'teacher_id' => $teacherId,
+                        'grade_id' => $fee['grade_id'],
+                        'month' => $month,
+                    ],
+                    [
+                        'amount' => $fee['amount'],
+                    ]
+                );
+            }
+
+            return $this->successResponse(trans('main.edited', ['item' => trans('admin/fees.fees')]));
+        });
+    }
+
+    private function getArabicMonthName($month)
+    {
+        $months = [
+            1 => 'يناير',
+            2 => 'فبراير',
+            3 => 'مارس',
+            4 => 'أبريل',
+            5 => 'مايو',
+            6 => 'يونيو',
+            7 => 'يوليو',
+            8 => 'أغسطس',
+            9 => 'سبتمبر',
+            10 => 'أكتوبر',
+            11 => 'نوفمبر',
+            12 => 'ديسمبر',
+        ];
+        return $months[$month] ?? 'N/A';
     }
 }

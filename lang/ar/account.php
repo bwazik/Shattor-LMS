@@ -78,4 +78,7 @@ return [
     // Coupons
     'redeemCoupon' => 'إسترداد كوبون',
     'redeem' => 'إسترداد',
+
+    // Fees
+    'fees' => 'أسعار المصاريف',
 ];

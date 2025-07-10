@@ -64,14 +64,14 @@ if(!function_exists('mapDaysToNames')) {
 if(!function_exists('isoFormat')) {
     function isoFormat(string $value)
     {
-        return Carbon::parse($value)->isoFormat('dddd D MMMM h:mm A');
+        return Carbon::parse($value, 'Africa/Cairo')->isoFormat('dddd D MMMM h:mm A');
     }
 }
 
 if(!function_exists('humanFormat')) {
     function humanFormat(string $value)
     {
-        return Carbon::parse($value)->format('Y-m-d H:i');
+        return Carbon::parse($value, 'Africa/Cairo')->format('Y-m-d H:i');
     }
 }
 
@@ -508,7 +508,7 @@ if (!function_exists('formatDate')) {
             $format = 'l d M Y';
         }
 
-        return Carbon::parse($date)->translatedFormat($format);
+        return Carbon::parse($date, 'Africa/Cairo')->translatedFormat($format);
     }
 }
 

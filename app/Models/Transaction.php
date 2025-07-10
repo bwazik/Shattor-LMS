@@ -82,14 +82,4 @@ class Transaction extends Model
     {
         return $query->where('payment_method', 4);
     }
-
-    # Accessors
-    public function getCreatedAtAttribute($value)
-    {
-        return isoFormat($value);
-    }
-    public function getUpdatedAtAttribute($value)
-    {
-        return isoFormat($value);
-    }
 }

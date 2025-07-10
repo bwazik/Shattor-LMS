@@ -108,12 +108,4 @@ class Group extends Model
     {
         return Carbon::parse($value)->format('H:i');
     }
-    public function getCreatedAtAttribute($value)
-    {
-        return isoFormat($value);
-    }
-    public function getUpdatedAtAttribute($value)
-    {
-        return isoFormat($value);
-    }
 }

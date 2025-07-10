@@ -4,13 +4,10 @@ namespace App\Models;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Translatable\HasTranslations;
 
-class Zoom extends Model
+class GradeFee extends Model
 {
-    use HasTranslations;
-
-    protected $table = 'zooms';
+    protected $table = 'grade_fees';
 
     protected static function boot()
     {
@@ -23,28 +20,21 @@ class Zoom extends Model
         });
     }
 
-    public $translatable = ['topic'];
-
     protected $fillable = [
+        'uuid',
         'teacher_id',
         'grade_id',
-        'group_id',
-        'meeting_id',
-        'topic',
-        'duration',
-        'password',
-        'start_time',
-        'start_url',
-        'join_url',
+        'amount',
+        'month', // YYYY-MM format for specific month, null for default
+    ];
+
+    protected $hidden = [
         'created_at',
         'updated_at',
     ];
 
-    protected $hidden = [
-    ];
 
     # Relationships
-
     public function teacher()
     {
         return $this->belongsTo(Teacher::class, 'teacher_id');
@@ -55,15 +45,14 @@ class Zoom extends Model
         return $this->belongsTo(Grade::class, 'grade_id');
     }
 
-    public function group()
-    {
-        return $this->belongsTo(Group::class, 'group_id');
-    }
-
     # Scopes
     public function scopeUuid($query, $uuid)
     {
         return $query->where('uuid', $uuid);
     }
 
+    public function scopeUuids($query, $uuids)
+    {
+        return $query->whereIn('uuid', $uuids);
+    }
 }
