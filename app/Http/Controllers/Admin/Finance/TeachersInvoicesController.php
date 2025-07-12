@@ -37,7 +37,7 @@ class TeachersInvoicesController extends Controller
             ->select('id', 'type', 'teacher_id', 'subscription_id', 'amount', 'date', 'due_date', 'status');
 
         $pageStatistics = [
-            'clients' => TeacherSubscription::distinct('teacher_id')->count('teacher_id'),
+            'clients' => Teacher::distinct('id')->count('id'),
             'invoices' => $invoicesQuery->count(),
             'paid' => $invoicesQuery->clone()->where('status', 2)->sum('amount'),
             'unpaid' => $invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount'),

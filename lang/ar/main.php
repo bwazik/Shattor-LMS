@@ -70,6 +70,7 @@ return [
     'slug' => 'الرابط',
     'icon' => 'الأيقونة',
     'order' => 'الترتيب',
+    'paymentDate' => 'تاريخ الدفع',
 
     # Weekdays
     'weekdays' => [

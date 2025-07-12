@@ -313,6 +313,10 @@ Route::group(
                         Route::post('delete', 'delete')->name('delete');
                         Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                     });
+                    Route::get('{uuid}/reports', 'reports')->name('reports');
+                    Route::get('{uuid}/students-paid-fees', 'studentsPaidFee')->name('studentsPaidFee');
+                    Route::get('{uuid}/students-havenot-pay-fee', 'studentsHavenotPaidFee')->name('studentsHavenotPaidFee');
+                    Route::get('{uuid}/students-without-fee', 'studentsWithoutFee')->name('studentsWithoutFee');
                 });
 
                 # Student Fees

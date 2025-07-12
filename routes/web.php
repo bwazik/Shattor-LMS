@@ -382,6 +382,10 @@ Route::group(
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                 });
+                Route::get('{id}/reports', 'reports')->name('reports');
+                Route::get('{id}/students-paid-fees', 'studentsPaidFee')->name('studentsPaidFee');
+                Route::get('{id}/students-havenot-pay-fee', 'studentsHavenotPaidFee')->name('studentsHavenotPaidFee');
+                Route::get('{id}/students-without-fee', 'studentsWithoutFee')->name('studentsWithoutFee');
             });
 
             Route::prefix('student-fees')->controller(StudentFeesController::class)->name('student-fees.')->group(function () {

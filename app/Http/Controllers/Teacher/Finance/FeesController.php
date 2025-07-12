@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers\Teacher\Finance;
 
+use Carbon\Carbon;
 use App\Models\Fee;
 use App\Models\Grade;
+use App\Models\Invoice;
+use App\Models\Student;
+use App\Models\StudentFee;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
+use App\Traits\ServiceResponseTrait;
 use App\Services\Teacher\Finance\FeeService;
 use App\Http\Requests\Admin\Finance\FeesRequest;
-use App\Traits\ServiceResponseTrait;
 
 class FeesController extends Controller
 {
@@ -84,4 +88,158 @@ class FeesController extends Controller
         return $this->conrtollerJsonResponse($result);
     }
 
+    public function reports($uuid)
+    {
+        $fee = Fee::uuid($uuid)
+            ->with(['grade:id,name'])
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $invoicesQuery = Invoice::query()
+            ->fee()
+            ->whereNull('teacher_id')
+            ->whereNull('subscription_id')
+            ->where('fee_id', $fee->id)
+            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->select('id', 'uuid', 'type', 'student_id', 'student_fee_id', 'fee_id', 'amount', 'date', 'due_date', 'status');
+
+        // Total students eligible for the fee
+        $totalStudents = Student::where('grade_id', $fee->grade_id)
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->distinct('id')
+            ->count('id');
+
+        // Total students with invoices
+        $totalStudentsWithInvoices = $invoicesQuery->clone()->distinct('student_id')->count('student_id');
+
+        // Student counts for paid and unpaid invoices
+        $paidStudents = $invoicesQuery->clone()->where('status', 2)->distinct('student_id')->count('student_id');
+        $unpaidStudents = $invoicesQuery->clone()->whereIn('status', [1, 3])->distinct('student_id')->count('student_id');
+
+        // Fetch statistics
+        $pageStatistics = [
+            'totalStudents' => $totalStudents,
+            'totalStudentsWithInvoices' => $totalStudentsWithInvoices,
+            'invoices' => $invoicesQuery->count(),
+            'paid' => $invoicesQuery->clone()->where('status', 2)->sum('amount'),
+            'unpaid' => $invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount'),
+            'paidFee' => $paidStudents,
+            'didntPayFee' => $unpaidStudents,
+            'paidFeePercentage' => $totalStudentsWithInvoices > 0 ? round(($paidStudents / $totalStudentsWithInvoices) * 100, 1) : 0,
+            'didntPayFeePercentage' => $totalStudentsWithInvoices > 0 ? round(($unpaidStudents / $totalStudentsWithInvoices) * 100, 1) : 0,
+        ];
+
+        // Payment trends
+        $startDate = Carbon::parse($fee->created_at, 'Africa/Cairo')->startOfDay();
+        $endDate = $startDate->copy()->endOfMonth();
+        $dateRange = collect(Carbon::parse($startDate)->daysUntil($endDate)->toArray())->map(fn($date) => $date->format('Y-m-d'));
+
+        $paymentTrendsQuery = Invoice::query()
+            ->where('invoices.type', 2)
+            ->whereNull('invoices.teacher_id')
+            ->whereNull('invoices.subscription_id')
+            ->where('invoices.fee_id', $fee->id)
+            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
+            ->whereBetween('transactions.date', [$dateRange->first(), $dateRange->last() . ' 23:59:59'])
+            ->selectRaw('DATE(transactions.date) as date, COUNT(DISTINCT invoices.student_id) as count')
+            ->join('transactions', 'invoices.id', '=', 'transactions.invoice_id')
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
+        $paymentTrends = $dateRange->mapWithKeys(function ($date) use ($paymentTrendsQuery) {
+            return [$date => $paymentTrendsQuery[$date] ?? 0];
+        })->values()->toArray();
+
+        $paymentDates = $dateRange->map(fn($date) => Carbon::parse($date)->translatedFormat('d F', app()->getLocale()))->toArray();
+
+        // Data for the chart
+        $data = [
+            'paymentTrends' => $paymentTrends,
+            'paymentDates' => $paymentDates,
+        ];
+
+        return view('teacher.finance.fees.reports', compact('fee', 'pageStatistics', 'data'));
+    }
+
+    public function studentsPaidFee(Request $request, $uuid)
+    {
+        $fee = Fee::uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $invoicesQuery = Invoice::query()
+            ->fee()
+            ->where('status', 2)
+            ->whereNull('teacher_id')
+            ->whereNull('subscription_id')
+            ->where('fee_id', $fee->id)
+            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->with(['student', 'transactions' => fn($query) => $query->where('type', 2)]);
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($invoicesQuery)
+                ->addIndexColumn()
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->email, 'admin.students.details', $row->student->uuid))
+                ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
+                ->editColumn('date', fn($row) => formatDate($row->date))
+                ->addColumn('paymentDate', fn($row) => $row->transactions->isNotEmpty() ? isoFormat($row->transactions->max('created_at')) : 'N/A')
+                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+                ->rawColumns(['details'])
+                ->make(true);
+        }
+    }
+
+    public function studentsHavenotPaidFee(Request $request, $uuid)
+    {
+        $fee = Fee::uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $invoicesQuery = Invoice::query()
+            ->fee()
+            ->whereIn('status', [1, 3])
+            ->whereNull('teacher_id')
+            ->whereNull('subscription_id')
+            ->where('fee_id', $fee->id)
+            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->with(['student']);
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($invoicesQuery)
+                ->addIndexColumn()
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->email, 'admin.students.details', $row->student->uuid))
+                ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
+                ->editColumn('date', fn($row) => formatDate($row->date))
+                ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
+                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+                ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
+                ->rawColumns(['details', 'status'])
+                ->make(true);
+        }
+    }
+
+    public function studentsWithoutFee(Request $request, $uuid)
+    {
+        $fee = Fee::uuid($uuid)
+            ->with(['grade'])
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $studentsQuery = Student::query()
+            ->where('grade_id', $fee->grade_id)
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->whereDoesntHave('invoices', fn($query) => $query->where('fee_id', $fee->id))
+            ->select('id', 'uuid', 'name', 'email', 'grade_id', 'profile_pic');
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($studentsQuery)
+                ->addIndexColumn()
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'admin.students.details', $row->uuid))
+                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+                ->rawColumns(['details'])
+                ->make(true);
+        }
+    }
 }

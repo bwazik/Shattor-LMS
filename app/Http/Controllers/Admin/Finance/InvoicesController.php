@@ -33,7 +33,7 @@ class InvoicesController extends Controller
             ->select('id', 'type', 'student_id', 'student_fee_id', 'fee_id', 'amount', 'date', 'due_date', 'status');
 
         $pageStatistics = [
-            'clients' => StudentFee::distinct('student_id')->count('student_id'),
+            'clients' => Student::distinct('id')->count('id'),
             'invoices' => $invoicesQuery->count(),
             'paid' => $invoicesQuery->clone()->where('status', 2)->sum('amount'),
             'unpaid' => $invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount'),

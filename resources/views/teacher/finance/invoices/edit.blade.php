@@ -91,9 +91,9 @@
                                 <x-basic-input divClasses="mb-4" type="text" name="parent_name"
                                     label="{{ trans('main.parent') }}"
                                     placeholder="{{ trans('main.placeholders.realName') }}"
-                                    value="{{ $invoice->student->parent->name }}" disabled />
-                                <p id="parent_phone" class="mb-1">{{ $invoice->student->parent->phone }}</p>
-                                <p id="parent_email" class="mb-0">{{ $invoice->student->parent->email }}</p>
+                                    value="{{ $invoice->student->parent->name ?? 'N/A' }}" disabled />
+                                <p id="parent_phone" class="mb-1">{{ $invoice->student->parent->phone ?? 'N/A' }}</p>
+                                <p id="parent_email" class="mb-0">{{ $invoice->student->parent->email ?? 'N/A' }}</p>
                             </div>
                         </div>
                     </div>

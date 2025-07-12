@@ -6,7 +6,7 @@
                     <div class="d-flex justify-content-between align-items-start card-widget-1 border-end pb-4 pb-sm-0">
                         <div>
                             <h4 class="mb-0">{{ $pageStatistics['clients'] }}</h4>
-                            <p class="mb-0">{{ trans('admin/invoices.clients') }}</p>
+                            <p class="mb-0">{{ trans('admin/students.students') }}</p>
                         </div>
                         <div class="avatar me-sm-6">
                             <span class="avatar-initial rounded-3">

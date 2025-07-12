@@ -38,7 +38,7 @@ class InvoicesController extends Controller
             ->whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId));
 
         $pageStatistics = [
-            'clients' => StudentFee::whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId))->distinct('student_id')->count('student_id'),
+            'clients' => Student::whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))->distinct('id')->count('id'),
             'invoices' => $invoicesQuery->count(),
             'paid' => $invoicesQuery->clone()->where('status', 2)->sum('amount'),
             'unpaid' => $invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount'),

@@ -69,6 +69,7 @@ return [
     'slug' => 'Slug',
     'icon' => 'Icon',
     'order' => 'Order',
+    'paymentDate' => 'Payment Date',
 
     # Weekdays
     'weekdays' => [
