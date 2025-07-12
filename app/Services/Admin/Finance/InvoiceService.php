@@ -76,6 +76,9 @@ class InvoiceService
                         '</button>' .
                     '</li>' .
                     '<li>
+                        <a target="_blank" href="' . route('admin.invoices.transactions', $row->id) . '" class="dropdown-item">'.trans('admin/transactions.transactions').'</a>
+                    </li>' .
+                    '<li>
                         <a target="_blank" href="' . route('admin.invoices.edit', $row->id) . '" class="dropdown-item">'.trans('main.edit').'</a>
                     </li>' .
                     '<li>
@@ -517,6 +520,9 @@ class InvoiceService
                             trans('main.addItem', ['item' => trans('main.refund')]).
                         '</button>' .
                     '</li>' .
+                    '<li>
+                        <a target="_blank" href="' . route('admin.invoices.teachers.transactions', $row->id) . '" class="dropdown-item">'.trans('admin/transactions.transactions').'</a>
+                    </li>' .
                     '<li>
                         <a target="_blank" href="' . route('admin.invoices.teachers.edit', $row->id) . '" class="dropdown-item">'.trans('main.edit').'</a>
                     </li>' .

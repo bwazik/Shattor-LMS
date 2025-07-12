@@ -81,6 +81,9 @@ class InvoiceService
                         '</button>' .
                     '</li>' .
                     '<li>
+                        <a target="_blank" href="' . route('teacher.invoices.transactions', $row->uuid) . '" class="dropdown-item">'.trans('admin/transactions.transactions').'</a>
+                    </li>' .
+                    '<li>
                         <a target="_blank" href="' . route('teacher.invoices.edit', $row->uuid) . '" class="dropdown-item">'.trans('main.edit').'</a>
                     </li>' .
                     '<li>

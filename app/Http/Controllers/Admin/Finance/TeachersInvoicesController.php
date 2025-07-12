@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\Admin\Finance;
 
 use App\Models\Invoice;
-use App\Models\Student;
 use App\Models\Teacher;
-use App\Models\StudentFee;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
+use App\Models\TeacherSubscription;
 use App\Http\Controllers\Controller;
+use App\Traits\ServiceResponseTrait;
 use App\Services\Admin\Finance\InvoiceService;
-use App\Http\Requests\Admin\Finance\InvoicesRequest;
 use App\Http\Requests\Admin\Finance\PaymentsRequest;
 use App\Http\Requests\Admin\Finance\TeachersInvoicesRequest;
-use App\Models\TeacherSubscription;
 
 class TeachersInvoicesController extends Controller
 {
-    use ValidatesExistence;
+    use ValidatesExistence, ServiceResponseTrait;
 
     protected $invoiceService;
 
@@ -121,11 +120,7 @@ class TeachersInvoicesController extends Controller
     {
         $result = $this->invoiceService->insertTeacherInvoice($request->validated());
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function edit($id)
@@ -168,33 +163,21 @@ class TeachersInvoicesController extends Controller
     {
         $result = $this->invoiceService->updateTeacherInvoice($id, $request->validated());
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function payment(PaymentsRequest $request, $id)
     {
         $result = $this->invoiceService->payTeacherInvoice($id, $request->validated());
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function refund(PaymentsRequest $request, $id)
     {
         $result = $this->invoiceService->refundTeacherInvoice($id, $request->validated());
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function delete(Request $request)
@@ -203,11 +186,7 @@ class TeachersInvoicesController extends Controller
 
         $result = $this->invoiceService->deleteTeacherInvoice($request->id);
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function cancel(Request $request)
@@ -216,11 +195,7 @@ class TeachersInvoicesController extends Controller
 
         $result = $this->invoiceService->cancelTeacherInvoice($request->id);
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function archive(Request $request)
@@ -229,11 +204,7 @@ class TeachersInvoicesController extends Controller
 
         $result = $this->invoiceService->archiveInvoice($request->id);
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
-        }
-
-        return response()->json(['error' => $result['message']], 500);
+        return $this->conrtollerJsonResponse($result);
     }
 
     public function restore(Request $request)
@@ -242,10 +213,45 @@ class TeachersInvoicesController extends Controller
 
         $result = $this->invoiceService->restoreInvoice($request->id);
 
-        if ($result['status'] === 'success') {
-            return response()->json(['success' => $result['message']], 200);
+        return $this->conrtollerJsonResponse($result);
+    }
+
+    public function transactions(Request $request, $invoiceId)
+    {
+        $invoice = Invoice::with(['teacher:id,name',  'subscription.plan:id,name'])
+            ->subscription()
+            ->whereNull('student_id')
+            ->whereNull('student_fee_id')
+            ->whereNull('fee_id')
+            ->findOrFail($invoiceId);
+
+        $transactionsQuery = Transaction::query()
+            ->with(['teacher', 'invoice'])
+            ->whereNull('student_id')
+            ->where('invoice_id', $invoice->id)
+            ->select('id', 'type', 'teacher_id', 'invoice_id', 'amount', 'balance_after', 'description', 'payment_method', 'date', 'created_at');
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($transactionsQuery)
+            ->editColumn('invoice_id', function($row) {
+                if (!$row->invoice_id) {
+                    return 'N/A';
+                }
+                return formatInvoiceReference($row->invoice_id, route('admin.invoices.preview', $row->invoice_id));
+            })
+            ->editColumn('type', fn($row) => formatTransactionType($row->type))
+            ->editColumn('teacher_id', fn($row) => formatRelation($row->teacher_id, $row->teacher, 'name', 'admin.teachers.details'))
+            ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
+            ->editColumn('balance_after', fn($row) => formatCurrency($row->balance_after) . ' ' . trans('main.currency'))
+            ->editColumn('description', fn($row) => $row->description ?: '-')
+            ->editColumn('payment_method', fn($row) => formatPaymentMethod($row->payment_method))
+            ->editColumn('date', fn($row) => formatDate($row->date))
+            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
+            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+            ->rawColumns(['selectbox', 'invoice_id', 'type', 'teacher_id', 'amount', 'balance_after', 'payment_method', 'date'])
+            ->make(true);
         }
 
-        return response()->json(['error' => $result['message']], 500);
+        return view('admin.finance.invoices.teachers.transactions', compact('invoice'));
     }
 }

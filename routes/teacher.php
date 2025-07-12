@@ -345,6 +345,7 @@ Route::group(
                         Route::post('delete', 'delete')->name('delete');
                         Route::post('cancel', 'cancel')->name('cancel');
                     });
+                    Route::get('{uuid}/transactions', 'transactions')->name('transactions');
                 });
 
                 # Transactions

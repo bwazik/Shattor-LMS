@@ -185,8 +185,9 @@ class FeesController extends Controller
                 ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
                 ->editColumn('date', fn($row) => formatDate($row->date))
                 ->addColumn('paymentDate', fn($row) => $row->transactions->isNotEmpty() ? isoFormat($row->transactions->max('created_at')) : 'N/A')
+                ->addColumn('transactions', fn($row) => formatSpanUrl(route('teacher.invoices.transactions', $row->uuid), trans('admin/transactions.transactions')))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
-                ->rawColumns(['details'])
+                ->rawColumns(['details', 'transactions'])
                 ->make(true);
         }
     }
@@ -213,9 +214,10 @@ class FeesController extends Controller
                 ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
                 ->editColumn('date', fn($row) => formatDate($row->date))
                 ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
+                ->addColumn('transactions', fn($row) => formatSpanUrl(route('teacher.invoices.transactions', $row->uuid), trans('admin/transactions.transactions')))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
                 ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
-                ->rawColumns(['details', 'status'])
+                ->rawColumns(['details', 'status', 'transactions'])
                 ->make(true);
         }
     }

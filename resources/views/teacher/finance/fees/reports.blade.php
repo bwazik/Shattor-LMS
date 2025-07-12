@@ -165,6 +165,7 @@
                 <th>{{ trans('main.amount') }}</th>
                 <th>{{ trans('main.date') }}</th>
                 <th>{{ trans('main.paymentDate') }}</th>
+                <th>{{ trans('admin/transactions.transactions') }}</th>
             </x-datatable>
         </div>
     </div>
@@ -179,6 +180,7 @@
                 <th>{{ trans('main.amount') }}</th>
                 <th>{{ trans('main.created_at') }}</th>
                 <th>{{ trans('main.status') }}</th>
+                <th>{{ trans('admin/transactions.transactions') }}</th>
             </x-datatable>
         </div>
     </div>
@@ -218,6 +220,7 @@
                     { data: 'amount', name: 'amount', orderable: false, searchable: false },
                     { data: 'date', name: 'date' },
                     { data: 'paymentDate', name: 'paymentDate', orderable: false, searchable: false },
+                    { data: 'transactions', name: 'transactions', orderable: false, searchable: false },
                 ],
             );
             initializeDataTable('#students-havenot-paid-fee-datatable', "{{ route('teacher.fees.studentsHavenotPaidFee', $fee->uuid) }}", [1, 2, 3, 4, 5],
@@ -228,6 +231,7 @@
                     { data: 'amount', name: 'amount', orderable: false, searchable: false },
                     { data: 'date', name: 'date' },
                     { data: 'status', name: 'status', orderable: false, searchable: false },
+                    { data: 'transactions', name: 'transactions', orderable: false, searchable: false },
                 ],
             );
             initializeDataTable('#students-without-fee-datatable', "{{ route('teacher.fees.studentsWithoutFee', $fee->uuid) }}", [1, 2, 3],

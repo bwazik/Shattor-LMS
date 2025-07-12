@@ -425,6 +425,7 @@ Route::group(
                     Route::post('archive', 'archive')->name('archive');
                     Route::post('restore', 'restore')->name('restore');
                 });
+                Route::get('{invoiceId}/transactions', 'transactions')->name('transactions');
             });
             Route::prefix('invoices/teachers')->controller(TeachersInvoicesController::class)->name('invoices.teachers.')->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -443,6 +444,7 @@ Route::group(
                     Route::post('archive', 'archive')->name('archive');
                     Route::post('restore', 'restore')->name('restore');
                 });
+                Route::get('{invoiceId}/transactions', 'transactions')->name('transactions');
             });
 
             Route::prefix('transactions')->controller(TransactionsController::class)->name('transactions.')->group(function () {
