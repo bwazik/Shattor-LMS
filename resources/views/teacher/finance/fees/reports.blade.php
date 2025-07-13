@@ -163,8 +163,9 @@
                 <th>#</th>
                 <th>{{ trans('main.student') }}</th>
                 <th>{{ trans('main.amount') }}</th>
-                <th>{{ trans('main.date') }}</th>
+                <th>{{ trans('main.created_at') }}</th>
                 <th>{{ trans('main.paymentDate') }}</th>
+                <th>{{ trans('main.paymentMethod') }}</th>
                 <th>{{ trans('admin/transactions.transactions') }}</th>
             </x-datatable>
         </div>
@@ -220,6 +221,7 @@
                     { data: 'amount', name: 'amount', orderable: false, searchable: false },
                     { data: 'date', name: 'date' },
                     { data: 'paymentDate', name: 'paymentDate', orderable: false, searchable: false },
+                    { data: 'payment_method', name: 'payment_method', orderable: false, searchable: false },
                     { data: 'transactions', name: 'transactions', orderable: false, searchable: false },
                 ],
             );

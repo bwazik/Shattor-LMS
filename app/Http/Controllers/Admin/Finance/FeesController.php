@@ -165,9 +165,10 @@ class FeesController extends Controller
                 ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
                 ->editColumn('date', fn($row) => formatDate($row->date))
                 ->addColumn('paymentDate', fn($row) => $row->transactions->isNotEmpty() ? isoFormat($row->transactions->max('created_at')) : 'N/A')
+                ->editColumn('payment_method', fn($row) => $row->transactions->isNotEmpty() ? formatPaymentMethod($row->transactions->max('payment_method')) : 'N/A')
                 ->addColumn('transactions', fn($row) => formatSpanUrl(route('admin.invoices.transactions', $row->id), trans('admin/transactions.transactions')))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
-                ->rawColumns(['details', 'transactions'])
+                ->rawColumns(['details', 'payment_method', 'transactions'])
                 ->make(true);
         }
     }
