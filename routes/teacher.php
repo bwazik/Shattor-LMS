@@ -151,6 +151,12 @@ Route::group(
                         Route::post('delete', 'delete')->name('delete');
                         Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                     });
+                    Route::get('{uuid}/reports', 'reports')->name('reports');
+                    Route::get('{uuid}/absent-students', 'absentStudents')->name('absent');
+                    Route::get('{uuid}/compensated-students', 'compensatedStudents')->name('compensated');
+                    Route::get('{uuid}/present-late-students', 'presentLateStudents')->name('present_late');
+                    Route::get('{uuid}/compensatory-students', 'compensatoryStudents')->name('compensatory');
+                    Route::get('{uuid}/unrecorded-students', 'unrecordedStudents')->name('unrecorded');
                 });
 
                 # Resources

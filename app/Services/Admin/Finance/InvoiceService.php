@@ -28,13 +28,13 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->email, 'admin.students.details', $row->student->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
             ->editColumn('fee_id', fn($row) => $row->fee_id ? $row->fee->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateUnarchivedActionButtons($row))
-            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
             ->filterColumn('fee_id', fn($query, $keyword) => filterByRelation($query, 'fee', 'name', $keyword))
             ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
             ->rawColumns(['id', 'balance', 'details', 'status', 'actions'])
@@ -129,13 +129,13 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->email, 'admin.students.details', $row->student->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
             ->editColumn('fee_id', fn($row) => $row->fee_id ? $row->fee->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateArchivedActionButtons($row))
-            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
             ->filterColumn('fee_id', fn($query, $keyword) => filterByRelation($query, 'fee', 'name', $keyword))
             ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
             ->rawColumns(['id', 'balance', 'details', 'status', 'actions'])
@@ -474,13 +474,13 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->teacher->name, $row->teacher->profile_pic, 'storage/profiles/teachers', $row->teacher->email, 'admin.teachers.details', $row->teacher->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->teacher->name, $row->teacher->profile_pic, 'storage/profiles/teachers', $row->teacher->phone, 'admin.teachers.details', $row->teacher->id))
             ->editColumn('subscription_id', fn($row) => $row->subscription->plan->id ? $row->subscription->plan->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateUnarchivedTeachersActionButtons($row))
-            ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))
+            ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'phone', $keyword))
             ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
             ->rawColumns(['id', 'balance', 'details', 'status', 'actions'])
             ->make(true);
@@ -574,13 +574,13 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->teacher->name, $row->teacher->profile_pic, 'storage/profiles/teachers', $row->teacher->email, 'admin.teachers.details', $row->teacher->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->teacher->name, $row->teacher->profile_pic, 'storage/profiles/teachers', $row->teacher->phone, 'admin.teachers.details', $row->teacher->id))
             ->editColumn('subscription_id', fn($row) => $row->subscription->plan->id ? $row->subscription->plan->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateArchivedTeachersActionButtons($row))
-            ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))
+            ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'phone', $keyword))
             ->filterColumn('subscription_id', fn($query, $keyword) => filterByRelation($query, 'subscription:plan', 'name', $keyword))
             ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
             ->rawColumns(['id', 'balance', 'details', 'status', 'actions'])

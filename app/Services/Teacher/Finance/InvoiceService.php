@@ -33,13 +33,13 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->email, 'admin.students.details', $row->student->uuid))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->uuid))
             ->editColumn('fee_id', fn($row) => $row->fee_id ? $row->fee->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
-            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
             ->filterColumn('fee_id', fn($query, $keyword) => filterByRelation($query, 'fee', 'name', $keyword))
             ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
             ->rawColumns(['uuid', 'balance', 'details', 'status', 'actions'])

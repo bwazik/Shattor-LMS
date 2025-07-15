@@ -186,22 +186,22 @@
             .css('color', 'white')
             .css('opacity', '1');
 
-        checkAllStatusSelected();
+        // checkAllStatusSelected();
     });
 
-    function checkDateAndUpdateButton() {
-        let selectedDate = document.getElementById('date').value;
-        let today = "{{ now()->toDateString() }}";
-        let submitButton = document.getElementById('other-button');
+    // function checkDateAndUpdateButton() {
+    //     let selectedDate = document.getElementById('date').value;
+    //     let today = "{{ now()->toDateString() }}";
+    //     let submitButton = document.getElementById('other-button');
 
-        submitButton.disabled = selectedDate !== today;
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-        checkDateAndUpdateButton();
-    });
-    document.getElementById('date').addEventListener('change', function() {
-        checkDateAndUpdateButton();
-    });
+    //     submitButton.disabled = selectedDate !== today;
+    // }
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     checkDateAndUpdateButton();
+    // });
+    // document.getElementById('date').addEventListener('change', function() {
+    //     checkDateAndUpdateButton();
+    // });
 
     $('#mark-all').on('click', function() {
         let allMarked = true;
@@ -228,16 +228,16 @@
         }
     });
 
-    function checkAllStatusSelected() {
-        let allSelected = true;
-        $('.status-container').each(function() {
-            if (!$(this).find('.active').length) {
-                allSelected = false;
-            }
-        });
+    // function checkAllStatusSelected() {
+    //     let allSelected = true;
+    //     $('.status-container').each(function() {
+    //         if (!$(this).find('.active').length) {
+    //             allSelected = false;
+    //         }
+    //     });
 
-        $('#other-button').prop('disabled', !allSelected);
-    }
+    //     $('#other-button').prop('disabled', !allSelected);
+    // }
 
     $(document).ready(function() {
         const video = document.getElementById('qr-video');

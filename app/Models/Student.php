@@ -68,7 +68,7 @@ class Student extends Authenticatable
 
     public function groups()
     {
-        return $this->belongsToMany(Group::class, 'student_group');
+        return $this->belongsToMany(Group::class, 'student_group')->withPivot('created_at', 'updated_at')->withTimestamps();
     }
 
     public function attendances()

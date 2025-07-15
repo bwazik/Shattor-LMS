@@ -33,21 +33,21 @@ class AttendanceRequest extends FormRequest
         return $rules;
     }
 
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            $missingCount = collect($this->input('attendance', []))
-                ->filter(fn($student) => empty($student['status']))
-                ->count();
+    // public function withValidator($validator)
+    // {
+    //     $validator->after(function ($validator) {
+    //         $missingCount = collect($this->input('attendance', []))
+    //             ->filter(fn($student) => empty($student['status']))
+    //             ->count();
 
-            if ($missingCount > 0) {
-                $validator->errors()->add(
-                    'attendance',
-                    trans('admin/attendance.missingStatuses', ['count' => $missingCount])
-                );
-            }
-        });
-    }
+    //         if ($missingCount > 0) {
+    //             $validator->errors()->add(
+    //                 'attendance',
+    //                 trans('admin/attendance.missingStatuses', ['count' => $missingCount])
+    //             );
+    //         }
+    //     });
+    // }
 
 
     public function messages()

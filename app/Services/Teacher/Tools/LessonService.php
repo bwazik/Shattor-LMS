@@ -2,10 +2,8 @@
 
 namespace App\Services\Teacher\Tools;
 
-use Carbon\Carbon;
 use App\Models\Group;
 use App\Models\Lesson;
-use App\Models\Student;
 use App\Traits\PublicValidatesTrait;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;

@@ -16,7 +16,7 @@ class Attendance extends Authenticatable
         'student_id',
         'date',
         'note',
-        'status',
+        'status', // 1 - Present, 2 - Absent, 3 - Late, 4 - Compensatory
         'is_compensatory',
     ];
 
