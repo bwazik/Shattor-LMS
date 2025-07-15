@@ -157,12 +157,12 @@
             </div>
         </div>
     </div>
-    <!-- Chart -->
+    <!-- Lessons Chart -->
     <div class="row mb-6">
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-md-center align-items-start">
-                    <h5 class="card-title mb-0">Data Science</h5>
+                    <h5 class="card-title mb-0">{{ trans('admin/lessons.lessonsChart') }}</h5>
                 </div>
                 <div class="card-body">
                     <div id="lessonsChart"></div>

@@ -24,9 +24,10 @@ return [
     'attendanceRate' => 'Attendance Rate',
     'compensatoryRate' => 'Compensation Rate',
     'presentStudents' => 'Present Students',
-    'lateStudents' => 'Late Students', 
+    'lateStudents' => 'Late Students',
     'absentStudents' => 'Absent Students',
     'compensatedStudents' => 'Compensated Students (group students)',
     'compensatoryStudents' => 'Compensated Students (from other groups)',
     'unrecordedStudents' => 'Unrecorded Students',
+    'lessonsChart' => 'Last 5 lesson stats for the same group',
 ];

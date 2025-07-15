@@ -49,6 +49,9 @@ class LessonService
                 '</a>' .
                 '<ul class="dropdown-menu dropdown-menu-end m-0">' .
                     '<li>
+                        <a target="_blank" href="' . route('teacher.lessons.reports', $row->uuid) . '" class="dropdown-item">'.trans('main.reports').'</a>
+                    </li>' .
+                    '<li>
                         <a target="_blank" href="' . route('teacher.lessons.compensatories', $row->uuid) . '" class="dropdown-item">'.trans('admin/compensatories.compensatories').'</a>
                     </li>' .
                     '<div class="dropdown-divider"></div>' .
