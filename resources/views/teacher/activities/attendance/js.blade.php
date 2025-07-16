@@ -93,7 +93,7 @@
             let activeButton = $row.find('.status-container .status-btn.active');
             let status = activeButton.length > 0 ? activeButton.data('status') : null;
 
-            if (studentId) {
+            if (studentId && status !== null) {
                 attendanceData.push({
                     student_id: studentId,
                     status: status,
@@ -112,6 +112,14 @@
 
             let form = $('#students-form');
             let data = gatherAttendanceData();
+
+            if (data.length === 0) {
+                toastr.error('{{ trans('admin/attendance.noStudentsSelected') }}');
+                setTimeout(function() {
+                    submitButton.prop('disabled', false);
+                }, 1500);
+                return;
+            }
 
             let payload = {
                 _token: $('meta[name="csrf-token"]').attr('content'),

@@ -17,7 +17,7 @@ class AttendanceRequest extends FormRequest
             'grade_id' => 'required|integer|exists:grades,id',
             'attendance' => 'required|array|min:1',
             'attendance.*.student_id' => 'required|integer|exists:students,id',
-            'attendance.*.status' => 'nullable|integer|in:1,2,3,4',
+            'attendance.*.status' => 'required|integer|in:1,2,3,4',
             'attendance.*.note' => 'nullable|string|max:255',
         ];
 
