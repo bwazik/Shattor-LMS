@@ -10,6 +10,7 @@ return [
     ],
     'paymentTrends' => 'إحصائيات أوقات دفع المصاريف',
     'paymentsCount' => 'عدد المدفوعات',
+    'paymentMethodsChart' => 'إحصائيات وسائل دفع المصاريف',
     'paidFee' => 'دفعو المصاريف',
     'didntPayFee' => 'مدفعوش المصاريف',
     'studentsWithoutFee' => 'لم تسجل لهم المصاريف',

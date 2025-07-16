@@ -154,10 +154,36 @@ class FeesController extends Controller
 
         $paymentDates = $dateRange->map(fn($date) => Carbon::parse($date)->translatedFormat('d F', app()->getLocale()))->toArray();
 
+        // Add to reports method
+        $paymentMethodsQuery = Invoice::query()
+            ->where('invoices.type', 2)
+            ->whereNull('invoices.teacher_id')
+            ->whereNull('invoices.subscription_id')
+            ->where('invoices.fee_id', $fee->id)
+            ->where('status', 2)
+            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
+            ->join('transactions', 'invoices.id', '=', 'transactions.invoice_id')
+            ->groupBy('transactions.payment_method')
+            ->selectRaw('transactions.payment_method, COUNT(*) as count, SUM(transactions.amount) as total_amount')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->payment_method => ['count' => $item->count, 'amount' => $item->total_amount]];
+            })
+            ->toArray();
+
+        $paymentMethods = [
+            'cash' => ['count' => $paymentMethodsQuery[1]['count'] ?? 0, 'amount' => $paymentMethodsQuery[1]['amount'] ?? 0],
+            'vodafone_cash' => ['count' => $paymentMethodsQuery[2]['count'] ?? 0, 'amount' => $paymentMethodsQuery[2]['amount'] ?? 0],
+            'instapay' => ['count' => $paymentMethodsQuery[3]['count'] ?? 0, 'amount' => $paymentMethodsQuery[3]['amount'] ?? 0],
+            'balance' => ['count' => $paymentMethodsQuery[4]['count'] ?? 0, 'amount' => $paymentMethodsQuery[4]['amount'] ?? 0],
+        ];
+
         // Data for the chart
         $data = [
             'paymentTrends' => $paymentTrends,
             'paymentDates' => $paymentDates,
+            'paymentMethods' => $paymentMethods,
         ];
 
         return view('teacher.finance.fees.reports', compact('fee', 'pageStatistics', 'data'));
@@ -234,12 +260,13 @@ class FeesController extends Controller
             ->where('grade_id', $fee->grade_id)
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
             ->whereDoesntHave('invoices', fn($query) => $query->where('fee_id', $fee->id))
-            ->select('id', 'uuid', 'name', 'email', 'grade_id', 'profile_pic');
+            ->select('id', 'uuid', 'name', 'email', 'grade_id', 'profile_pic', 'created_at');
 
         if ($request->ajax()) {
             return datatables()->eloquent($studentsQuery)
                 ->addIndexColumn()
                 ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.details', $row->uuid))
+                ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
                 ->rawColumns(['details'])
                 ->make(true);

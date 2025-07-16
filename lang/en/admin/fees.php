@@ -10,6 +10,7 @@ return [
     ],
     'paymentTrends' => 'Payment Time Statistics',
     'paymentsCount' => 'Number of Payments',
+    'paymentMethodsChart' => 'Payment Methods Statistics',
     'paidFee' => 'Paid fees',
     'didntPayFee' => 'Did not pay fees',
     'studentsWithoutFee' => 'Students without fees',

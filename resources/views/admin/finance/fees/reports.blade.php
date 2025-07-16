@@ -86,7 +86,7 @@
             </div>
         </div>
     </div>
-    <!-- Studnet Stats & Students Without Fee Datatable -->
+    <!-- Studnet Stats & Payment Methods -->
     <div class="row mb-6 align-items-stretch">
         <div class="col-md-7 mb-6">
             <div class="card h-100">
@@ -133,8 +133,8 @@
                     <div class="d-flex align-items-center mt-4">
                         <div class="progress w-100 rounded" style="height: 8px;">
                             <div class="progress-bar bg-primary" style="width: {{ $pageStatistics['paidFeePercentage'] }}%"
-                                role="progressbar" aria-valuenow="{{ $pageStatistics['paidFeePercentage'] }}" aria-valuemin="0"
-                                aria-valuemax="100"></div>
+                                role="progressbar" aria-valuenow="{{ $pageStatistics['paidFeePercentage'] }}"
+                                aria-valuemin="0" aria-valuemax="100"></div>
                             <div class="progress-bar bg-warning" role="progressbar"
                                 style="width: {{ $pageStatistics['didntPayFeePercentage'] }}%"
                                 aria-valuenow="{{ $pageStatistics['didntPayFeePercentage'] }}" aria-valuemin="0"
@@ -146,19 +146,22 @@
             </div>
         </div>
         <div class="col-md-5 mb-6">
-            <x-datatable id="students-without-fee-datatable"
-                datatableTitle="{{ trans('admin/fees.studentsWithoutFee') }}">
-                <th></th>
-                <th>#</th>
-                <th>{{ trans('main.student') }}</th>
-            </x-datatable>
+            <div class="card h-100">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title mb-0">{{ trans('admin/fees.paymentMethodsChart') }}</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="paymentMethodsChart"></div>
+                </div>
+            </div>
         </div>
     </div>
     <!-- Students Who Paid Datatable -->
     <div class="row mb-6">
         <div class="col-md-12">
-            <x-datatable id="students-paid-fee-datatable"
-                datatableTitle="{{ trans('admin/fees.studentsPaidFee') }}">
+            <x-datatable id="students-paid-fee-datatable" datatableTitle="{{ trans('admin/fees.studentsPaidFee') }}">
                 <th></th>
                 <th>#</th>
                 <th>{{ trans('main.student') }}</th>
@@ -170,9 +173,9 @@
             </x-datatable>
         </div>
     </div>
-    <!-- Students Who Didn't Pay Datatable -->
+    <!-- Students Who Didn't Pay & Students Without Fee Datatables -->
     <div class="row mb-6">
-        <div class="col-md-12">
+        <div class="col-md-7 mb-6">
             <x-datatable id="students-havenot-paid-fee-datatable"
                 datatableTitle="{{ trans('admin/fees.studentsHavenotPaidFee') }}">
                 <th></th>
@@ -184,6 +187,15 @@
                 <th>{{ trans('admin/transactions.transactions') }}</th>
             </x-datatable>
         </div>
+        <div class="col-md-5 mb-6">
+            <x-datatable id="students-without-fee-datatable"
+                datatableTitle="{{ trans('admin/fees.studentsWithoutFee') }}">
+                <th></th>
+                <th>#</th>
+                <th>{{ trans('main.student') }}</th>
+                <th>{{ trans('main.created_at') }}</th>
+            </x-datatable>
+        </div>
     </div>
 @endsection
 
@@ -193,6 +205,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chartColors = {
+                donut: {
+                    series1: '#28a745',
+                    series3: '#ab7efd',
+                    series2: '#dc3545',
+                    series4: '#007bff',
+                },
                 area: {
                     series1: '#ab7efd',
                     series2: '#b992fe',
@@ -213,34 +231,117 @@
                 legendColor = config.colors.bodyColor;
             }
 
-            initializeDataTable('#students-paid-fee-datatable', "{{ route('admin.fees.studentsPaidFee', $fee->id) }}", [1, 2, 3, 4, 5],
-                [
-                    { data: "", orderable: false, searchable: false },
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'details', name: 'student_id' },
-                    { data: 'amount', name: 'amount', orderable: false, searchable: false },
-                    { data: 'date', name: 'date' },
-                    { data: 'paymentDate', name: 'paymentDate', orderable: false, searchable: false },
-                    { data: 'payment_method', name: 'payment_method', orderable: false, searchable: false },
-                    { data: 'transactions', name: 'transactions', orderable: false, searchable: false },
+            initializeDataTable('#students-paid-fee-datatable',
+                "{{ route('admin.fees.studentsPaidFee', $fee->id) }}", [1, 2, 3, 4, 5],
+                [{
+                        data: "",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'details',
+                        name: 'student_id'
+                    },
+                    {
+                        data: 'amount',
+                        name: 'amount',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'date',
+                        name: 'date'
+                    },
+                    {
+                        data: 'paymentDate',
+                        name: 'paymentDate',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'payment_method',
+                        name: 'payment_method',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'transactions',
+                        name: 'transactions',
+                        orderable: false,
+                        searchable: false
+                    },
                 ],
             );
-            initializeDataTable('#students-havenot-paid-fee-datatable', "{{ route('admin.fees.studentsHavenotPaidFee', $fee->id) }}", [1, 2, 3, 4, 5],
-                [
-                    { data: "", orderable: false, searchable: false },
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'details', name: 'student_id' },
-                    { data: 'amount', name: 'amount', orderable: false, searchable: false },
-                    { data: 'date', name: 'date' },
-                    { data: 'status', name: 'status', orderable: false, searchable: false },
-                    { data: 'transactions', name: 'transactions', orderable: false, searchable: false },
+            initializeDataTable('#students-havenot-paid-fee-datatable',
+                "{{ route('admin.fees.studentsHavenotPaidFee', $fee->id) }}", [1, 2, 3, 4, 5],
+                [{
+                        data: "",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'details',
+                        name: 'student_id'
+                    },
+                    {
+                        data: 'amount',
+                        name: 'amount',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'date',
+                        name: 'date'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'transactions',
+                        name: 'transactions',
+                        orderable: false,
+                        searchable: false
+                    },
                 ],
             );
-            initializeDataTable('#students-without-fee-datatable', "{{ route('admin.fees.studentsWithoutFee', $fee->id) }}", [1, 2, 3],
-                [
-                    { data: "", orderable: false, searchable: false },
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'details', name: 'student_id' },
+            initializeDataTable('#students-without-fee-datatable',
+                "{{ route('admin.fees.studentsWithoutFee', $fee->id) }}", [1, 2, 3],
+                [{
+                        data: "",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'details',
+                        name: 'student_id'
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at',
+                        orderable: false,
+                        searchable: false
+                    },
                 ],
             );
 
@@ -328,6 +429,216 @@
             if (typeof paymentTrendsChartE !== undefined && paymentTrendsChartE !== null) {
                 const paymentTrendsChart = new ApexCharts(paymentTrendsChartE, paymentTrendsChartConfig);
                 paymentTrendsChart.render();
+            }
+
+            const paymentMethods = @json($data['paymentMethods']);
+            const totalTransactions = Object.values(paymentMethods).reduce((sum, val) => sum + val.count, 0);
+            const percentages = {
+                cash: totalTransactions > 0 ? (paymentMethods.cash.count / totalTransactions * 100).toFixed(1) :
+                    0,
+                vodafone_cash: totalTransactions > 0 ? (paymentMethods.vodafone_cash.count / totalTransactions *
+                    100).toFixed(1) : 0,
+                instapay: totalTransactions > 0 ? (paymentMethods.instapay.count / totalTransactions * 100)
+                    .toFixed(1) : 0,
+                balance: totalTransactions > 0 ? (paymentMethods.balance.count / totalTransactions * 100)
+                    .toFixed(1) : 0
+            };
+            const paymentMethodsChartEl = document.querySelector('#paymentMethodsChart'),
+                paymentMethodsChartConfig = {
+                    chart: {
+                        height: 390,
+                        fontFamily: 'Alexandria',
+                        type: 'donut'
+                    },
+                    labels: [
+                        '{{ trans('main.cash') }}',
+                        '{{ trans('main.vodafoneCash') }}',
+                        '{{ trans('main.instapay') }}',
+                        '{{ trans('main.wallet') }}'
+                    ],
+                    series: [
+                        paymentMethods.cash.count || 0,
+                        paymentMethods.vodafone_cash.count || 0,
+                        paymentMethods.instapay.count || 0,
+                        paymentMethods.balance.count || 0
+                    ],
+                    colors: [
+                        chartColors.donut.series1,
+                        chartColors.donut.series2,
+                        chartColors.donut.series3,
+                        chartColors.donut.series4,
+                    ],
+                    stroke: {
+                        show: false,
+                        curve: 'straight'
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val, opt) {
+                            return parseFloat(val).toFixed(1) + '%';
+                        },
+                        style: {
+                            fontSize: '15px',
+                            fontWeight: 'normal'
+                        },
+                        dropShadow: {
+                            enabled: false
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(val, {
+                                seriesIndex
+                            }) {
+                                const keys = ['cash', 'vodafone_cash', 'instapay', 'balance'];
+                                const percentage = percentages[keys[seriesIndex]];
+                                const amount = paymentMethods[keys[seriesIndex]].amount || 0;
+                                return `${val} (${percentage}%, ${amount} {{ trans('main.currency') }})`;
+                            }
+                        }
+                    },
+                    legend: {
+                        show: true,
+                        position: 'bottom',
+                        fontSize: '13px',
+                        markers: {
+                            offsetX: -3,
+                            width: 10,
+                            height: 10
+                        },
+                        itemMargin: {
+                            vertical: 3,
+                            horizontal: 10
+                        },
+                        labels: {
+                            colors: legendColor,
+                            useSeriesColors: false
+                        }
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '65%',
+                                labels: {
+                                    show: true,
+                                    name: {
+                                        fontSize: '2rem',
+                                        fontFamily: 'Alexandria',
+                                        color: headingColor,
+                                        offsetY: -10
+                                    },
+                                    value: {
+                                        fontSize: '0.9375rem',
+                                        fontWeight: 500,
+                                        fontFamily: 'Alexandria',
+                                        color: legendColor,
+                                        offsetY: 10,
+                                        formatter: function(val) {
+                                            return parseInt(val, 10);
+                                        }
+                                    },
+                                    total: {
+                                        show: true,
+                                        fontSize: '0.9375rem',
+                                        fontWeight: 500,
+                                        fontFamily: 'Alexandria',
+                                        color: headingColor,
+                                        label: '{{ trans('admin/lessons.totalExpected') }}',
+                                        formatter: function(w) {
+                                            return totalTransactions;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    responsive: [{
+                            breakpoint: 992,
+                            options: {
+                                chart: {
+                                    height: 380
+                                },
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        colors: legendColor,
+                                        useSeriesColors: false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            breakpoint: 576,
+                            options: {
+                                chart: {
+                                    height: 320
+                                },
+                                plotOptions: {
+                                    pie: {
+                                        donut: {
+                                            labels: {
+                                                show: true,
+                                                name: {
+                                                    fontSize: '1.5rem'
+                                                },
+                                                value: {
+                                                    fontSize: '1rem'
+                                                },
+                                                total: {
+                                                    fontSize: '1.5rem'
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        colors: legendColor,
+                                        useSeriesColors: false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            breakpoint: 420,
+                            options: {
+                                chart: {
+                                    height: 280
+                                },
+                                legend: {
+                                    show: false
+                                }
+                            }
+                        },
+                        {
+                            breakpoint: 360,
+                            options: {
+                                chart: {
+                                    height: 250
+                                },
+                                legend: {
+                                    show: false
+                                }
+                            }
+                        }
+                    ],
+                    noData: {
+                        text: '{{ trans('main.datatable.empty_table') }}',
+                        align: 'center',
+                        verticalAlign: 'middle',
+                        offsetX: 0,
+                        offsetY: 0,
+                        style: {
+                            color: headingColor,
+                            fontSize: '14px',
+                            fontFamily: 'Alexandria'
+                        }
+                    }
+                };
+            if (typeof paymentMethodsChartEl !== undefined && paymentMethodsChartEl !== null) {
+                const paymentMethodsChart = new ApexCharts(paymentMethodsChartEl, paymentMethodsChartConfig);
+                paymentMethodsChart.render();
             }
         });
     </script>
