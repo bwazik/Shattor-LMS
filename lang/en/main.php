@@ -70,6 +70,7 @@ return [
     'icon' => 'Icon',
     'order' => 'Order',
     'paymentDate' => 'Payment Date',
+    'profile' => 'Profile',
 
     # Weekdays
     'weekdays' => [

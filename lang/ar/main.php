@@ -71,6 +71,7 @@ return [
     'icon' => 'الأيقونة',
     'order' => 'الترتيب',
     'paymentDate' => 'تاريخ الدفع',
+    'profile' => 'البروفايل',
 
     # Weekdays
     'weekdays' => [
