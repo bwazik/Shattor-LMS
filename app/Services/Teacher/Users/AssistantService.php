@@ -23,7 +23,7 @@ class AssistantService
         return datatables()->eloquent($assistantsQuery)
             ->addIndexColumn()
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->uuid))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/assistants', $row->email))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/assistants', $row->email, 'teacher.students.profile.index', $row->uuid))
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'email'))

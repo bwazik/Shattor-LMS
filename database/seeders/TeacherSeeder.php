@@ -27,7 +27,7 @@ class TeacherSeeder extends Seeder
                 'phone' => '01' . $fakerEn->randomElement([0, 1, 2, 5]) . $fakerEn->numerify('########'),
                 'email' => $fakerEn->unique()->safeEmail,
                 'subject_id' => rand(1, 14),
-                'plan_id' => rand(1, 4),
+                'plan_id' => null,
                 'is_active' => $fakerEn->boolean(75),
                 'average_rating' => $fakerEn->randomFloat(2, 0, 10),
                 'balance' => $fakerEn->randomFloat(2, 0, 1000),

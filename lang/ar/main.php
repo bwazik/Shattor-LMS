@@ -72,6 +72,9 @@ return [
     'order' => 'الترتيب',
     'paymentDate' => 'تاريخ الدفع',
     'profile' => 'البروفايل',
+    'personalDetails' => 'المعلومات الشخصية',
+    'contacts' => 'التواصل',
+    'academicDetails' => 'المعلومات الدراسية',
 
     # Weekdays
     'weekdays' => [
@@ -186,6 +189,7 @@ return [
     'original' => 'الأصلية',
     'accept' => 'قبول',
     'reject' => 'رفض',
+    'joined' => 'انضم',
 
     # Modals
     'items' => 'عدد العناصر',
@@ -233,6 +237,8 @@ return [
     'reportIssue' => 'في مشكلة؟',
     'reportIssueTooltip' => 'النص دا مستخرج عن طريق الذكاء الإصطناعي لو في أي مشلكة اضغط علي الزرار دا.',
     'showInstructions' => 'وريني التعليمات',
+    'upload' => 'رفع الصورة',
+    'reset' => 'إستعادة',
 
     # Toasts
     'errorMessage' => 'فيه مشكلة حصلت، جرب تاني بعد شوية!',

@@ -25,7 +25,7 @@ class StudentService
         return datatables()->eloquent($studentsQuery)
             ->addIndexColumn()
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->uuid))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'teacher.students.profile.index', $row->uuid))
             ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
             ->editColumn('parent_id', fn($row) => formatRelation($row->parent_id, $row->parent, 'name'))
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))

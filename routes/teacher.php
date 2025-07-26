@@ -14,6 +14,7 @@ use App\Http\Controllers\Teacher\Tools\ResourcesController;
 
 use App\Http\Controllers\Teacher\Users\AssistantsController;
 use App\Http\Controllers\Teacher\Users\StudentsController;
+use App\Http\Controllers\Teacher\Users\StudentsProfileController;
 use App\Http\Controllers\Teacher\Users\ParentsController;
 
 use App\Http\Controllers\Teacher\Activities\CompensatoriesController;
@@ -187,24 +188,40 @@ Route::group(
                 });
 
                 # Students
-                Route::prefix('students')->controller(StudentsController::class)->name('students.')->group(function() {
-                    Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
-                        Route::post('insert', 'insert')->name('insert');
-                        Route::post('update', 'update')->name('update');
-                        Route::post('delete', 'delete')->name('delete');
-                        Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                Route::prefix('students')->name('students.')->group(function() {
+                    Route::controller(StudentsController::class)->group(function() {
+                        Route::get('/', 'index')->name('index');
+                        Route::middleware('throttle:10,1')->group(function() {
+                            Route::post('insert', 'insert')->name('insert');
+                            Route::post('update', 'update')->name('update');
+                            Route::post('delete', 'delete')->name('delete');
+                            Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                        });
+                    });
+                    Route::controller(StudentsProfileController::class)->group(function() {
+                        Route::prefix('{uuid}')->name('profile.')->group(function() {
+                            Route::get('profile', 'profile')->name('index');
+                            Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
+                            Route::get('attendance', 'attendance')->name('attendance');
+                        });
                     });
                 });
-
                 # Parents
-                Route::prefix('parents')->controller(ParentsController::class)->name('parents.')->group(function() {
-                    Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
-                        Route::post('insert', 'insert')->name('insert');
-                        Route::post('update', 'update')->name('update');
-                        Route::post('delete', 'delete')->name('delete');
-                        Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                Route::prefix('parents')->name('parents.')->group(function() {
+                    Route::controller(ParentsController::class)->group(function() {
+                        Route::get('/', 'index')->name('index');
+                        Route::middleware('throttle:10,1')->group(function() {
+                            Route::post('insert', 'insert')->name('insert');
+                            Route::post('update', 'update')->name('update');
+                            Route::post('delete', 'delete')->name('delete');
+                            Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                        });
+                    });
+                    Route::controller(ParentsProfileController::class)->group(function() {
+                        Route::prefix('{uuid}')->name('profile.')->group(function() {
+                            Route::get('profile', 'profile')->name('index');
+                            Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
+                        });
                     });
                 });
             # End Users Managment

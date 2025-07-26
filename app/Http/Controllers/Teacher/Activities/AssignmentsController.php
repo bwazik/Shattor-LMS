@@ -395,7 +395,7 @@ class AssignmentsController extends Controller
         if ($request->ajax()) {
             return datatables()->eloquent($studentsTookQuery)
                 ->addColumn('rank', fn($row) => $this->getRank($assignment->id, $row->assignment_score))
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
                 ->addColumn('score', fn($row) => $row->assignment_score !== null ? number_format($row->assignment_score, 2) : 'N/A')
                 ->addColumn('link', fn($row) => $this->getReviewLink($assignment->uuid, $row->uuid))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
@@ -422,7 +422,7 @@ class AssignmentsController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($studentsNotTakenQuery)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
                 ->rawColumns(['details'])
                 ->make(true);

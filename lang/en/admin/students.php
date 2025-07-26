@@ -25,4 +25,6 @@ return [
         'email' => 'bwazik@outlook.com',
         'phone' => '01098617164',
     ],
+    'studentsProfile' => 'Students Profile',
+    'groupsCount' => 'Groups Count',
 ];
