@@ -20,8 +20,8 @@ return [
 
     // Hero
     'hero' => [
-        'title' => 'Shattor: Comprehensive Learning Platform starting from 26 ' . trans('main.currency') . ' per day',
-        'subtitle' => 'Join our advanced educational platform in beta phase. Enjoy an exceptional learning experience with flexible packages ranging from 26 ' . trans('main.currency') . ' to 116 ' . trans('main.currency') . ' daily.',
+        'title' => 'Shattor: Comprehensive Learning Platform starting from 33 ' . trans('main.currency') . ' per day',
+        'subtitle' => 'Join our advanced educational platform in beta phase. Enjoy an exceptional learning experience with flexible packages ranging from 33 ' . trans('main.currency') . ' to 50 ' . trans('main.currency') . ' daily.',
         'button' => 'Get Trial Version',
     ],
 
@@ -77,7 +77,7 @@ return [
     // CTA
     'cta' => [
         'title' => 'Ready to Start?',
-        'subtitle' => 'Join Shattor platform and get 14 days free trial, then costs starting from 26 ' . ' ' . trans('main.currency') . ' daily!',
+        'subtitle' => 'Join Shattor platform and get 14 days free trial, then costs starting from 33 ' . ' ' . trans('main.currency') . ' daily!',
         'button' => 'Let\'s Go'
     ],
 
@@ -87,7 +87,7 @@ return [
         'subtitle' => 'Have a question or feedback? Write your message here if you don\'t have WhatsApp!',
         'cardTagline' => 'Connect with our team',
         'cardTitle' => 'Share your ideas or inquiries about our educational platform.',
-        'cardDescription' => 'Looking for additional features or a custom plan? Contact us to achieve the best learning experience starting from ' . '26 ' . trans('main.currency') . ' daily!',
+        'cardDescription' => 'Looking for additional features or a custom plan? Contact us to achieve the best learning experience starting from ' . '33 ' . trans('main.currency') . ' daily!',
         'message' => 'Message',
         'button' => 'Send Message',
     ],
