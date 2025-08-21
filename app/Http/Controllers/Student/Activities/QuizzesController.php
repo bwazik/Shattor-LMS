@@ -321,7 +321,7 @@ class QuizzesController extends Controller
 
         $result = $this->getStudentResult($quiz->id, true);
 
-        if ((!in_array($result->status, [2, 3])) || (!$quiz->show_result || !$quiz->allow_review)) {
+        if ((!in_array($result->status, [2, 3])) || !$quiz->show_result) {
             return redirect()->route('student.quizzes.index')->with('error', trans('toasts.reviewNotAvailable'));
         }
 

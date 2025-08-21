@@ -75,6 +75,8 @@ return [
     'personalDetails' => 'المعلومات الشخصية',
     'contacts' => 'التواصل',
     'academicDetails' => 'المعلومات الدراسية',
+    'submitted' => 'تم التسليم',
+    'notSubmitted' => 'متسلمش',
 
     # Weekdays
     'weekdays' => [
@@ -289,4 +291,5 @@ return [
         10 => 'العاشر',
     ],
     'all' => 'الجميع',
+    'of' => 'من',
 ];

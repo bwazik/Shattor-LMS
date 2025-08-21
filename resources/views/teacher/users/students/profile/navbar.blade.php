@@ -13,16 +13,24 @@
                             class="ri-calendar-check-line me-2"></i>{{ trans('admin/attendance.attendance') }}</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href=""><i
+                    <a class="nav-link {{ isActiveRoute('teacher.students.profile.quizzes') ? 'active' : '' }}"
+                        href="{{ route('teacher.students.profile.quizzes', $student->uuid) }}"><i
                             class="ri-brain-line me-2"></i>{{ trans('admin/quizzes.quizzes') }}</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href=""><i
+                    <a class="nav-link {{ isActiveRoute('teacher.students.profile.assignments') ? 'active' : '' }}"
+                        href="{{ route('teacher.students.profile.assignments', $student->uuid) }}"><i
                             class="ri-file-copy-2-line me-2"></i>{{ trans('admin/assignments.assignments') }}</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href=""><i
+                    <a class="nav-link {{ isActiveRoute('teacher.students.profile.fees') ? 'active' : '' }}"
+                        href="{{ route('teacher.students.profile.fees', $student->uuid) }}"><i
                             class="ri-bank-line me-2"></i>{{ trans('admin/fees.fees') }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ isActiveRoute('teacher.students.profile.security') ? 'active' : '' }}"
+                        href="{{ route('teacher.students.profile.security', $student->uuid) }}"><i
+                            class="ri-lock-line me-2"></i>{{ trans('account.security') }}</a>
                 </li>
             </ul>
         </div>

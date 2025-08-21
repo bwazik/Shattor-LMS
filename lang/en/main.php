@@ -74,6 +74,8 @@ return [
     'personalDetails' => 'Personal Details',
     'contacts' => 'Contacts',
     'academicDetails' => 'Academic Details',
+    'submitted' => 'Submitted',
+    'notSubmitted' => 'Not Submitted',
 
     # Weekdays
     'weekdays' => [
@@ -276,4 +278,5 @@ return [
     'yes' => 'Yes',
     'no' => 'No',
     'all' => 'All',
+    'of' => 'of',
 ];

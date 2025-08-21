@@ -480,11 +480,11 @@ class LessonsController extends Controller
     {
         switch ($status) {
             case 1:
-                return '<span class="badge rounded-pill bg-label-success text-capitalize">' . trans('admin/attendance.p') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.present') . '" class="badge rounded-pill bg-label-success text-capitalize">' . trans('admin/attendance.p') . '</span>';
             case 2:
-                return '<span class="badge rounded-pill bg-label-danger text-capitalize">' . trans('admin/attendance.a') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.absent') . '" class="badge rounded-pill bg-label-danger text-capitalize">' . trans('admin/attendance.a') . '</span>';
             case 3:
-                return '<span class="badge rounded-pill bg-label-warning text-capitalize">' . trans('admin/attendance.l') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.late') . '" class="badge rounded-pill bg-label-warning text-capitalize">' . trans('admin/attendance.l') . '</span>';
             default:
                 return '<span class="badge rounded-pill bg-label-secondary text-capitalize">-</span>';
         }

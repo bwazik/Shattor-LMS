@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-$('#invoices-datatable, #datatable').on('draw.dt', function () {
+$('#invoices-datatable, #lessons-datatable, #compensatory-students-datatable, #compensated-students-datatable, #present-late-students-datatable, #datatable').on('draw.dt', function () {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl, {

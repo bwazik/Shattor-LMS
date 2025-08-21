@@ -133,7 +133,7 @@ class AttendanceService
             $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
             $lesson = Lesson::uuid($request['lesson_id'])
                 ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-                ->firstOrFail(['id', 'date']);
+                ->firstOrFail(['id', 'title', 'date']);
             $attendanceData = $request['attendance'];
 
             if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true))

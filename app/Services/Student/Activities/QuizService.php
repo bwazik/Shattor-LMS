@@ -47,7 +47,7 @@ class QuizService
             ->where('quiz_id', $row->id)
             ->first();
 
-        if ($result && ($result->status == 2 || $result->status == 3) && ($row->show_result || $row->allow_review) && now()->greaterThanOrEqualTo($row->end_time)) {
+        if ($result && ($result->status == 2 || $result->status == 3) && $row->show_result && now()->greaterThanOrEqualTo($row->end_time)) {
             return formatSpanUrl(
                 route('student.quizzes.review', $row->uuid),
                 trans('admin/quizzes.reviewAnswers'),

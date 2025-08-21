@@ -122,7 +122,7 @@ class AttendanceService
             $teacherId = $request['teacher_id'];
             $gradeId = $request['grade_id'];
             $groupId = $request['group_id'];
-            $lesson = Lesson::select('id', 'date')->findOrFail($request['lesson_id']);
+            $lesson = Lesson::select('id', 'title', 'date')->findOrFail($request['lesson_id']);
             $attendanceData = $request['attendance'];
 
             if ($validationResult = $this->validateTeacherGradeAndGroups($teacherId, $groupId, $gradeId, true))

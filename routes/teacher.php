@@ -203,6 +203,10 @@ Route::group(
                             Route::get('profile', 'profile')->name('index');
                             Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                             Route::get('attendance', 'attendance')->name('attendance');
+                            Route::get('quizzes', 'quizzes')->name('quizzes');
+                            Route::get('assignments', 'assignments')->name('assignments');
+                            Route::get('fees', 'fees')->name('fees');
+                            Route::get('security', 'security')->name('security');
                         });
                     });
                 });
