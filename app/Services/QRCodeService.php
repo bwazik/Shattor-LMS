@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;

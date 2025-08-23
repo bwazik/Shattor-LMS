@@ -19,6 +19,8 @@ use App\Services\Teacher\Tools\LessonService;
 use App\Services\Teacher\Users\StudentService;
 use App\Http\Requests\Admin\Tools\GroupsRequest;
 use App\Http\Requests\Admin\Tools\GenerateLessonsRequest;
+use App\Services\QRCodeService;
+use Omaralalwi\Gpdf\Gpdf;
 
 class GroupsController extends Controller
 {
@@ -29,14 +31,16 @@ class GroupsController extends Controller
     protected $lessonService;
     protected $studentService;
     protected $planLimitService;
+    protected $qrCodeService;
 
-    public function __construct(GroupService $groupService, LessonService $lessonService, StudentService $studentService)
+    public function __construct(GroupService $groupService, LessonService $lessonService, StudentService $studentService, QRCodeService $qrCodeService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
         $this->groupService = $groupService;
         $this->lessonService = $lessonService;
         $this->studentService = $studentService;
         $this->planLimitService = new PlanLimitService($this->teacherId);
+        $this->qrCodeService = $qrCodeService;
     }
 
     public function index(Request $request)
@@ -193,5 +197,44 @@ class GroupsController extends Controller
         }
 
         return view('teacher.tools.groups.students', compact('group', 'grades', 'parents', 'groups'));
+    }
+
+    public function exportQrCodes($uuid)
+    {
+        $group = Group::uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $students = Student::select('id', 'uuid', 'name')
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->whereHas('groups', fn($query) => $query->where('group_id', $group->id))
+            ->get();
+
+        if ($students->isEmpty()) {
+            return $this->errorResponse(trans('toasts.noStudentsFound'));
+        }
+
+        $qrCodes = [];
+
+        foreach ($students as $student) {
+            $qrCodes[] = [
+                'qr_code' => $this->qrCodeService->generateQRCode('student', $student->uuid),
+                'student_id' => $student->id,
+                'student_name' => $student->name,
+            ];
+        }
+
+        $html = view('teacher.tools.groups.export-qr-codes', [
+            'qrCodes' => $qrCodes,
+            'groupName' => $group->name,
+            'groupUuid' => $group->uuid,
+            'platformName' => "منصة شطور",
+            'logoPath' => public_path('assets/img/brand/navbar.png'),
+        ])->render();
+
+        $gpdf = app(Gpdf::class);
+        $gpdf->generateWithStream($html, "group-{$group->uuid}-qr-codes", true);
+
+        return response(null, 200, ['Content-Type' => 'application/pdf']);
     }
 }

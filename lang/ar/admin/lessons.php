@@ -19,6 +19,7 @@ return [
         'title_en' => 'Review Lesson',
     ],
     'generate' => 'إنشاء الحصص',
+    'exportQrCodes' => 'تصدير Codes QR',
     'attendanceStats' => 'إحصائيات الحضور والغياب',
     'totalExpected' => 'عدد الطلاب',
     'attendanceRate' => 'نسبة الحضور',

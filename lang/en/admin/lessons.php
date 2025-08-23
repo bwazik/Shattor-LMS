@@ -19,6 +19,7 @@ return [
         'title_en' => 'Review Lesson',
     ],
     'generate' => 'Generate Lessons',
+        'exportQrCodes' => 'Export Codes QR',
     'attendanceStats' => 'Attendance Statistics',
     'totalExpected' => 'Total Students',
     'attendanceRate' => 'Attendance Rate',

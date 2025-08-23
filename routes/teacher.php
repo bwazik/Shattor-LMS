@@ -132,6 +132,7 @@ Route::group(
                     Route::get('/', 'index')->name('index');
                     Route::get('{uuid}/lessons', 'lessons')->name('lessons');
                     Route::get('{uuid}/students', 'students')->name('students');
+                    Route::get('{uuid}/export-qr-codes', 'exportQrCodes')->name('exportQrCodes');
                     Route::middleware('throttle:10,1')->group(function() {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');

@@ -62,71 +62,73 @@ class LoginRequest extends FormRequest
                 ]);
             }
 
-            $deviceFingerprint = hash('sha256', request()->userAgent() . '|' . request()->ip());
-            $deviceCount = DB::table('user_devices')
-                ->where('user_id', $user->id)
-                ->where('guard', $guard)
-                ->count();
+            if ($guard !== 'teacher') {
+                $deviceFingerprint = hash('sha256', request()->userAgent() . '|' . request()->ip());
+                $deviceCount = DB::table('user_devices')
+                    ->where('user_id', $user->id)
+                    ->where('guard', $guard)
+                    ->count();
 
-            $isAuthorized = DB::table('user_devices')
-                ->where('user_id', $user->id)
-                ->where('guard', $guard)
-                ->where('device_fingerprint', $deviceFingerprint)
-                ->exists();
+                $isAuthorized = DB::table('user_devices')
+                    ->where('user_id', $user->id)
+                    ->where('guard', $guard)
+                    ->where('device_fingerprint', $deviceFingerprint)
+                    ->exists();
 
-            if ($deviceCount >= 2 && !$isAuthorized) {
-                Auth::guard($guard)->logout();
-                Log::warning('Too many devices attempted login', [
-                    'username' => $this->input('username'),
-                    'guard' => $guard,
-                    'ip' => request()->ip(),
-                    'fingerprint' => $deviceFingerprint,
-                ]);
-                throw ValidationException::withMessages([
-                    'username' => trans('auth.tooManyDevices'),
-                ]);
-            }
-
-            // Invalidate other sessions for this user and guard
-            $sessionKeyPrefix = 'login_' . $guard . '_';
-            $currentSessionId = session()->getId();
-            $sessions = DB::table('sessions')->where('user_id', $user->id)->get();
-
-            foreach ($sessions as $session) {
-                if ($session->id === $currentSessionId) {
-                    continue;
-                }
-                try {
-                    $decodedPayload = unserialize(base64_decode($session->payload));
-                    foreach (array_keys($decodedPayload) as $key) {
-                        if (strpos($key, $sessionKeyPrefix) === 0) {
-                            DB::table('sessions')->where('id', $session->id)->delete();
-                            break;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Session payload decode failed', [
-                        'session_id' => $session->id,
-                        'error' => $e->getMessage(),
+                if ($deviceCount >= 2 && !$isAuthorized) {
+                    Auth::guard($guard)->logout();
+                    Log::warning('Too many devices attempted login', [
+                        'username' => $this->input('username'),
+                        'guard' => $guard,
+                        'ip' => request()->ip(),
+                        'fingerprint' => $deviceFingerprint,
+                    ]);
+                    throw ValidationException::withMessages([
+                        'username' => trans('auth.tooManyDevices'),
                     ]);
                 }
-            }
 
-            // Update or add device
-            DB::table('user_devices')->updateOrInsert(
-                [
-                    'user_id' => $user->id,
-                    'guard' => $guard,
-                    'device_fingerprint' => $deviceFingerprint,
-                ],
-                [
-                    'user_agent' => request()->userAgent(),
-                    'last_ip' => request()->ip(),
-                    'last_used_at' => now(),
-                    'updated_at' => now(),
-                    'created_at' => DB::raw('COALESCE(created_at, NOW())'),
-                ]
-            );
+                // Invalidate other sessions for this user and guard
+                $sessionKeyPrefix = 'login_' . $guard . '_';
+                $currentSessionId = session()->getId();
+                $sessions = DB::table('sessions')->where('user_id', $user->id)->get();
+
+                foreach ($sessions as $session) {
+                    if ($session->id === $currentSessionId) {
+                        continue;
+                    }
+                    try {
+                        $decodedPayload = unserialize(base64_decode($session->payload));
+                        foreach (array_keys($decodedPayload) as $key) {
+                            if (strpos($key, $sessionKeyPrefix) === 0) {
+                                DB::table('sessions')->where('id', $session->id)->delete();
+                                break;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Session payload decode failed', [
+                            'session_id' => $session->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                // Update or add device
+                DB::table('user_devices')->updateOrInsert(
+                    [
+                        'user_id' => $user->id,
+                        'guard' => $guard,
+                        'device_fingerprint' => $deviceFingerprint,
+                    ],
+                    [
+                        'user_agent' => request()->userAgent(),
+                        'last_ip' => request()->ip(),
+                        'last_used_at' => now(),
+                        'updated_at' => now(),
+                        'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+                    ]
+                );
+            }
         }
 
         RateLimiter::clear($this->throttleKey());
