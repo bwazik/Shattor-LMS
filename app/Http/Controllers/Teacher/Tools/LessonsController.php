@@ -41,7 +41,7 @@ class LessonsController extends Controller
         $lessonsQuery = Lesson::query()->with(['group:id,uuid,name'])
             ->select('id', 'uuid', 'title', 'group_id', 'date', 'time', 'status')
             ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->orderBy('date', 'desc');
+            ->orderBy('date');
 
         if ($request->ajax()) {
             return $this->lessonService->getLessonsForDatatable($lessonsQuery);

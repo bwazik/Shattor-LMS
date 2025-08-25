@@ -108,7 +108,7 @@ class GroupsController extends Controller
         $lessonsQuery = Lesson::query()->with(['group'])
             ->select('id', 'title', 'group_id', 'date', 'time', 'status')
             ->where('group_id', $groupId)
-            ->orderBy('date', 'desc');
+            ->orderBy('date');
 
         $groups = Group::query()->select('id', 'name', 'teacher_id', 'grade_id')
             ->with(['teacher:id,name', 'grade:id,name'])
