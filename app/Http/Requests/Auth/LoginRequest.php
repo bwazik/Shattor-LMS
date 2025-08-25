@@ -77,8 +77,6 @@ class LoginRequest extends FormRequest
         if ($guard === 'web') {
             // admin: unlimited devices & sessions → no restriction
         } elseif ($guard === 'teacher') {
-            Log::debug("🟡 Teacher detected, skipping restrictions");
-
             // teacher: unlimited devices & sessions → no restriction
         } else {
             if ($deviceCount >= 2 && !$isAuthorized) {
@@ -119,8 +117,7 @@ class LoginRequest extends FormRequest
                 }
             }
         }
-            Log::debug("🟡 Teacher detectedssssssssssss, skipping restrictions");
-
+        
         // Update or add device
         DB::table('user_devices')->updateOrInsert(
             [
