@@ -205,7 +205,7 @@ class GroupsController extends Controller
             ->where('teacher_id', $this->teacherId)
             ->firstOrFail();
 
-        $students = Student::select('id', 'uuid', 'name')
+        $students = Student::select('id', 'uuid', 'name', 'phone')
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereHas('groups', fn($query) => $query->where('group_id', $group->id))
             ->get();
@@ -219,8 +219,10 @@ class GroupsController extends Controller
         foreach ($students as $student) {
             $qrCodes[] = [
                 'qr_code' => $this->qrCodeService->generateQRCode('student', $student->uuid),
-                'student_id' => $student->id,
                 'student_name' => $student->name,
+                'teacher_name' => auth()->guard('teacher')->user()->name,
+                'student_phone' => $student->phone,
+                'group_name' => $group->name,
             ];
         }
 

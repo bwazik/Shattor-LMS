@@ -35,7 +35,7 @@ class LessonsController extends Controller
 
     public function index(Request $request)
     {
-        $lessonsQuery = Lesson::query()->with(['group'])
+        $lessonsQuery = Lesson::query()->with(['group:id,name'])
             ->select('id', 'title', 'group_id', 'date', 'time', 'status');
 
         if ($request->ajax()) {
@@ -162,7 +162,9 @@ class LessonsController extends Controller
             })
             ->where('student_teacher.teacher_id', $lesson->group->teacher_id)
             ->where('students.grade_id', $lesson->group->grade_id)
-            ->where('student_group.group_id', $lesson->group_id);
+            ->where('student_group.group_id', $lesson->group_id)
+            ->where('student_group.created_at', '<=', $lesson->date)
+            ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$lesson->date]);
 
         $compensatoryAttendancesQuery = Student::query()
             ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
@@ -233,11 +235,17 @@ class LessonsController extends Controller
         $groupId = $lesson->group_id;
 
         // Total expected students: group members + approved compensatory students from other groups
-        $groupStudents = Student::whereHas('groups', fn($query) => $query->where('group_id', $groupId)
-            ->where('student_group.created_at', '<=', $lesson->date))
-            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $lesson->group->teacher_id))
-            ->pluck('id')
-            ->toArray();
+        $groupStudentsQuery = Student::query()
+            ->join('student_group', 'students.id', '=', 'student_group.student_id')
+            ->join('groups', 'student_group.group_id', '=', 'groups.id')
+            ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
+            ->where('student_group.group_id', $groupId)
+            ->where('student_group.created_at', '<=', $lesson->date)
+            ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$lesson->date])
+            ->where('student_teacher.teacher_id', $lesson->group->teacher_id)
+            ->select('students.id');
+
+        $groupStudents = $groupStudentsQuery->pluck('students.id')->toArray();
 
         $compensatoryStudents = Compensatory::where('makeup_lesson_id', $lesson->id)
             ->where('status', 2)
@@ -428,11 +436,12 @@ class LessonsController extends Controller
             ->select('id', 'title', 'group_id', 'date')->findOrFail($id);
 
         $unrecordedStudents = Student::query()
-            ->whereHas('groups', fn($query) => $query->where('group_id', $lesson->group_id)
-                ->where('student_group.created_at', '<=', $lesson->date))->whereHas('teachers', fn($query) => $query->where('teacher_id', $lesson->group->teacher_id))
+            ->whereHas('allGroups', fn($query) => $query->where('group_id', $lesson->group_id)
+                ->where('student_group.created_at', '<=', $lesson->date))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $lesson->group->teacher_id))
             ->whereDoesntHave('attendances', fn($query) =>
                 $query->where('lesson_id', $lesson->id)->where('teacher_id', $lesson->group->teacher_id))
-            ->select('id', 'name', 'phone', 'profile_pic', 'created_at');
+            ->select('id', 'uuid', 'name', 'phone', 'profile_pic', 'created_at');
 
         if ($request->ajax()) {
             return datatables()->eloquent($unrecordedStudents)

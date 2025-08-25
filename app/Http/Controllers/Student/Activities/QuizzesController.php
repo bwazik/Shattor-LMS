@@ -11,6 +11,7 @@ use App\Models\StudentAnswer;
 use App\Models\StudentResult;
 use App\Services\GeminiService;
 use App\Models\StudentQuizOrder;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Traits\DatabaseTransactionTrait;
@@ -36,7 +37,11 @@ class QuizzesController extends Controller
         $this->studentId = $this->student->id;
         $this->studentGradeId = $this->student->grade_id;
         $this->studentGroupIds = Cache::remember("student_groups:{$this->studentId}", now()->addHours(24), function () {
-            return $this->student->groups()->pluck('groups.id')->toArray();
+            return $this->student->allGroups()
+                ->where('student_group.created_at', '<=', now())
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [now()->subDays(90)])
+                ->pluck('groups.id')
+                ->toArray();
         });
         $this->teacherIds = Cache::remember("student_teachers:{$this->studentId}", now()->addHours(24), function () {
             return $this->student->teachers()->pluck('teachers.id')->toArray();
@@ -48,8 +53,16 @@ class QuizzesController extends Controller
         $quizzesQuery = $this->getStudentQuizQuery()
             ->with(['teacher:id,name'])
             ->select(
-                'id', 'uuid', 'name', 'teacher_id', 'duration', 'quiz_mode',
-                'start_time', 'end_time', 'show_result', 'allow_review'
+                'id',
+                'uuid',
+                'name',
+                'teacher_id',
+                'duration',
+                'quiz_mode',
+                'start_time',
+                'end_time',
+                'show_result',
+                'allow_review'
             );
 
         if ($request->ajax()) {
@@ -236,11 +249,13 @@ class QuizzesController extends Controller
 
         $this->validateAnswerSubmission($request, $quiz);
 
-        if (!StudentQuizOrder::where('student_id', $this->studentId)
-            ->where('quiz_id', $quiz->id)
-            ->where('question_id', $request->question_id)
-            ->where('display_order', $request->current_order)
-            ->exists()) {
+        if (
+            !StudentQuizOrder::where('student_id', $this->studentId)
+                ->where('quiz_id', $quiz->id)
+                ->where('question_id', $request->question_id)
+                ->where('display_order', $request->current_order)
+                ->exists()
+        ) {
             return $this->createResponse('error', trans('toasts.invalidQuestionOrder'));
         }
 
@@ -345,7 +360,13 @@ class QuizzesController extends Controller
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
             ->whereHas('groups', function ($query) {
-                $query->whereIn('groups.id', $this->studentGroupIds);
+                $query->whereIn('groups.id', $this->studentGroupIds)
+                    ->join('student_group', function ($join) {
+                        $join->on('groups.id', '=', 'student_group.group_id')
+                            ->where('student_group.student_id', $this->studentId);
+                    })
+                    ->where('student_group.created_at', '<=', DB::raw('quizzes.end_time'))
+                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time');
             });
     }
 
@@ -388,7 +409,7 @@ class QuizzesController extends Controller
     protected function validateQuizAvailability($quiz, $result)
     {
         if ($quiz->quiz_mode == 1 && $quiz->duration > 0 && now()->greaterThanOrEqualTo(Carbon::parse($quiz->end_time))) {
-            if($result){
+            if ($result) {
                 $this->executeTransaction(function () use ($result) {
                     $result->update(['status' => 2, 'completed_at' => now()]);
                 });

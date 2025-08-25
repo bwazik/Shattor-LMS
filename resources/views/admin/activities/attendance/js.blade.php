@@ -256,6 +256,8 @@
         let lastScanTime = 0;
         let lastInvalidScanTime = 0;
 
+        const successSound = new Audio('{{ asset('assets/sounds/attendance-sound.mp3') }}');
+
         startScanner.addEventListener('click', function() {
             const teacherId = form.find('#teacher_id').val();
             const gradeId = form.find('#grade_id').val();
@@ -340,6 +342,9 @@
                                         success: function(response) {
                                             if (response.success) {
                                                 toastr.success(response.success)
+                                                successSound.play().catch(function(error) {
+                                                    console.warn('Audio playback failed:', error);
+                                                });
                                             } else {
                                                 toastr.error(response.error ||
                                                     errorMessage);

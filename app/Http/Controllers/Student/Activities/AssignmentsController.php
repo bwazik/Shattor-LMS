@@ -8,6 +8,7 @@ use App\Models\AssignmentFile;
 use App\Models\SubmissionFile;
 use App\Services\GeminiService;
 use App\Traits\ValidatesExistence;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\AssignmentSubmission;
 use App\Traits\ServiceResponseTrait;
@@ -34,7 +35,11 @@ class AssignmentsController extends Controller
         $this->studentId = $this->student->id;
         $this->studentGradeId = $this->student->grade_id;
         $this->studentGroupIds = Cache::remember("student_groups:{$this->studentId}", now()->addHours(24), function () {
-            return $this->student->groups()->pluck('groups.id')->toArray();
+            return $this->student->allGroups()
+                ->where('student_group.created_at', '<=', now())
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [now()->subDays(90)])
+                ->pluck('groups.id')
+                ->toArray();
         });
         $this->teacherIds = Cache::remember("student_teachers:{$this->studentId}", now()->addHours(24), function () {
             return $this->student->teachers()->pluck('teachers.id')->toArray();
@@ -139,13 +144,15 @@ class AssignmentsController extends Controller
 
         $result = $this->fileUploadService->uploadFile($request, 'submission', $assignment->id);
 
-        return $this->conrtollerJsonResponse($result,
-        [
-            "student_assignment_review:{$this->studentId}:{$assignment->id}",
-            "assignment_{$assignment->id}_avg_files",
-            "assignment_{$assignment->id}_avg_file_size",
-            "submission_trends_{$assignment->id}",
-        ]);
+        return $this->conrtollerJsonResponse(
+            $result,
+            [
+                "student_assignment_review:{$this->studentId}:{$assignment->id}",
+                "assignment_{$assignment->id}_avg_files",
+                "assignment_{$assignment->id}_avg_file_size",
+                "submission_trends_{$assignment->id}",
+            ]
+        );
     }
 
     public function downloadAssignment($fileId)
@@ -218,13 +225,15 @@ class AssignmentsController extends Controller
 
         $result = $this->fileUploadService->deleteFile('submission', $request->id);
 
-        return $this->conrtollerJsonResponse($result,
-        [
-            "student_assignment_review:{$this->studentId}:{$assignment->id}",
-            "assignment_{$assignment->id}_avg_files",
-            "assignment_{$assignment->id}_avg_file_size",
-            "submission_trends_{$assignment->id}",
-        ]);
+        return $this->conrtollerJsonResponse(
+            $result,
+            [
+                "student_assignment_review:{$this->studentId}:{$assignment->id}",
+                "assignment_{$assignment->id}_avg_files",
+                "assignment_{$assignment->id}_avg_file_size",
+                "submission_trends_{$assignment->id}",
+            ]
+        );
     }
 
     public function review($uuid)
@@ -275,7 +284,13 @@ class AssignmentsController extends Controller
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
             ->whereHas('groups', function ($query) {
-                $query->whereIn('groups.id', $this->studentGroupIds);
+                $query->whereIn('groups.id', $this->studentGroupIds)
+                    ->join('student_group', function ($join) {
+                        $join->on('groups.id', '=', 'student_group.group_id')
+                            ->where('student_group.student_id', $this->studentId);
+                    })
+                    ->where('student_group.created_at', '<=', DB::raw('assignments.deadline'))
+                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at');
             });
     }
 

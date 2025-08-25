@@ -36,7 +36,9 @@ class AttendanceService
             })
             ->where('student_teacher.teacher_id', $request['teacher_id'])
             ->where('students.grade_id', $request['grade_id'])
-            ->where('student_group.group_id', $request['group_id']);
+            ->where('student_group.group_id', $request['group_id'])
+            ->where('student_group.created_at', '<=', $lesson->date)
+            ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$lesson->date]);
 
         $compensatoryStudentsQuery = Student::query()
             ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))

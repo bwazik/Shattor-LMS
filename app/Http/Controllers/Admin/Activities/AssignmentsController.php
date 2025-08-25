@@ -164,7 +164,10 @@ class AssignmentsController extends Controller
 
         // Total students eligible for the assignment
         $totalStudents = Student::where('grade_id', $assignment->grade_id)
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $assignment->deadline)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$assignment->created_at]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $assignment->teacher_id))
             ->count();
 
         // Students who actually took the assignment
@@ -279,11 +282,11 @@ class AssignmentsController extends Controller
                 ->get()
                 ->map(function ($item) {
                     return [
-                        'id' => $item->student->id,
-                        'uuid' => $item->student->uuid,
-                        'name' => $item->student->name,
+                        'id' => $item->student->id ?? 'N/A',
+                        'uuid' => $item->student->uuid ?? 'N/A',
+                        'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
-                        'profile_pic' => $item->student->profile_pic,
+                        'profile_pic' => $item->student->profile_pic ?? 'N/A',
                         'assignment_score' => number_format($item->assignment_score, 2),
                     ];
                 });
@@ -348,14 +351,18 @@ class AssignmentsController extends Controller
     public function studentsTookAssignment(Request $request, $id)
     {
         $assignment = Assignment::with('groups')
-            ->select('id')
+            ->select('id', 'teacher_id', 'grade_id', 'deadline', 'created_at')
             ->findOrFail($id);
 
         $groupIds = $assignment->groups()->pluck('groups.id');
 
         $studentsTookQuery = Student::query()
             ->with(['assignmentSubmissions' => fn($q) => $q->where('assignment_id', $assignment->id)])
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->where('grade_id', $assignment->grade_id)
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $assignment->deadline)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$assignment->created_at]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $assignment->teacher_id))
             ->whereHas('assignmentSubmissions', fn($q) => $q->where('assignment_id', $assignment->id))
             ->select('id', 'name', 'phone', 'profile_pic')
             ->addSelect([
@@ -379,13 +386,16 @@ class AssignmentsController extends Controller
 
     public function studentsHavenotTakenAssignment(Request $request, $id)
     {
-        $assignment = Assignment::select('id', 'grade_id')->findOrFail($id);
+        $assignment = Assignment::select('id', 'teacher_id', 'grade_id', 'created_at', 'deadline')->findOrFail($id);
 
         $groupIds = $assignment->groups()->pluck('groups.id');
 
         $studentsNotTakenQuery = Student::query()
             ->where('grade_id', $assignment->grade_id)
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $assignment->deadline)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$assignment->created_at]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $assignment->teacher_id))
             ->whereDoesntHave('assignmentSubmissions', fn($q) => $q->where('assignment_id', $assignment->id))
             ->select('id', 'name', 'phone', 'profile_pic');
 

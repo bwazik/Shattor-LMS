@@ -143,7 +143,20 @@ class StudentService
             ]);
 
             $student->teachers()->sync($this->teacherId ?? []);
-            $student->groups()->sync($groupIds ?? []);
+
+            $currentGroups = $student->groups()->pluck('groups.id')->toArray();
+            $groupsToRemove = array_diff($currentGroups, $groupIds);
+            $groupsToAdd = array_diff($groupIds, $currentGroups);
+
+            if (!empty($groupsToRemove)) {
+                $student->groups()->whereIn('groups.id', $groupsToRemove)
+                    ->whereNull('student_group.ended_at')
+                    ->update(['student_group.ended_at' => now()]);
+            }
+
+            if (!empty($groupsToAdd)) {
+                $student->groups()->attach($groupsToAdd);
+            }
 
             return $this->successResponse(trans('main.edited', ['item' => trans('admin/students.student')]));
         }, trans('toasts.ownershipError'));

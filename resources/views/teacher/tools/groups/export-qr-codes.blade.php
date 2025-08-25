@@ -128,7 +128,7 @@
 
 <body>
     @php
-        $platformPhoneNumber = '01098617164';
+        $platformPhoneNumber = '01034866329';
     @endphp
 
     @foreach ($qrCodes as $item)
@@ -142,7 +142,9 @@
                         </td>
                         <td class="student-td">
                             <p class="student-name">{{ $item['student_name'] }}</p>
-                            <p class="student-id">الأيدي : {{ $item['student_id'] }}</p>
+                            <p class="student-id">المدرس: {{ $item['teacher_name'] }}</p>
+                            <p class="student-id">المجموعة: {!! $item['group_name'] !!}</p>
+                            <p class="student-id">موبايل الطالب: {{ $item['student_phone'] }}</p>
                         </td>
                     </tr>
                 </table>

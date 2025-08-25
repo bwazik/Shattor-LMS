@@ -75,12 +75,12 @@ class LessonService
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
             ->addColumn('attendances', fn($row) => formatSpanUrl(route('admin.lessons.attendances', $row->id), trans('admin/lessons.attendancesLink')))
             ->editColumn('title', fn($row) => $row->title)
-            ->editColumn('group_id', fn($row) => $row->group_id ? $row->group->name : '-')
+            ->editColumn('group_id', fn($row) => formatRelation($row->group_id, $row->group, 'name'))
             ->editColumn('date', fn($row) => formatDate($row->date, true))
             ->editColumn('status', fn($row) => formatLessonStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('group_id', fn($query, $keyword) => filterByRelation($query, 'group', 'name', $keyword))
-            ->rawColumns(['selectbox', 'attendances', 'status', 'actions'])
+            ->rawColumns(['selectbox', 'attendances', 'group_id', 'status', 'actions'])
             ->make(true);
     }
 

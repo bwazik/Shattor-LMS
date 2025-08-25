@@ -187,8 +187,9 @@ class AssignmentsController extends Controller
 
         // Total students eligible for the assignment
         $totalStudents = Student::where('grade_id', $assignment->grade_id)
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
-            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $assignment->deadline)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$assignment->created_at]))            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->count();
 
         // Students who actually took the assignment
@@ -303,11 +304,11 @@ class AssignmentsController extends Controller
                 ->get()
                 ->map(function ($item) {
                     return [
-                        'id' => $item->student->id,
-                        'uuid' => $item->student->uuid,
-                        'name' => $item->student->name,
+                        'id' => $item->student->id ?? 'N/A',
+                        'uuid' => $item->student->uuid ?? 'N/A',
+                        'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
-                        'profile_pic' => $item->student->profile_pic,
+                        'profile_pic' => $item->student->profile_pic ?? 'N/A',
                         'assignment_score' => number_format($item->assignment_score, 2),
                     ];
                 });
@@ -373,7 +374,7 @@ class AssignmentsController extends Controller
     {
         $assignment = Assignment::with('groups')
             ->where('teacher_id', $this->teacherId)
-            ->select('id', 'uuid')
+            ->select('id', 'uuid', 'grade_id', 'deadline', 'created_at')
             ->uuid($uuid)
             ->firstOrFail();
 
@@ -381,7 +382,10 @@ class AssignmentsController extends Controller
 
         $studentsTookQuery = Student::query()
             ->with(['assignmentSubmissions' => fn($q) => $q->where('assignment_id', $assignment->id)])
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->where('grade_id', $assignment->grade_id)
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $assignment->deadline)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$assignment->created_at]))
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereHas('assignmentSubmissions', fn($q) => $q->where('assignment_id', $assignment->id))
             ->select('id', 'uuid', 'name', 'phone', 'profile_pic')
@@ -406,7 +410,7 @@ class AssignmentsController extends Controller
 
     public function studentsHavenotTakenAssignment(Request $request, $uuid)
     {
-        $assignment = Assignment::select('id', 'grade_id')
+        $assignment = Assignment::select('id', 'grade_id', 'created_at', 'deadline')
             ->where('teacher_id', $this->teacherId)
             ->uuid($uuid)
             ->firstOrFail();
@@ -415,7 +419,9 @@ class AssignmentsController extends Controller
 
         $studentsNotTakenQuery = Student::query()
             ->where('grade_id', $assignment->grade_id)
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $assignment->deadline)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$assignment->created_at]))
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereDoesntHave('assignmentSubmissions', fn($q) => $q->where('assignment_id', $assignment->id))
             ->select('id', 'name', 'phone', 'profile_pic');

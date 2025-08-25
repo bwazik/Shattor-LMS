@@ -53,7 +53,7 @@ class Group extends Model
 
     public function students()
     {
-        return $this->belongsToMany(Student::class, 'student_group')->withPivot('created_at', 'updated_at')->withTimestamps();
+        return $this->belongsToMany(Student::class, 'student_group')->withPivot('created_at', 'updated_at', 'ended_at')->withTimestamps();
     }
 
     public function attendances()

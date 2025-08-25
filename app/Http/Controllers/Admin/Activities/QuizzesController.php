@@ -116,7 +116,10 @@ class QuizzesController extends Controller
 
         // Total students eligible for the quiz
         $totalStudents = Student::where('grade_id', $quiz->grade_id)
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $quiz->end_time)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$quiz->start_time]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $quiz->teacher_id))
             ->count();
 
         // Students who actually took the quiz
@@ -237,11 +240,11 @@ class QuizzesController extends Controller
                 ->get()
                 ->map(function ($item) {
                     return [
-                        'id' => $item->student->id,
-                        'uuid' => $item->student->uuid,
-                        'name' => $item->student->name,
+                        'id' => $item->student->id ?? 'N/A',
+                        'uuid' => $item->student->uuid ?? 'N/A',
+                        'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
-                        'profile_pic' => $item->student->profile_pic,
+                        'profile_pic' => $item->student->profile_pic ?? 'N/A',
                         'quiz_score' => number_format($item->quiz_score, 2),
                     ];
                 });
@@ -297,11 +300,18 @@ class QuizzesController extends Controller
 
     public function studentsTakenQuiz(Request $request, $id)
     {
-        $groupIds = Quiz::findOrFail($id)->groups()->pluck('groups.id');
+        $quiz = Quiz::with('groups')
+            ->select('id', 'teacher_id', 'start_time', 'end_time')
+            ->findOrFail($id);
+
+        $groupIds = $quiz->groups()->pluck('groups.id');
 
         $studentsTakenQuery = Student::query()
             ->with(['studentResults' => fn($q) => $q->where('quiz_id', $id)])
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $quiz->end_time)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$quiz->start_time]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $quiz->teacher_id))
             ->whereHas('studentResults', fn($q) => $q->where('quiz_id', $id))
             ->select('id', 'name', 'phone', 'profile_pic')
             ->addSelect([
@@ -336,26 +346,17 @@ class QuizzesController extends Controller
 
     public function studentsNotTakenQuiz(Request $request, $id)
     {
-        $quiz = Quiz::select('id', 'grade_id')->findOrFail($id);
+        $quiz = Quiz::select('id', 'teacher_id', 'grade_id', 'start_time', 'end_time')->findOrFail($id);
         $groupIds = $quiz->groups()->pluck('groups.id');
 
         $studentsNotTakenQuery = Student::query()
             ->where('grade_id', $quiz->grade_id)
-            ->whereHas('groups', fn($q) => $q->whereIn('groups.id', $groupIds))
+            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
+                ->where('student_group.created_at', '<=', $quiz->end_time)
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$quiz->start_time]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $quiz->teacher_id))
             ->whereDoesntHave('studentResults', fn($q) => $q->where('quiz_id', $id)->whereIn('status', [2, 3]))
-            ->select('id', 'name', 'phone', 'profile_pic')
-            ->addSelect([
-                'quiz_score' => StudentResult::select('total_score')
-                    ->whereColumn('student_id', 'students.id')
-                    ->where('quiz_id', $id)
-                    ->whereIn('status', [2, 3])
-                    ->limit(1),
-                'quiz_percentage' => StudentResult::select('percentage')
-                    ->whereColumn('student_id', 'students.id')
-                    ->where('quiz_id', $id)
-                    ->whereIn('status', [2, 3])
-                    ->limit(1),
-            ]);
+            ->select('id', 'name', 'phone', 'profile_pic');
 
         if ($request->ajax()) {
             return datatables()->eloquent($studentsNotTakenQuery)

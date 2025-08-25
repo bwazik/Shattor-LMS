@@ -189,7 +189,20 @@ class StudentService
             ]);
 
             $student->teachers()->sync($request['teachers'] ?? []);
-            $student->groups()->sync($request['groups'] ?? []);
+
+            $currentGroups = $student->groups()->pluck('groups.id')->toArray();
+            $groupsToRemove = array_diff($currentGroups, $request['groups']);
+            $groupsToAdd = array_diff($request['groups'], $currentGroups);
+
+            if (!empty($groupsToRemove)) {
+                $student->groups()->whereIn('groups.id', $groupsToRemove)
+                    ->whereNull('student_group.ended_at')
+                    ->update(['student_group.ended_at' => now()]);
+            }
+
+            if (!empty($groupsToAdd)) {
+                $student->groups()->attach($groupsToAdd);
+            }
 
             return $this->successResponse(trans('main.edited', ['item' => trans('admin/students.student')]));
         });
