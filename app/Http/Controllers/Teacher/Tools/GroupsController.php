@@ -247,7 +247,7 @@ class GroupsController extends Controller
             $hours = $matches[2];
             $minutes = $matches[3];
 
-            return $arabicText . $minutes . ':' . $hours;
+            return $arabicText . ' ' . $minutes . ':' . $hours;
         }
 
         return $text;
