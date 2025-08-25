@@ -169,8 +169,8 @@ class LessonsController extends Controller
             ->where('student_teacher.teacher_id', $this->teacherId)
             ->where('students.grade_id', $lesson->group->grade_id)
             ->where('student_group.group_id', $lesson->group_id)
-            ->where('student_group.created_at', '<=', $lesson->date)
-            ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$lesson->date]);
+            ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
+            ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
 
         $compensatoryAttendancesQuery = Student::query()
             ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
@@ -248,10 +248,11 @@ class LessonsController extends Controller
             ->join('groups', 'student_group.group_id', '=', 'groups.id')
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->where('student_group.group_id', $groupId)
-            ->where('student_group.created_at', '<=', $lesson->date)
-            ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$lesson->date])
+            ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
+            ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date])
             ->where('student_teacher.teacher_id', $teacherId)
             ->select('students.id');
+
         $groupStudents = $groupStudentsQuery->pluck('students.id')->toArray();
 
         $compensatoryStudents = Compensatory::where('makeup_lesson_id', $lesson->id)
@@ -469,7 +470,8 @@ class LessonsController extends Controller
 
         $unrecordedStudents = Student::query()
             ->whereHas('allGroups', fn($query) => $query->where('group_id', $lesson->group_id)
-                ->where('student_group.created_at', '<=', $lesson->date))
+                ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
+                ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]))
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereDoesntHave('attendances', fn($query) =>
                 $query->where('lesson_id', $lesson->id)->where('teacher_id', $this->teacherId))
