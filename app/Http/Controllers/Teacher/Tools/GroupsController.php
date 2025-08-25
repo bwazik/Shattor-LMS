@@ -222,7 +222,7 @@ class GroupsController extends Controller
                 'student_name' => $student->name,
                 'teacher_name' => auth()->guard('teacher')->user()->name,
                 'student_phone' => $student->phone,
-                'group_name' => $group->name,
+                'group_name' => $this->fixTimeInGroupName($group->name),
             ];
         }
 
@@ -238,5 +238,18 @@ class GroupsController extends Controller
         $gpdf->generateWithStream($html, "group-{$group->uuid}-qr-codes", true);
 
         return response(null, 200, ['Content-Type' => 'application/pdf']);
+    }
+
+    private function fixTimeInGroupName($text)
+    {
+        if (preg_match('/^(.+?)\s+(\d{2}):(\d{2})$/', $text, $matches)) {
+            $arabicText = trim($matches[1]);
+            $hours = $matches[2];
+            $minutes = $matches[3];
+
+            return $arabicText . $minutes . ':' . $hours;
+        }
+
+        return $text;
     }
 }

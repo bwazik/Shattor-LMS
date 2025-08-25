@@ -67,6 +67,8 @@
             font-size: 9pt;
             color: #666;
             margin: 1mm 0 0 0;
+            direction: rtl;
+            text-align: right;
         }
 
         .separator {
