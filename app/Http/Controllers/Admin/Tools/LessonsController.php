@@ -36,7 +36,8 @@ class LessonsController extends Controller
     public function index(Request $request)
     {
         $lessonsQuery = Lesson::query()->with(['group:id,name'])
-            ->select('id', 'title', 'group_id', 'date', 'time', 'status');
+            ->select('id', 'title', 'group_id', 'date', 'time', 'status')
+            ->orderBy('date', 'desc');
 
         if ($request->ajax()) {
             return $this->lessonService->getLessonsForDatatable($lessonsQuery);
