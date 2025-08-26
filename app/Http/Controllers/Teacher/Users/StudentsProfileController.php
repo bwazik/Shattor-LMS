@@ -43,9 +43,7 @@ class StudentsProfileController extends Controller
                 'grade:id,name',
                 'parent:id,uuid,name',
                 'allGroups' => fn($query) => $query->where('teacher_id', $this->teacherId)
-                    ->where('student_group.created_at', '<=', now())
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [now()->subDays(1000)])
-                    ->select('groups.id', 'groups.name'),
+                    ->select('groups.id', 'groups.name', 'student_group.created_at', 'student_group.ended_at'),
                 'attendances' => fn($query) => $query->where('teacher_id', $this->teacherId)->select('student_id', 'status', 'teacher_id'),
                 'teachers:id'
             ])
@@ -65,7 +63,7 @@ class StudentsProfileController extends Controller
             ->where('teacher_id', $this->teacherId)
             ->whereHas('students', fn($query) => $query->where('students.id', $student->id)
                 ->where('student_group.created_at', '<=', now())
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [now()->subDays(1000)]));
+                ->whereNull('student_group.ended_at'));
 
         if ($request->ajax()) {
             return datatables()->eloquent($groupsQuery)
@@ -81,9 +79,11 @@ class StudentsProfileController extends Controller
     {
         // Attendance Rate
         $lessonsQuery = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->whereHas('group.students', fn($query) => $query->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($q) => $q->where('student_group.created_at', '<=', DB::raw('lessons.date'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > lessons.created_at')))
+            ->whereHas('group.students', function ($query) use ($student) {
+                $query->where('students.id', $student->id)
+                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
+            })
             ->where('lessons.date', '<=', now()->toDateString());
         $totalLessons = $lessonsQuery->count();
         $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->count();
@@ -93,8 +93,8 @@ class StudentsProfileController extends Controller
         $quizzesQuery = Quiz::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($sub) => $sub->where('student_group.created_at', '<=', DB::raw('quizzes.end_time'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time'))));
+                ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')));
         $quizResults = StudentResult::where('student_id', $student->id)
             ->whereIn('quiz_id', $quizzesQuery->pluck('id'))
             ->selectRaw('AVG(percentage) as avg_percentage, COUNT(*) as taken_count')
@@ -105,8 +105,8 @@ class StudentsProfileController extends Controller
         $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($sub) => $sub->where('student_group.created_at', '<=', DB::raw('assignments.deadline'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at'))));
+                ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')));
         $submissionResults = AssignmentSubmission::where('student_id', $student->id)
             ->whereIn('assignment_id', $assignmentsQuery->pluck('id'))
             ->whereNotNull('assignment_submissions.score')
@@ -157,12 +157,13 @@ class StudentsProfileController extends Controller
                     ->where('teacher_id', $this->teacherId)
                     ->select('attendances.student_id', 'attendances.lesson_id', 'attendances.status', 'attendances.is_compensatory', 'attendances.note', 'attendances.created_at')
             ])
-            ->select('id', 'uuid', 'title', 'group_id', 'date', 'created_at')
+            ->select('id', 'uuid', 'title', 'group_id', 'date')
             ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->whereHas('group.students', fn($query) => $query->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($q) => $q->where('groups.id', DB::raw('lessons.group_id'))
-                    ->whereRaw('student_group.created_at <= lessons.date')
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at >= lessons.date')))
+            ->whereHas('group.students', function ($query) use ($student) {
+                $query->where('students.id', $student->id)
+                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
+            })
             ->where('lessons.date', '<=', now()->toDateString())
             ->orderBy('lessons.date', 'desc');
 
@@ -200,9 +201,11 @@ class StudentsProfileController extends Controller
     private function getAttendanceStats($student)
     {
         $lessonsQuery = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->whereHas('group.students', fn($query) => $query->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($q) => $q->where('student_group.created_at', '<=', DB::raw('lessons.date'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > lessons.created_at')))
+            ->whereHas('group.students', function ($query) use ($student) {
+                $query->where('students.id', $student->id)
+                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
+            })
             ->where('lessons.date', '<=', now()->toDateString());
 
         $totalLessons = $lessonsQuery->count();
@@ -284,8 +287,8 @@ class StudentsProfileController extends Controller
             ->where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($sub) => $sub->where('student_group.created_at', '<=', DB::raw('quizzes.end_time'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time'))))
+                ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')))
             ->orderBy('start_time', 'desc');
 
         if ($request->ajax()) {
@@ -311,8 +314,8 @@ class StudentsProfileController extends Controller
         $quizzesQuery = Quiz::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($sub) => $sub->where('student_group.created_at', '<=', DB::raw('quizzes.end_time'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time'))));
+                ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')));
 
         $totalQuizzes = $quizzesQuery->count();
         $quizResults = StudentResult::where('student_id', $student->id)
@@ -354,8 +357,9 @@ class StudentsProfileController extends Controller
             ->where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($sub) => $sub->where('student_group.created_at', '<=', DB::raw('assignments.deadline'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at'))))
+                ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')))
+
             ->orderBy('deadline', 'desc');
 
         if ($request->ajax()) {
@@ -380,8 +384,8 @@ class StudentsProfileController extends Controller
         $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereHas('allGroups', fn($sub) => $sub->where('student_group.created_at', '<=', DB::raw('assignments.deadline'))
-                    ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at'))));
+                ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')));
 
         $totalAssignments = $assignmentsQuery->count();
         $submissionResults = AssignmentSubmission::where('student_id', $student->id)

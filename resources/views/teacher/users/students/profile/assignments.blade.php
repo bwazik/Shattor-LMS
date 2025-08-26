@@ -84,7 +84,7 @@
         </div>
     </div>
 
-    <x-datatable id="assignments-datatable" cardClasses="mb-6" datatableTitle="{{ trans('admin/quizzes.quizzes') }}">
+    <x-datatable id="assignments-datatable" cardClasses="mb-6" datatableTitle="{{ trans('admin/assignments.assignments') }}">
         <th></th>
         <th>#</th>
         <th>{{ trans('admin/quizzes.rank') }}</th>
