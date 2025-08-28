@@ -332,7 +332,7 @@ class QuizzesController extends Controller
         if ($request->ajax()) {
             return datatables()->eloquent($studentsTakenQuery)
                 ->addColumn('rank', fn($row) => $this->getRank($id, $row->quiz_score))
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.details', $row->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->addColumn('score', fn($row) => $row->quiz_score !== null ? number_format($row->quiz_score, 2) : 'N/A')
                 ->addColumn('percentage', fn($row) => $row->quiz_percentage !== null ? number_format($row->quiz_percentage, 2) : 'N/A')
                 ->addColumn('status', fn($row) => $this->getQuizStatus($row->status))
@@ -360,7 +360,7 @@ class QuizzesController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($studentsNotTakenQuery)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.details', $row->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
                 ->rawColumns(['details'])
                 ->make(true);

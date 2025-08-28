@@ -255,7 +255,7 @@ class InvoicesController extends Controller
                 return formatInvoiceReference($row->invoice_id, route('admin.invoices.preview', $row->invoice_id));
             })
             ->editColumn('type', fn($row) => formatTransactionType($row->type))
-            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'admin.students.details'))
+            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'admin.students.profile.index'))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('balance_after', fn($row) => formatCurrency($row->balance_after) . ' ' . trans('main.currency'))
             ->editColumn('description', fn($row) => $row->description ?: '-')

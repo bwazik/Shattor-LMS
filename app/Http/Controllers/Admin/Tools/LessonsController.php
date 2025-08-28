@@ -319,7 +319,7 @@ class LessonsController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($absentStudents)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
                 ->editColumn('note', fn($row) => $row->note ? $row->note : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
@@ -358,7 +358,7 @@ class LessonsController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($compensatedStudents)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
                 ->addColumn('makeup_lesson_title', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->makeupLesson ? $compensatories[$row->student_id]->makeupLesson->title : 'N/A')
                 ->addColumn('reason', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->reason ? $compensatories[$row->student_id]->reason : 'N/A')
                 ->addColumn('makeup_status', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->makeupLesson ?
@@ -385,7 +385,7 @@ class LessonsController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($presentLateStudents)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
                 ->editColumn('status', fn($row) => $this->formatStatus($row->status))
                 ->editColumn('note', fn($row) => $row->note ? $row->note : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
@@ -420,7 +420,7 @@ class LessonsController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($compensatoryStudents)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
                 ->addColumn('original_lesson_title', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->originalLesson && $compensatories[$row->student_id]->originalLesson->title ? $compensatories[$row->student_id]->originalLesson->title : 'N/A')
                 ->addColumn('reason', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->reason ? $compensatories[$row->student_id]->reason : 'N/A')
                 ->editColumn('status', fn($row) => $this->formatStatus($row->status))
@@ -447,7 +447,7 @@ class LessonsController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($unrecordedStudents)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.details', $row->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
                 ->rawColumns(['details'])

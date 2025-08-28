@@ -61,6 +61,9 @@ class GroupService
                             trans('admin/lessons.generate').
                         '</a>' .
                     '</li>' .
+                    '<li>
+                        <a href="' . route('admin.groups.exportQrCodes', $row->id) . '" class="dropdown-item">'.trans('admin/lessons.exportQrCodes').'</a>
+                    </li>' .
                     '<div class="dropdown-divider"></div>' .
                     '<li>' .
                         '<a href="javascript:;" class="dropdown-item text-danger" ' .

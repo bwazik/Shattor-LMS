@@ -19,7 +19,7 @@ class CompensatoryService
         return datatables()->eloquent($compensatoriesQuery)
             ->addIndexColumn()
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
-            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'admin.students.details'))
+            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'admin.students.profile.index'))
             ->editColumn('original_lesson_group', fn($row) => formatRelation($row->original_lesson_id, $row->originalLesson->group, 'name'))
             ->editColumn('original_lesson_id', fn($row) => formatRelation($row->original_lesson_id, $row->originalLesson, 'title'))
             ->editColumn('makeup_lesson_group', fn($row) => formatRelation($row->makeup_lesson_id, $row->makeupLesson->group, 'name'))

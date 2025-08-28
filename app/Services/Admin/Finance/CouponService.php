@@ -22,7 +22,7 @@ class CouponService
             ->editColumn('is_used', fn($row) => formatUsedStatus($row->is_used))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('teacher_id', fn($row) => formatRelation($row->teacher_id, $row->teacher, 'name', 'admin.teachers.details'))
-            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'admin.students.details'))
+            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'admin.students.profile.index'))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('is_used', fn($query, $keyword) => filterUsedStatus($query, $keyword))
             ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))

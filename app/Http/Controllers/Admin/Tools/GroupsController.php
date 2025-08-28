@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\MyParent;
 use Illuminate\Http\Request;
+use App\Services\QRCodeService;
 use App\Traits\ValidatesExistence;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -18,6 +19,7 @@ use App\Services\Admin\Tools\LessonService;
 use App\Services\Admin\Users\StudentService;
 use App\Http\Requests\Admin\Tools\GroupsRequest;
 use App\Http\Requests\Admin\Tools\GenerateLessonsRequest;
+use Omaralalwi\Gpdf\Gpdf;
 
 class GroupsController extends Controller
 {
@@ -26,12 +28,14 @@ class GroupsController extends Controller
     protected $groupService;
     protected $lessonService;
     protected $studentService;
+    protected $qrCodeService;
 
-    public function __construct(GroupService $groupService, LessonService $lessonService, StudentService $studentService)
+    public function __construct(GroupService $groupService, LessonService $lessonService, StudentService $studentService, QRCodeService $qrCodeService)
     {
         $this->groupService = $groupService;
         $this->lessonService = $lessonService;
         $this->studentService = $studentService;
+        $this->qrCodeService = $qrCodeService;
     }
 
     public function index(Request $request)
@@ -169,5 +173,59 @@ class GroupsController extends Controller
         }
 
         return view('admin.tools.groups.students', compact('group', 'grades', 'parents', 'teachers', 'groups'));
+    }
+
+    public function exportQrCodes($groupId)
+    {
+        $group = Group::with(['teacher:id,name'])
+            ->select('id', 'uuid', 'name', 'teacher_id')
+            ->findOrFail($groupId);
+
+        $students = Student::select('id', 'uuid', 'name', 'phone')
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $group->teacher_id))
+            ->whereHas('groups', fn($query) => $query->where('group_id', $group->id))
+            ->get();
+
+        if ($students->isEmpty()) {
+            return $this->errorResponse(trans('toasts.noStudentsFound'));
+        }
+
+        $qrCodes = [];
+
+        foreach ($students as $student) {
+            $qrCodes[] = [
+                'qr_code' => $this->qrCodeService->generateQRCode('student', $student->uuid),
+                'student_name' => $student->name,
+                'teacher_name' => $group->teacher->name,
+                'student_phone' => $student->phone,
+                'group_name' => $this->fixTimeInGroupName($group->name),
+            ];
+        }
+
+        $html = view('admin.tools.groups.export-qr-codes', [
+            'qrCodes' => $qrCodes,
+            'groupName' => $group->name,
+            'groupUuid' => $group->uuid,
+            'platformName' => "منصة شطور",
+            'logoPath' => public_path('assets/img/brand/navbar.png'),
+        ])->render();
+
+        $gpdf = app(Gpdf::class);
+        $gpdf->generateWithStream($html, "group-{$group->uuid}-qr-codes", true);
+
+        return response(null, 200, ['Content-Type' => 'application/pdf']);
+    }
+
+    private function fixTimeInGroupName($text)
+    {
+        if (preg_match('/^(.+?)\s+(\d{2}):(\d{2})$/', $text, $matches)) {
+            $arabicText = trim($matches[1]);
+            $hours = $matches[2];
+            $minutes = $matches[3];
+
+            return $arabicText . ' ' . $minutes . ':' . $hours;
+        }
+
+        return $text;
     }
 }

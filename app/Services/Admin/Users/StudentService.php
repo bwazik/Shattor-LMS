@@ -20,7 +20,7 @@ class StudentService
         return datatables()->eloquent($studentsQuery)
             ->addIndexColumn()
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'admin.students.details', $row->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'admin.students.profile.index', $row->id))
             ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
             ->editColumn('parent_id', fn($row) => formatRelation($row->parent_id, $row->parent, 'name', 'admin.parents.details'))
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
@@ -47,7 +47,7 @@ class StudentService
                 '</a>' .
                 '<ul class="dropdown-menu dropdown-menu-end m-0">' .
                     '<li>
-                        <a target="_blank" href="'.route('admin.students.details', $row->id).'" class="dropdown-item">'.trans('main.details').'</a>
+                        <a target="_blank" href="'.route('admin.students.profile.index', $row->id).'" class="dropdown-item">'.trans('main.details').'</a>
                     </li>' .
                     '<li>' .
                         '<a href="javascript:;" class="dropdown-item" ' .
@@ -98,7 +98,7 @@ class StudentService
         return datatables()->eloquent($studentsQuery)
             ->addIndexColumn()
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'admin.students.details', $row->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'admin.students.profile.index', $row->id))
             ->addColumn('actions', fn($row) => $this->generateArchivedActionButtons($row))
             ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'email'))
             ->rawColumns(['selectbox', 'details', 'actions'])

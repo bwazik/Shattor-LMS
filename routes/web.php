@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\Users\Teachers\TeachersDetailsController;
 use App\Http\Controllers\Admin\Users\Assistants\AssistantsController;
 use App\Http\Controllers\Admin\Users\Assistants\AssistantsDetailsController;
 use App\Http\Controllers\Admin\Users\Students\StudentsController;
-use App\Http\Controllers\Admin\Users\Students\StudentsDetailsController;
+use App\Http\Controllers\Admin\Users\Students\StudentsProfileController;
 use App\Http\Controllers\Admin\Users\Parents\ParentsController;
 use App\Http\Controllers\Admin\Users\Parents\ParentsDetailsController;
 
@@ -201,9 +201,16 @@ Route::group(
                         Route::post('restore-selected', 'restoreSelected')->name('restoreSelected');
                     });
                 });
-                Route::controller(StudentsDetailsController::class)->group(function () {
-                    Route::get('/details/{id}', 'index')->name('details');
-                    Route::post('/update-profile-pic/{id}', 'updateProfilePic')->name('updateProfilePic');
+                Route::controller(StudentsProfileController::class)->group(function() {
+                    Route::prefix('{id}')->name('profile.')->group(function() {
+                        Route::get('profile', 'profile')->name('index');
+                        Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
+                        Route::get('attendance', 'attendance')->name('attendance');
+                        Route::get('quizzes', 'quizzes')->name('quizzes');
+                        Route::get('assignments', 'assignments')->name('assignments');
+                        Route::get('fees', 'fees')->name('fees');
+                        Route::get('security', 'security')->name('security');
+                    });
                 });
             });
 
@@ -235,6 +242,7 @@ Route::group(
                 Route::get('/', 'index')->name('index');
                 Route::get('{groupId}/lessons', 'lessons')->name('lessons');
                 Route::get('{groupId}/students', 'students')->name('students');
+                Route::get('{groupId}/export-qr-codes', 'exportQrCodes')->name('exportQrCodes');
                 Route::middleware('throttle:10,1')->group(function () {
                     Route::post('insert', 'insert')->name('insert');
                     Route::post('update', 'update')->name('update');

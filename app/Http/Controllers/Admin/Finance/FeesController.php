@@ -187,7 +187,7 @@ class FeesController extends Controller
         if ($request->ajax()) {
             return datatables()->eloquent($invoicesQuery)
                 ->addIndexColumn()
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
                 ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
                 ->editColumn('date', fn($row) => formatDate($row->date))
                 ->addColumn('paymentDate', fn($row) => $row->transactions->isNotEmpty() ? isoFormat($row->transactions->max('created_at')) : 'N/A')
@@ -215,7 +215,7 @@ class FeesController extends Controller
         if ($request->ajax()) {
             return datatables()->eloquent($invoicesQuery)
                 ->addIndexColumn()
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
                 ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
                 ->editColumn('date', fn($row) => formatDate($row->date))
                 ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
@@ -240,7 +240,7 @@ class FeesController extends Controller
         if ($request->ajax()) {
             return datatables()->eloquent($studentsQuery)
                 ->addIndexColumn()
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.details', $row->id))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
                 ->rawColumns(['details'])

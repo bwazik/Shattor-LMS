@@ -28,7 +28,7 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
             ->editColumn('fee_id', fn($row) => $row->fee_id ? $row->fee->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
@@ -129,7 +129,7 @@ class InvoiceService
                 'amount' => $row->amount,
                 'status' => $row->status
             ]))
-            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.details', $row->student->id))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
             ->editColumn('fee_id', fn($row) => $row->fee_id ? $row->fee->name : '-')
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))

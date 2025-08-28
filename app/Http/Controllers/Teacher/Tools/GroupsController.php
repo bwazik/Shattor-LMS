@@ -227,7 +227,7 @@ class GroupsController extends Controller
             ];
         }
 
-        $html = view('teacher.tools.groups.export-qr-codes', [
+        $html = view('admin.tools.groups.export-qr-codes', [
             'qrCodes' => $qrCodes,
             'groupName' => $group->name,
             'groupUuid' => $group->uuid,

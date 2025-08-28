@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Teacher\Users;
+namespace App\Http\Controllers\Admin\Users\Students;
 
 use App\Models\Fee;
 use App\Models\Quiz;
@@ -24,42 +24,36 @@ class StudentsProfileController extends Controller
 {
     use ValidatesExistence, ServiceResponseTrait;
 
-    protected $teacherId;
     protected $profilePicService;
     protected $sessionService;
 
     public function __construct(FileUploadService $profilePicService, SessionService $sessionService)
     {
-        $this->teacherId = auth()->guard('teacher')->user()->id;
         $this->profilePicService = $profilePicService;
         $this->sessionService = $sessionService;
     }
 
-    private function getStudent($uuid)
+    private function getStudent($id)
     {
         return Student::query()
             ->with([
                 'grade:id,name',
                 'parent:id,uuid,name',
-                'allGroups' => fn($query) => $query->where('teacher_id', $this->teacherId)
-                    ->select('groups.id', 'groups.name', 'student_group.created_at', 'student_group.ended_at'),
-                'attendances' => fn($query) => $query->where('teacher_id', $this->teacherId)->select('student_id', 'status', 'teacher_id'),
+                'allGroups' => fn($query) => $query->select('groups.id', 'groups.name', 'student_group.created_at', 'student_group.ended_at'),
+                'attendances' => fn($query) => $query->select('student_id', 'status', 'teacher_id'),
                 'teachers:id'
             ])
             ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.grade_id', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
-            ->whereHas('teachers', fn($query) => $query->where('teachers.id', $this->teacherId))
-            ->uuid($uuid)
-            ->firstOrFail();
+            ->findOrFail($id);
     }
 
-    public function profile(Request $request, $uuid)
+    public function profile(Request $request, $id)
     {
-        $student = $this->getStudent($uuid);
+        $student = $this->getStudent($id);
         $stats = $this->getProfileStats($student);
 
         $groupsQuery = Group::query()
             ->select('id', 'uuid', 'name')
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('students', fn($query) => $query->where('students.id', $student->id)
                 ->where('student_group.created_at', '<=', now())
                 ->whereNull('student_group.ended_at'));
@@ -71,14 +65,13 @@ class StudentsProfileController extends Controller
                 ->make(true);
         }
 
-        return view('teacher.users.students.profile.index', compact('student', 'stats'));
+        return view('admin.users.students.profile.index', compact('student', 'stats'));
     }
 
     private function getProfileStats($student)
     {
         // Attendance Rate
-        $lessonsQuery = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->whereHas('group.students', function ($query) use ($student) {
+        $lessonsQuery = Lesson::whereHas('group.students', function ($query) use ($student) {
                 $query->where('students.id', $student->id)
                     ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
                     ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
@@ -90,7 +83,6 @@ class StudentsProfileController extends Controller
 
         // Quiz Average Percentage
         $quizzesQuery = Quiz::where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
                 ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')));
@@ -102,7 +94,6 @@ class StudentsProfileController extends Controller
 
         // Assignment Average Percentage
         $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
                 ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')));
@@ -115,8 +106,7 @@ class StudentsProfileController extends Controller
         $avgAssignmentPercentage = $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_percentage, 1) : 'N/A';
 
         // Total Paid Fees
-        $feesQuery = Fee::where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId);
+        $feesQuery = Fee::where('grade_id', $student->grade_id);
         $totalPaidFees = Invoice::where('student_id', $student->id)
             ->where('type', 2)
             ->whereNull('teacher_id')
@@ -133,31 +123,27 @@ class StudentsProfileController extends Controller
         ];
     }
 
-    public function updateProfilePic(ProfilePicRequest $request, $uuid)
+    public function updateProfilePic(ProfilePicRequest $request, $id)
     {
-        $student = Student::whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->uuid($uuid)
-            ->firstOrFail(['id']);
+        $student = Student::select('id')->findOrFail($id);
 
         $result = $this->profilePicService->updateProfilePic($request, Student::class, $student->id, 'students');
 
         return $this->conrtollerJsonResponse($result);
     }
 
-    public function attendance(Request $request, $uuid)
+    public function attendance(Request $request, $id)
     {
-        $student = $this->getStudent($uuid);
+        $student = $this->getStudent($id);
         $stats = $this->getAttendanceStats($student);
 
         $lessonsQuery = Lesson::query()
             ->with([
                 'group:id,name',
                 'attendances' => fn($query) => $query->where('student_id', $student->id)
-                    ->where('teacher_id', $this->teacherId)
                     ->select('attendances.student_id', 'attendances.lesson_id', 'attendances.status', 'attendances.is_compensatory', 'attendances.note', 'attendances.created_at')
             ])
             ->select('id', 'uuid', 'title', 'group_id', 'date')
-            ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereHas('group.students', function ($query) use ($student) {
                 $query->where('students.id', $student->id)
                     ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
@@ -168,7 +154,6 @@ class StudentsProfileController extends Controller
 
         $compensatoriesQuery = Compensatory::query()->with(['originalLesson:id,title,group_id', 'makeupLesson:id,title,group_id'])
             ->select('id', 'uuid', 'student_id', 'original_lesson_id', 'makeup_lesson_id', 'reason', 'status')
-            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
             ->where('student_id', $student->id)
             ->orderBy('created_at', 'desc');
 
@@ -194,13 +179,12 @@ class StudentsProfileController extends Controller
                 ->make(true);
         }
 
-        return view('teacher.users.students.profile.attendance', compact('student', 'stats'));
+        return view('admin.users.students.profile.attendance', compact('student', 'stats'));
     }
 
     private function getAttendanceStats($student)
     {
-        $lessonsQuery = Lesson::whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->whereHas('group.students', function ($query) use ($student) {
+        $lessonsQuery = Lesson::whereHas('group.students', function ($query) use ($student) {
                 $query->where('students.id', $student->id)
                     ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
                     ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
@@ -272,9 +256,9 @@ class StudentsProfileController extends Controller
         }
     }
 
-    public function quizzes(Request $request, $uuid)
+    public function quizzes(Request $request, $id)
     {
-        $student = $this->getStudent($uuid);
+        $student = $this->getStudent($id);
         $stats = $this->getQuizStats($student);
 
         $quizzesQuery = Quiz::query()
@@ -284,7 +268,6 @@ class StudentsProfileController extends Controller
             ])
             ->select('id', 'uuid', 'name', 'start_time', 'end_time')
             ->where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
                 ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')))
@@ -299,19 +282,18 @@ class StudentsProfileController extends Controller
                     ->addColumn('percentage', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->percentage, 2) : 'N/A')
                     ->addColumn('status', fn($row) => $this->formatQuizStatus($row->studentResults->first() ? $row->studentResults->first()->status : null))
                     ->addColumn('rank', fn($row) => $row->studentResults->first() ? $this->getRank('quiz', $row->id, $row->studentResults->first()->total_score) : 'N/A')
-                    ->addColumn('link', fn($row) => $row->studentResults->first() ? $this->getReviewLink('quiz', $row->uuid, $student->uuid, $row->studentResults->first()) : 'N/A')
+                    ->addColumn('link', fn($row) => $row->studentResults->first() ? $this->getReviewLink('quiz', $row->id, $student->id, $row->studentResults->first()) : 'N/A')
                     ->rawColumns(['status', 'link'])
                     ->make(true);
             }
         }
 
-        return view('teacher.users.students.profile.quizzes', compact('student', 'stats'));
+        return view('admin.users.students.profile.quizzes', compact('student', 'stats'));
     }
 
     private function getQuizStats($student)
     {
         $quizzesQuery = Quiz::where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
                 ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')));
@@ -342,9 +324,9 @@ class StudentsProfileController extends Controller
         };
     }
 
-    public function assignments(Request $request, $uuid)
+    public function assignments(Request $request, $id)
     {
-        $student = $this->getStudent($uuid);
+        $student = $this->getStudent($id);
         $stats = $this->getAssignmentStats($student);
 
         $assignmentsQuery = Assignment::query()
@@ -354,7 +336,6 @@ class StudentsProfileController extends Controller
             ])
             ->select('id', 'uuid', 'title', 'deadline', 'score as max_score', 'created_at')
             ->where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
                 ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')))
@@ -369,19 +350,18 @@ class StudentsProfileController extends Controller
                     ->addColumn('rank', fn($row) => $row->assignmentSubmissions->first() ? $this->getRank('assignment', $row->id, $row->assignmentSubmissions->first()->score) : 'N/A')
                     ->addColumn('score', fn($row) => $row->assignmentSubmissions->first() && !is_null($row->assignmentSubmissions->first()->score) ? number_format($row->assignmentSubmissions->first()->score, 2) : 'N/A')
                     ->addColumn('status', fn($row) => $this->formatSubmissionStatus($row->assignmentSubmissions->first()))
-                    ->addColumn('link', fn($row) => $this->getReviewLink('assignment', $row->uuid, $student->uuid, $row->assignmentSubmissions->first()))
+                    ->addColumn('link', fn($row) => $this->getReviewLink('assignment', $row->id, $student->id, $row->assignmentSubmissions->first()))
                     ->rawColumns(['status', 'link'])
                     ->make(true);
             }
         }
 
-        return view('teacher.users.students.profile.assignments', compact('student', 'stats'));
+        return view('admin.users.students.profile.assignments', compact('student', 'stats'));
     }
 
     private function getAssignmentStats($student)
     {
         $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
                 ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')));
@@ -411,17 +391,17 @@ class StudentsProfileController extends Controller
             : '<span class="badge rounded-pill bg-label-secondary text-capitalize">' . trans('main.notSubmitted') . '</span>';
     }
 
-    private function getReviewLink($model, $uuid, $studentUuid, $submission = null)
+    private function getReviewLink($model, $id, $studentId, $submission = null)
     {
         if (!$submission) {
             return '<span class="badge rounded-pill bg-label-secondary text-capitalize">N/A</span>';
         }
 
-        $route = ($model === 'quiz') ? 'teacher.quizzes.review' : 'teacher.assignments.review';
+        $route = ($model === 'quiz') ? 'admin.quizzes.review' : 'admin.assignments.review';
         $translation = ($model === 'quiz') ? trans('admin/quizzes.reviewAnswers') : trans('admin/assignments.reviewAssignment');
 
         return formatSpanUrl(
-            route($route, ['uuid' => $uuid, 'studentUuid' => $studentUuid]),
+            route($route, ['id' => $id, 'studentId' => $studentId]),
             $translation,
             'info',
             false
@@ -447,9 +427,9 @@ class StudentsProfileController extends Controller
         return $formattedRank;
     }
 
-    public function fees(Request $request, $uuid)
+    public function fees(Request $request, $id)
     {
-        $student = $this->getStudent($uuid);
+        $student = $this->getStudent($id);
         $stats = $this->getFeeStats($student);
 
         $feesQuery = Fee::query()
@@ -464,7 +444,6 @@ class StudentsProfileController extends Controller
             ])
             ->select('fees.id', 'fees.uuid', 'fees.name', 'fees.grade_id', 'fees.created_at')
             ->where('fees.grade_id', $student->grade_id)
-            ->where('fees.teacher_id', $this->teacherId)
             ->orderBy('fees.created_at', 'desc');
 
         if ($request->ajax()) {
@@ -475,19 +454,18 @@ class StudentsProfileController extends Controller
                     ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : 'N/A')
                     ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? 'N/A') : 'N/A')
                     ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : 'N/A')
-                    ->addColumn('transactions', fn($row) => $row->invoices->isNotEmpty() ? formatSpanUrl(route('teacher.invoices.transactions', $row->invoices->first()->uuid), trans('admin/transactions.transactions')) : 'N/A')
+                    ->addColumn('transactions', fn($row) => $row->invoices->isNotEmpty() ? formatSpanUrl(route('admin.invoices.transactions', $row->invoices->first()->id), trans('admin/transactions.transactions')) : 'N/A')
                     ->rawColumns(['payment_method', 'transactions'])
                     ->make(true);
             }
         }
 
-        return view('teacher.users.students.profile.fees', compact('student', 'stats'));
+        return view('admin.users.students.profile.fees', compact('student', 'stats'));
     }
 
     private function getFeeStats($student)
     {
-        $feesQuery = Fee::where('grade_id', $student->grade_id)
-            ->where('teacher_id', $this->teacherId);
+        $feesQuery = Fee::where('grade_id', $student->grade_id);
         $totalFees = $feesQuery->count();
         $invoices = Invoice::where('student_id', $student->id)
             ->where('type', 2)
@@ -526,13 +504,13 @@ class StudentsProfileController extends Controller
         };
     }
 
-    public function security(Request $request, $uuid)
+    public function security(Request $request, $id)
     {
-        $student = $this->getStudent($uuid);
+        $student = $this->getStudent($id);
 
         $sessions = $this->sessionService->getUserSessions('student', $student->id);
         $devices = $this->sessionService->getUserDevices('student', $student->id);
 
-        return view('teacher.users.students.profile.security', compact('student', 'sessions', 'devices'));
+        return view('admin.users.students.profile.security', compact('student', 'sessions', 'devices'));
     }
 }
