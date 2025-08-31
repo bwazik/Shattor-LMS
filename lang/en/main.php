@@ -240,7 +240,8 @@ return [
     'showInstructions' => 'Show Instructions',
     'upload' => 'Upload',
     'reset' => 'Reset',
-
+    'excelExport' => 'Excel Export',
+    
     # Toasts
     'errorMessage' => 'An unexpected error occurred. Please try again later!',
     'added' => ':item has been added successfully!',

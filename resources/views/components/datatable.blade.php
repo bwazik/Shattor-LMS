@@ -10,7 +10,9 @@
     'otherButton' => false,
     'otherIcon' => null,
     'hrefButton' => false,
-    'hrefButtonRoute' => null
+    'hrefButtonRoute' => null,
+    'excelButton' => false,
+    'excelButtonRoute' => null,
 ])
 
 <div class="card {{ $cardClasses }}">
@@ -121,6 +123,16 @@
                                 <span class="d-none d-sm-inline-block">{{ $addButton }}</span>
                             </span>
                         </button>
+                        @endif
+                    @endisset
+                    @isset($excelButton)
+                        @if ($excelButton)
+                            <a href="{{ $excelButtonRoute }}" id="excel-button" class="btn btn-success me-4 waves-effect waves-light" style="border-radius: 0.5rem; !important">
+                                <span>
+                                    <i class="ri-file-excel-2-line ri-16px me-sm-2"></i>
+                                    <span class="d-none d-sm-inline-block">{{ trans('main.excelExport') }}</span>
+                                </span>
+                            </a>
                         @endif
                     @endisset
                     @isset($otherButton)

@@ -38,7 +38,7 @@
                 dataTable.destroy();
             }
 
-            datatable = initializePostDataTable('#datatable', url, [2, 3, 4],
+            datatable = initializePostDataTable('#datatable', url, [2, 5],
                 [{
                         data: "",
                         orderable: false,
@@ -253,7 +253,8 @@
         let lastScanTime = 0;
         let lastInvalidScanTime = 0;
 
-        const successSound = new Audio('{{ asset('assets/sounds/attendance-sound.mp3') }}');
+        const successSound = new Audio('{{ asset('assets/sounds/attendance-success-sound.mp3') }}');
+        const errorSound = new Audio('{{ asset('assets/sounds/attendance-error-sound.mp3') }}');
 
         startScanner.addEventListener('click', function() {
             const gradeId = form.find('#grade_id').val();
@@ -336,15 +337,22 @@
                                         },
                                         success: function(response) {
                                             if (response.success) {
-                                                console.log(response);
-
                                                 toastr.success(response.success)
-                                                successSound.play().catch(function(error) {
-                                                    console.warn('Audio playback failed:', error);
+                                                successSound.play().catch(function(
+                                                    error) {
+                                                    console.warn(
+                                                        'Audio playback failed:',
+                                                        error);
                                                 });
                                             } else {
                                                 toastr.error(response.error ||
                                                     errorMessage);
+                                                errorSound.play().catch(function(
+                                                error) {
+                                                    console.warn(
+                                                        'Audio playback failed:',
+                                                        error);
+                                                });
                                             }
                                         },
                                         error: function(xhr, status, error) {
@@ -358,7 +366,13 @@
                                                         });
                                                 } else if (xhr.responseJSON.error) {
                                                     toastr.error(xhr.responseJSON
-                                                    .error);
+                                                        .error);
+                                                    errorSound.play().catch(function(
+                                                        error) {
+                                                        console.warn(
+                                                            'Audio playback failed:',
+                                                            error);
+                                                    });
                                                 } else {
                                                     toastr.error(errorMessage);
                                                 }

@@ -241,6 +241,7 @@ return [
     'showInstructions' => 'وريني التعليمات',
     'upload' => 'رفع الصورة',
     'reset' => 'إستعادة',
+    'excelExport' => 'تصدير إكسيل',
 
     # Toasts
     'errorMessage' => 'فيه مشكلة حصلت، جرب تاني بعد شوية!',

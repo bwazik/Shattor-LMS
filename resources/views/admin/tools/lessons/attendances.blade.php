@@ -180,7 +180,7 @@
 @section('page-js')
     @include('admin.activities.attendance.js')
     <script>
-        initializeDataTable('#datatable', "{{ route('admin.lessons.attendances', $lesson->id) }}", [2, 3, 4],
+        initializeDataTable('#datatable', "{{ route('admin.lessons.attendances', $lesson->id) }}", [2, 5],
             [
                 { data: "", orderable: false, searchable: false },
                 { data: 'id', name: 'id' },

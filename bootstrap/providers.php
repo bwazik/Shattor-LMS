@@ -7,4 +7,5 @@ return [
     Barryvdh\Debugbar\ServiceProvider::class,
     Jubaer\Zoom\ZoomServiceProvider::class,
     Jenssegers\Agent\AgentServiceProvider::class,
+    Maatwebsite\Excel\ExcelServiceProvider::class,
 ];

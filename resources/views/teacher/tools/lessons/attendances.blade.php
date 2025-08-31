@@ -163,8 +163,8 @@
         <div class="tab-pane fade active show" id="datatable-tab" role="tabpanel">
             <x-datatable
                 datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/attendance.attendance')]) }}"
-                dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}"
-                otherIcon="ri-checkbox-circle-line">
+                dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-checkbox-circle-line"
+                excelButton="ss" excelButtonRoute="{{ route('teacher.attendance.export', $lesson->uuid) }}">
                 <th></th>
                 <th>#</th>
                 <th>{{ trans('main.student') }}</th>
@@ -188,7 +188,7 @@
 @section('page-js')
     @include('teacher.activities.attendance.js')
     <script>
-        initializeDataTable('#datatable', "{{ route('teacher.lessons.attendances', $lesson->uuid) }}", [2, 3, 4],
+        initializeDataTable('#datatable', "{{ route('teacher.lessons.attendances', $lesson->uuid) }}", [2, 5],
             [{
                     data: "",
                     orderable: false,

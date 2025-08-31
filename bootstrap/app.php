@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscribed' => EnsureTeacherIsSubscribed::class,
             'auth' => Authenticate::class,
             'guest' => RedirectIfAuthenticated::class,
+            'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
