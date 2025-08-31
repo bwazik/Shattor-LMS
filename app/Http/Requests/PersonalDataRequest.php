@@ -16,7 +16,8 @@ class PersonalDataRequest extends FormRequest
 
     public function rules()
     {
-        if(isTeacher()){
+        if(isTeacher())
+        {
             $rules = [
                 'username' => ['required','min:5','max:20',new UniqueFieldAcrossModels('username', Auth::user()->id)],
                 'name_ar' => 'required|min:3|max:100',
@@ -27,12 +28,24 @@ class PersonalDataRequest extends FormRequest
                 'grades' => 'required|array|min:1',
                 'grades.*' => 'integer|exists:grades,id',
             ];
-        }elseif(isStudent())
+        }
+        elseif(isStudent())
         {
             $rules = [
                 'username' => ['required','min:5','max:20',new UniqueFieldAcrossModels('username', Auth::user()->id)],
                 'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', Auth::user()->id)],
                 'birth_date' => 'nullable|date|date_format:Y-m-d',
+            ];
+        }
+        elseif(isParent())
+        {
+            $rules = [
+                'username' => ['required','min:5','max:20',new UniqueFieldAcrossModels('username', Auth::user()->id)],
+                'name_ar' => 'required|min:3|max:100',
+                'name_en' => 'required|min:3|max:100',
+                'phone' => ['required','numeric','regex:/^(01)[0-9]{9}$/',new UniqueFieldAcrossModels('phone', Auth::user()->id)],
+                'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', Auth::user()->id)],
+                'gender' => 'required|integer|in:1,2',
             ];
         }
 

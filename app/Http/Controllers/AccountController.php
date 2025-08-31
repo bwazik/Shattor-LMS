@@ -25,6 +25,7 @@ use App\Http\Requests\ZoomAccountRequest;
 use App\Services\Admin\FileUploadService;
 use App\Http\Requests\PersonalDataRequest;
 use App\Http\Requests\PasswordUpdateRequest;
+use App\Models\MyParent;
 
 class AccountController extends Controller
 {
@@ -49,6 +50,10 @@ class AccountController extends Controller
             'view_prefix' => 'student.account',
             'profile_pic_path' => 'students',
         ],
+        'parent' => [
+            'model' => MyParent::class,
+            'view_prefix' => 'parent.account',
+        ],
     ];
 
     public function __construct(QRCodeService $qrCodeService, FileUploadService $profilePicService, AccountService $accountService, SessionService $sessionService)
@@ -65,8 +70,10 @@ class AccountController extends Controller
 
     public function scanQRCode($uuid, Request $request)
     {
-        $student = Student::select('uuid')->where('uuid', $uuid)->firstOrFail();
-        return response()->json(['uuid' => $student->uuid]);
+        $model = $this->mapping['model'];
+
+        $user = $model::select('uuid')->where('uuid', $uuid)->firstOrFail();
+        return response()->json(['uuid' => $user->uuid]);
     }
 
     public function editPersonalInfo()
@@ -75,7 +82,7 @@ class AccountController extends Controller
         $cacheKey = "account:{$this->guard}:{$this->userId}:personal";
         $ttl = 3600; // 1 hour
 
-        $qrcode = $this->qrCodeService->generateQRCode('student', $this->userUuid);
+        $qrcode = $this->qrCodeService->generateQRCode($this->guard, $this->userUuid);
 
         $data = Cache::remember($cacheKey, $ttl, function () use ($model) {
             if ($this->guard === 'teacher') {
@@ -123,6 +130,18 @@ class AccountController extends Controller
                     'groups' => $user->groups->mapWithKeys(fn($group) => [$group->uuid => $group->name . ' - ' . $group->teacher->name]),
                     'student' => $user->setAttribute('groups', implode(',', $groupIds))
                         ->setAttribute('teachers', implode(',', $teacherIds)),
+                ];
+            } elseif ($this->guard === 'parent') {
+                $user = $model::query()
+                    ->with([
+                        'students:id,username,name,phone,email,gender,birth_date,grade_id,parent_id',
+                        'students.grade:id,name',
+                    ])
+                    ->select('id', 'username', 'name', 'phone', 'email', 'gender')
+                    ->findOrFail($this->userId);
+
+                return [
+                    'parent' => $user,
                 ];
             }
         });

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Coupon;
+use App\Models\MyParent;
 use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\Transaction;
@@ -22,6 +23,9 @@ class AccountService
         ],
         'student' => [
             'model' => Student::class,
+        ],
+        'parent' => [
+            'model' => MyParent::class,
         ],
     ];
 
@@ -47,6 +51,16 @@ class AccountService
                     'username' => $request['username'],
                     'email' => $request['email'],
                     'birth_date' => $request['birth_date'],
+                ]);
+            } elseif ($guard === 'parent') {
+                $parent = MyParent::findOrFail($userId);
+
+                $parent->update([
+                    'username' => $request['username'],
+                    'name' => ['ar' => $request['name_ar'], 'en' => $request['name_en']],
+                    'phone' => $request['phone'],
+                    'email' => $request['email'],
+                    'gender' => $request['gender'],
                 ]);
             }
 

@@ -1,4 +1,4 @@
-@extends('layouts.student.master')
+@extends('layouts.parent.master')
 
 @section('page-css')
 
