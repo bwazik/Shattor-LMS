@@ -229,7 +229,7 @@ class AttendanceService
             ])->first();
 
             if ($existingAttendance) {
-                return $this->successResponse(trans('admin/attendance.alreadyRecorded', ['name' => $student->name]));
+                return $this->errorResponse(trans('admin/attendance.alreadyRecorded', ['name' => $student->name]));
             }
 
             if ($validationResult = $this->validateTeacherGradeAndGroups($teacherId, $groupId, $request['grade_id'], true)) {

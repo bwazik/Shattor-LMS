@@ -437,13 +437,13 @@ class LessonsController extends Controller
             ->select('id', 'title', 'group_id', 'date')->findOrFail($id);
 
         $unrecordedStudents = Student::query()
-            ->whereHas('allGroups', fn($query) => $query->where('group_id', $lesson->group_id)
+            ->whereHas('groups', fn($query) => $query->where('groups.id', $lesson->group_id)
                 ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
                 ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]))
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $lesson->group->teacher_id))
             ->whereDoesntHave('attendances', fn($query) =>
                 $query->where('lesson_id', $lesson->id)->where('teacher_id', $lesson->group->teacher_id))
-            ->select('id', 'uuid', 'name', 'phone', 'profile_pic', 'created_at');
+            ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.profile_pic', 'students.created_at');
 
         if ($request->ajax()) {
             return datatables()->eloquent($unrecordedStudents)

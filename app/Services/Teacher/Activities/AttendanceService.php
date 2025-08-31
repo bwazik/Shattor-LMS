@@ -49,7 +49,7 @@ class AttendanceService
             ->where('student_group.group_id', $groupId)
             ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
             ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
-            
+
         $compensatoryStudentsQuery = Student::query()
             ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
@@ -241,7 +241,7 @@ class AttendanceService
             ])->first();
 
             if ($existingAttendance) {
-                return $this->successResponse(trans('admin/attendance.alreadyRecorded', ['name' => $student->name]));
+                return $this->errorResponse(trans('admin/attendance.alreadyRecorded', ['name' => $student->name]));
             }
 
             if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true)) {

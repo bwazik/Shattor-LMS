@@ -336,6 +336,8 @@
                                         },
                                         success: function(response) {
                                             if (response.success) {
+                                                console.log(response);
+
                                                 toastr.success(response.success)
                                                 successSound.play().catch(function(error) {
                                                     console.warn('Audio playback failed:', error);
