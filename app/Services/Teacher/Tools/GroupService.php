@@ -3,7 +3,9 @@
 namespace App\Services\Teacher\Tools;
 
 use App\Models\Group;
+use App\Imports\StudentsImport;
 use App\Traits\PublicValidatesTrait;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
 use App\Services\Admin\Tools\LessonService;
@@ -58,6 +60,16 @@ class GroupService
                             'data-name="' . $row->name . '" ' .
                             'data-bs-target="#lessons-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                             trans('admin/lessons.generate').
+                        '</a>' .
+                    '</li>' .
+                    '<li>' .
+                        '<a href="javascript:;" class="dropdown-item" ' .
+                            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#excel-import-modal" ' .
+                            'id="excel-import-button" ' .
+                            'data-id="' . $row->uuid . '" ' .
+                            'data-name="' . $row->name . '" ' .
+                            'data-bs-target="#excel-import-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+                            trans('main.excelImport').
                         '</a>' .
                     '</li>' .
                     '<li>
@@ -185,5 +197,20 @@ class GroupService
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->rawColumns(['selectbox', 'lessons', 'students', 'is_active', 'actions'])
             ->make(true);
+    }
+
+    public function importStudents($id, $file)
+    {
+        return $this->executeTransaction(function () use ($id, $file)
+        {
+            $group = Group::where('teacher_id', $this->teacherId)->select('id', 'grade_id')->findOrFail($id);
+
+            $import = new StudentsImport($group->id, $group->grade_id, $this->teacherId);
+            Excel::import($import, $file);
+
+            $credentials = $import->getCredentials();
+
+            return $this->successResponse(trans('main.imported'));
+        }, trans('toasts.ownershipError'));
     }
 }

@@ -241,7 +241,8 @@ return [
     'upload' => 'Upload',
     'reset' => 'Reset',
     'excelExport' => 'Excel Export',
-    
+    'excelImport' => 'Excel Import',
+
     # Toasts
     'errorMessage' => 'An unexpected error occurred. Please try again later!',
     'added' => ':item has been added successfully!',
@@ -268,7 +269,8 @@ return [
     'warning' => 'Warning!',
     'error' => 'Error!',
     'generated' => 'Lessons have been generated successfully!',
-
+    'imported' => 'File has been imported successfully!',
+    
     # Other
     'mr' => 'Mr',
     'mrs' => 'Mrs',

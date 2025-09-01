@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use App\Services\WhatsappService;
 
 class LoginRequest extends FormRequest
 {
@@ -117,7 +118,19 @@ class LoginRequest extends FormRequest
                 }
             }
         }
-        
+
+        // Send WhatsApp message for new device (exclude parent guard)
+        if (!$isAuthorized && $guard !== 'parent' && !empty($user->phone)) {
+            $whatsAppService = app(WhatsAppService::class);
+            $whatsAppService->sendMessage($user->phone, 'new_device_login',
+                [
+                    'name' => explode(' ', trim($user->name))[0],
+                    'date' => now()->translatedFormat('l j F Y'),
+                    'time' => now()->translatedFormat('h:i A'),
+                ]
+            );
+        }
+
         // Update or add device
         DB::table('user_devices')->updateOrInsert(
             [

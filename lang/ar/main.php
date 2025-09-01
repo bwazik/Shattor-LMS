@@ -242,6 +242,7 @@ return [
     'upload' => 'رفع الصورة',
     'reset' => 'إستعادة',
     'excelExport' => 'تصدير إكسيل',
+    'excelImport' => 'إستيراد إكسيل',
 
     # Toasts
     'errorMessage' => 'فيه مشكلة حصلت، جرب تاني بعد شوية!',
@@ -269,6 +270,7 @@ return [
     'warning' => 'تحذير!',
     'error' => 'خطأ!',
     'generated' => 'تم إنشاء الحصص بنجاح!',
+    'imported' => 'تم استيراد الملف بنجاح!',
 
     # Other
     'mr' => 'مستر',

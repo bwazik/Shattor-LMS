@@ -94,6 +94,15 @@
                 name: button => button.data('name'),
             }
         });
+        // Setup excel import modal
+        setupModal({
+            buttonId: '#excel-import-button',
+            modalId: '#excel-import-modal',
+            fields: {
+                id: button => button.data('id'),
+                name: button => button.data('name'),
+            }
+        });
 
         let fields = ['name_ar', 'name_en', 'grade_id', 'day_1', 'day_2', 'time', 'is_active'];
         let generateFields = ['start_date', 'end_date'];
@@ -102,6 +111,7 @@
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
         handleFormSubmit('#lessons-form', generateFields, '#lessons-modal', 'offcanvas', '#datatable');
+        handleFormSubmit('#excel-import-form', ['file'], '#excel-import-modal', 'offcanvas', '#datatable');
 
         $('#day_1, #day_2, #grade_id, #time').on('change', function () {
             updateGroupNames();

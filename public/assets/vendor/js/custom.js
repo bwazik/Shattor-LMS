@@ -231,17 +231,15 @@ function generateStrongPassword(length = 12) {
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const numbers = '0123456789';
-    const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
     // Combine all characters
-    const allChars = lowercase + uppercase + numbers + symbols;
+    const allChars = lowercase + uppercase + numbers;
 
     // Ensure at least one character from each set
     let password = '';
     password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
     password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
     password += numbers.charAt(Math.floor(Math.random() * numbers.length));
-    password += symbols.charAt(Math.floor(Math.random() * symbols.length));
 
     // Fill the rest with random characters
     for (let i = 4; i < length; i++) {

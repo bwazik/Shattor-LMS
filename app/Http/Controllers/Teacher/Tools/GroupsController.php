@@ -7,7 +7,9 @@ use App\Models\Group;
 use App\Models\Lesson;
 use App\Models\Student;
 use App\Models\MyParent;
+use Omaralalwi\Gpdf\Gpdf;
 use Illuminate\Http\Request;
+use App\Services\QRCodeService;
 use App\Services\PlanLimitService;
 use App\Traits\ValidatesExistence;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +21,6 @@ use App\Services\Teacher\Tools\LessonService;
 use App\Services\Teacher\Users\StudentService;
 use App\Http\Requests\Admin\Tools\GroupsRequest;
 use App\Http\Requests\Admin\Tools\GenerateLessonsRequest;
-use App\Services\QRCodeService;
-use Omaralalwi\Gpdf\Gpdf;
 
 class GroupsController extends Controller
 {
@@ -252,5 +252,18 @@ class GroupsController extends Controller
         }
 
         return $text;
+    }
+
+    public function importStudents(Request $request)
+    {
+        $id = Group::uuid($request->id)->value('id');
+
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        $result = $this->groupService->importStudents($id, $request->file('file'));
+
+        return $this->conrtollerJsonResponse($result);
     }
 }
