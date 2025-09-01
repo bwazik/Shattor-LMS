@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
 use App\Services\Admin\Tools\LessonService;
-use App\Services\WhatsAppService;
+use App\Services\WhatsappService;
 
 class GroupService
 {
@@ -17,13 +17,13 @@ class GroupService
 
     protected $teacherId;
     protected $lessonService;
-    protected $whatsAppService;
+    protected $whatsappService;
 
-    public function __construct(LessonService $lessonService, WhatsAppService $whatsAppService)
+    public function __construct(LessonService $lessonService, WhatsappService $whatsappService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
         $this->lessonService = $lessonService;
-        $this->whatsAppService = $whatsAppService;
+        $this->whatsappService = $whatsappService;
     }
 
     public function getGroupsForDatatable($groupsQuery)
@@ -210,7 +210,7 @@ class GroupService
             $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
 
             if (!empty($credentials)) {
-                $this->whatsAppService->sendBulkMessages(
+                $this->whatsappService->sendBulkMessages(
                     $credentials,
                     'student_credentials',
                     function ($credential) use ($teacherName) {

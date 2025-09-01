@@ -10,18 +10,18 @@ use App\Traits\PublicValidatesTrait;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
-use App\Services\WhatsAppService;
+use App\Services\WhatsappService;
 
 class StudentService
 {
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
     protected $teacherId;
-    protected $whatsAppService;
+    protected $whatsappService;
 
-    public function __construct(WhatsAppService $whatsAppService)
+    public function __construct(WhatsappService $whatsappService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
-        $this->whatsAppService = $whatsAppService;
+        $this->whatsappService = $whatsappService;
     }
 
     public function getStudentsForDatatable($studentsQuery)
@@ -116,7 +116,7 @@ class StudentService
 
             $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
 
-            $this->whatsAppService->sendMessage($student->phone, 'student_credentials', [
+            $this->whatsappService->sendMessage($student->phone, 'student_credentials', [
                 'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
                 'username'     => $student->username,
                 'password'     => $request['password'],

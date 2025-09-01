@@ -4,7 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use App\Services\WhatsAppService;
+use App\Services\WhatsappService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Log;
@@ -15,11 +15,11 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    protected $whatsAppService;
+    protected $whatsappService;
 
-    public function __construct(WhatsAppService $whatsAppService)
+    public function __construct(WhatsappService $whatsappService)
     {
-        $this->whatsAppService = $whatsAppService;
+        $this->whatsappService = $whatsappService;
     }
 
     public function authorize(): bool
@@ -137,7 +137,7 @@ class LoginRequest extends FormRequest
 
             Carbon::setLocale('ar');
 
-            $this->whatsAppService->sendMessage($user->phone, 'new_device_login',
+            $this->whatsappService->sendMessage($user->phone, 'new_device_login',
                 [
                     'name' => $name,
                     'date' => now()->translatedFormat('l j F Y'),

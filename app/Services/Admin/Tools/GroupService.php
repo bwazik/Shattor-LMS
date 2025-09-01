@@ -8,7 +8,7 @@ use App\Traits\PublicValidatesTrait;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
-use App\Services\WhatsAppService;
+use App\Services\WhatsappService;
 
 class GroupService
 {
@@ -17,12 +17,12 @@ class GroupService
     protected $relationships = ['students', 'attendances', 'zooms', 'lessons'];
     protected $transModelKey = 'admin/groups.groups';
     protected $lessonService;
-    protected $whatsAppService;
+    protected $whatsappService;
 
-    public function __construct(LessonService $lessonService, WhatsAppService $whatsAppService)
+    public function __construct(LessonService $lessonService, WhatsappService $whatsappService)
     {
         $this->lessonService = $lessonService;
-        $this->whatsAppService = $whatsAppService;
+        $this->whatsappService = $whatsappService;
     }
 
     public function getGroupsForDatatable($groupsQuery)
@@ -205,7 +205,7 @@ class GroupService
             $teacherName = 'مستر ' . $group->teacher->name;
 
             if (!empty($credentials)) {
-                $this->whatsAppService->sendBulkMessages(
+                $this->whatsappService->sendBulkMessages(
                     $credentials,
                     'student_credentials',
                     function ($credential) use ($teacherName) {

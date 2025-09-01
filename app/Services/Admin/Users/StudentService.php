@@ -4,7 +4,7 @@ namespace App\Services\Admin\Users;
 
 use App\Models\Student;
 use App\Models\Teacher;
-use App\Services\WhatsAppService;
+use App\Services\WhatsappService;
 use App\Traits\PublicValidatesTrait;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\DatabaseTransactionTrait;
@@ -16,11 +16,11 @@ class StudentService
 
     protected $relationships = ['attendances', 'assignmentSubmissions'];
     protected $transModelKey = 'admin/students.students';
-    protected $whatsAppService;
+    protected $whatsappService;
 
-    public function __construct(WhatsAppService $whatsAppService)
+    public function __construct(WhatsappService $whatsappService)
     {
-        $this->whatsAppService = $whatsAppService;
+        $this->whatsappService = $whatsappService;
     }
 
     public function getStudentsForDatatable($studentsQuery)
@@ -176,7 +176,7 @@ class StudentService
                 }
             }
 
-            $this->whatsAppService->sendMessage($student->phone, 'student_credentials', [
+            $this->whatsappService->sendMessage($student->phone, 'student_credentials', [
                 'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
                 'username'     => $student->username,
                 'password'     => $request['password'],

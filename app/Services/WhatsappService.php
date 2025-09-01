@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\WhatsAppMessage;
-use App\Jobs\SendWhatsAppMessage;
+use App\Models\WhatsappMessage;
+use App\Jobs\SendWhatsappMessage;
 use Illuminate\Support\Facades\Log;
 
-class WhatsAppService
+class WhatsappService
 {
     public function sendMessage(string $phone, string $template, array $data)
     {
@@ -38,7 +38,7 @@ class WhatsAppService
         ]);
 
         // Dispatch job to appropriate queue
-        SendWhatsAppMessage::dispatch($message)->onQueue('default');
+        SendWhatsappMessage::dispatch($message)->onQueue('default');
 
         Log::channel('whatsapp')->info('WhatsApp message queued', [
             'message_id' => $message->id,
@@ -83,7 +83,7 @@ class WhatsAppService
                 ]);
 
                 // Dispatch with batch delay to spread load
-                SendWhatsAppMessage::dispatch($message)
+                SendWhatsappMessage::dispatch($message)
                     ->onQueue('default')
                     ->delay(now()->addSeconds($index * 60)); // Delay each batch by 60 seconds
             }
