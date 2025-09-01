@@ -11,9 +11,10 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="description"
-        content="Shattor Platform - Empowering teachers with tools to manage students and create engaging educational experiences." />
-    <meta name="author" content="Abdullah Mohamed (Bazoka), Developer and Founder of Shattor Platform" />
-    <meta name="keywords" content="Shattor, education platform, teacher tools, student management, online learning" />
+        content="شطُّور - منصة تعليمية تفاعلية للطلاب والمعلمين" />
+    <meta name="author" content="عبدالله محمد (بازوكا)، مطوّر ومؤسس منصة شطور" />
+    <meta name="keywords" content="منصة شطور, شطور, منصة تعليمية, أدوات للمدرسين, إدارة الطلاب, متابعة الطلاب, التعليم أونلاين, حصص أونلاين, اختبارات أونلاين, واجبات أونلاين, حضور وغياب, تقارير الطلاب, تواصل مع أولياء الأمور, دروس خصوصية, مجموعات دراسية, منصة للمدرسين, منصة للطلاب, إدارة المجموعات, منصة تعليم مصرية, منصة تعليم خاصة, نظام تعليمي, تعليم ذكي, تعليم عن بعد, منصة تعليمية عربية, تطوير التعليم, إدارة السنتر, منصة للمدرس, منصة للطالب, إدارة الفصل, تعليم تفاعلي, أدوات تعليمية, منصات تعليم إلكتروني,
+        Shattor, Shattor Platform, education platform, teacher tools, student management, online learning, online classes, online exams, online assignments, attendance system, absence tracking, student reports, parent communication, private tutoring, study groups, teacher platform, student platform, class management, Egyptian education platform, private education, smart education, distance learning, Arabic education platform, e-learning platform, interactive education, tutoring platform, school management system" />
     <!-- Title -->
     <title>@yield("title")</title>
     <!-- Favicon -->
