@@ -101,6 +101,25 @@ class SendWhatsAppMessage implements ShouldQueue
             case 'new_device_login':
                 return "{$data['name']}, عامل ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
                     . "{$data['date']} الساعة {$data['time']}.";
+            case 'student_credentials':
+                $studentName = $data['student_name'];
+                $username = $data['username'];
+                $password = $data['password'];
+                $loginUrl = $data['login_url'];
+                $settingsUrl = $data['settings_url'];
+                $teacherName = $data['teacher_name'] ?? null;
+
+                $teacherLine = $teacherName ? "المدرس: {$teacherName}\n" : "";
+
+                return "{$studentName}، أهلاً بيك 👋\n"
+                    . "حسابك علي منصة شطّور جاهز دلوقتي!\n\n"
+                    . "بيانات الدخول:\n\n"
+                    . "اليوزرنيم: {$username}\n"
+                    . "الباسوورد: {$password}\n"
+                    . $teacherLine . "\n"
+                    . "تسجيل الدخول:\n{$loginUrl}\n"
+                    . "تقدر تغيّر اليوزرنيم أو الباسوورد من الإعدادات:\n{$settingsUrl}\n\n"
+                    . "ممكن تقولنا المجموعة بتعتك عشان نربط حسابك بيها؟ 🤔";
             default:
                 return "إشعار: {$data['message']}";
         }

@@ -3,10 +3,12 @@
 namespace App\Services\Admin\Users;
 
 use App\Models\Student;
-use Illuminate\Support\Facades\Hash;
-use App\Traits\PreventDeletionIfRelated;
-use App\Traits\DatabaseTransactionTrait;
+use App\Models\Teacher;
+use App\Services\WhatsAppService;
 use App\Traits\PublicValidatesTrait;
+use Illuminate\Support\Facades\Hash;
+use App\Traits\DatabaseTransactionTrait;
+use App\Traits\PreventDeletionIfRelated;
 
 class StudentService
 {
@@ -159,6 +161,24 @@ class StudentService
 
             $student->teachers()->attach($request['teachers']);
             $student->groups()->attach($request['groups']);
+
+            $teacherName = null;
+            if (count($request['teachers']) === 1) {
+                $teacher = Teacher::select('id', 'name')->findOrFail($request['teachers'][0]);
+                if ($teacher) {
+                    $teacherName = 'مستر ' . $teacher->getTranslation('name', 'ar');
+                }
+            }
+
+            $whatsAppService = app(WhatsAppService::class);
+            $whatsAppService->sendMessage($student->phone, 'student_credentials', [
+                'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
+                'username'     => $student->username,
+                'password'     => $request['password'],
+                'teacher_name' => $teacherName,
+                'login_url'    => "https://shattor.com/ar/student/login",
+                'settings_url' => "https://shattor.com/ar/student/account/personal",
+            ]);
 
             return $this->successResponse(trans('main.added', ['item' => trans('admin/students.student')]));
         });

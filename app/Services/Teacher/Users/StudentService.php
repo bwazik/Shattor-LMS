@@ -4,11 +4,13 @@ namespace App\Services\Teacher\Users;
 
 use App\Models\Group;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Models\MyParent;
 use App\Traits\PublicValidatesTrait;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
+use App\Services\WhatsAppService;
 
 class StudentService
 {
@@ -109,6 +111,18 @@ class StudentService
 
             $student->teachers()->attach($this->teacherId);
             $student->groups()->attach($groupIds);
+
+            $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
+
+            $whatsAppService = app(WhatsAppService::class);
+            $whatsAppService->sendMessage($student->phone, 'student_credentials', [
+                'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
+                'username'     => $student->username,
+                'password'     => $request['password'],
+                'teacher_name' => $teacherName,
+                'login_url'    => "https://shattor.com/ar/student/login",
+                'settings_url' => "https://shattor.com/ar/student/account/personal",
+            ]);
 
             return $this->successResponse(trans('main.added', ['item' => trans('admin/students.student')]));
         });

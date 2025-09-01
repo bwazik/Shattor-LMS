@@ -56,7 +56,7 @@ class WhatsAppService
 
         foreach ($batches as $index => $batch) {
             foreach ($batch as $recipient) {
-                $phone = $this->formatPhoneNumber($recipient['phone']);
+                $phone = $this->formatPhoneNumber($recipient['student_phone']);
                 $data = $dataCallback($recipient);
 
                 // Skip duplicates within 24 hours
@@ -78,7 +78,7 @@ class WhatsAppService
                     'phone' => $phone,
                     'template' => $template,
                     'data' => $data,
-                    'status' => 'queued',
+                    'status' => 1,
                     'attempts' => 0,
                 ]);
 

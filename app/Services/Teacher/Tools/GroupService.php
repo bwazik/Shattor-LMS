@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
 use App\Services\Admin\Tools\LessonService;
+use App\Services\WhatsAppService;
 
 class GroupService
 {
@@ -48,65 +49,64 @@ class GroupService
     {
         return
             '<div class="d-inline-block">' .
-                '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
-                    '<i class="ri-more-2-line"></i>' .
-                '</a>' .
-                '<ul class="dropdown-menu dropdown-menu-end m-0">' .
-                    '<li>' .
-                        '<a href="javascript:;" class="dropdown-item" ' .
-                            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#lessons-modal" ' .
-                            'id="lessons-button" ' .
-                            'data-id="' . $row->uuid . '" ' .
-                            'data-name="' . $row->name . '" ' .
-                            'data-bs-target="#lessons-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                            trans('admin/lessons.generate').
-                        '</a>' .
-                    '</li>' .
-                    '<li>' .
-                        '<a href="javascript:;" class="dropdown-item" ' .
-                            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#excel-import-modal" ' .
-                            'id="excel-import-button" ' .
-                            'data-id="' . $row->uuid . '" ' .
-                            'data-name="' . $row->name . '" ' .
-                            'data-bs-target="#excel-import-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                            trans('main.excelImport').
-                        '</a>' .
-                    '</li>' .
-                    '<li>
-                        <a href="' . route('teacher.groups.exportQrCodes', $row->uuid) . '" class="dropdown-item">'.trans('admin/lessons.exportQrCodes').'</a>
+            '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
+            '<i class="ri-more-2-line"></i>' .
+            '</a>' .
+            '<ul class="dropdown-menu dropdown-menu-end m-0">' .
+            '<li>' .
+            '<a href="javascript:;" class="dropdown-item" ' .
+            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#lessons-modal" ' .
+            'id="lessons-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-name="' . $row->name . '" ' .
+            'data-bs-target="#lessons-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            trans('admin/lessons.generate') .
+            '</a>' .
+            '</li>' .
+            '<li>' .
+            '<a href="javascript:;" class="dropdown-item" ' .
+            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#excel-import-modal" ' .
+            'id="excel-import-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-name="' . $row->name . '" ' .
+            'data-bs-target="#excel-import-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            trans('main.excelImport') .
+            '</a>' .
+            '</li>' .
+            '<li>
+                        <a href="' . route('teacher.groups.exportQrCodes', $row->uuid) . '" class="dropdown-item">' . trans('admin/lessons.exportQrCodes') . '</a>
                     </li>' .
-                    '<div class="dropdown-divider"></div>' .
-                    '<li>' .
-                        '<a href="javascript:;" class="dropdown-item text-danger" ' .
-                            'id="delete-button" ' .
-                            'data-id="' . $row->uuid . '" ' .
-                            'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
-                            'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
-                            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                            trans('main.delete').
-                        '</a>' .
-                    '</li>' .
-                '</ul>' .
+            '<div class="dropdown-divider"></div>' .
+            '<li>' .
+            '<a href="javascript:;" class="dropdown-item text-danger" ' .
+            'id="delete-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
+            'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
+            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            trans('main.delete') .
+            '</a>' .
+            '</li>' .
+            '</ul>' .
             '</div>' .
             '<button class="btn btn-sm btn-icon btn-text-secondary text-body rounded-pill waves-effect waves-light" ' .
-                'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
-                'id="edit-button" ' .
-                'data-id="' . $row->uuid . '" ' .
-                'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
-                'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
-                'data-is_active="' . ($row->is_active ? '1' : '0') . '" ' .
-                'data-grade_id="' . $row->grade_id . '" ' .
-                'data-day_1="' . $row->day_1 . '" ' .
-                'data-day_2="' . $row->day_2 . '" ' .
-                'data-time="' . $row->time . '">' .
-                '<i class="ri-edit-box-line ri-20px"></i>' .
+            'tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#edit-modal" ' .
+            'id="edit-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
+            'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
+            'data-is_active="' . ($row->is_active ? '1' : '0') . '" ' .
+            'data-grade_id="' . $row->grade_id . '" ' .
+            'data-day_1="' . $row->day_1 . '" ' .
+            'data-day_2="' . $row->day_2 . '" ' .
+            'data-time="' . $row->time . '">' .
+            '<i class="ri-edit-box-line ri-20px"></i>' .
             '</button>';
     }
 
     public function insertGroup(array $request)
     {
-        return $this->executeTransaction(function () use ($request)
-        {
+        return $this->executeTransaction(function () use ($request) {
             if ($validationResult = $this->validateTeacherGrade($request['grade_id'], $this->teacherId))
                 return $validationResult;
 
@@ -127,8 +127,7 @@ class GroupService
 
     public function updateGroup($id, array $request)
     {
-        return $this->executeTransaction(function () use ($id, $request)
-        {
+        return $this->executeTransaction(function () use ($id, $request) {
             $group = Group::where('teacher_id', $this->teacherId)->findOrFail($id);
 
             if ($validationResult = $this->validateTeacherGrade($request['grade_id'], $this->teacherId))
@@ -149,8 +148,7 @@ class GroupService
 
     public function deleteGroup($id): array
     {
-        return $this->executeTransaction(function () use ($id)
-        {
+        return $this->executeTransaction(function () use ($id) {
             Group::where('teacher_id', $this->teacherId)->findOrFail($id)->delete();
 
             return $this->successResponse(trans('main.deleted', ['item' => trans('admin/groups.group')]));
@@ -162,8 +160,7 @@ class GroupService
         if ($validationResult = $this->validateSelectedItems((array) $ids))
             return $validationResult;
 
-        return $this->executeTransaction(function () use ($ids)
-        {
+        return $this->executeTransaction(function () use ($ids) {
             Group::where('teacher_id', $this->teacherId)->whereIn('id', $ids)->delete();
 
             return $this->successResponse(trans('main.deletedSelected', ['item' => strtolower(trans('admin/groups.groups'))]));
@@ -172,8 +169,7 @@ class GroupService
 
     public function generateLessons($id, array $request)
     {
-        return $this->executeTransaction(function () use ($id, $request)
-        {
+        return $this->executeTransaction(function () use ($id, $request) {
             $group = Group::where('teacher_id', $this->teacherId)->findOrFail($id);
 
             $this->lessonService->generateLessonsForGroup($group->id, $request['start_date'], $request['end_date']);
@@ -201,14 +197,33 @@ class GroupService
 
     public function importStudents($id, $file)
     {
-        return $this->executeTransaction(function () use ($id, $file)
-        {
+        return $this->executeTransaction(function () use ($id, $file) {
             $group = Group::where('teacher_id', $this->teacherId)->select('id', 'grade_id')->findOrFail($id);
 
             $import = new StudentsImport($group->id, $group->grade_id, $this->teacherId);
             Excel::import($import, $file);
 
             $credentials = $import->getCredentials();
+
+            $whatsAppService = app(WhatsAppService::class);
+            $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
+
+            if (!empty($credentials)) {
+                $whatsAppService->sendBulkMessages(
+                    $credentials,
+                    'student_credentials',
+                    function ($credential) use ($teacherName) {
+                        return [
+                            'student_name' => explode(' ', trim($credential['student_name']))[0],
+                            'username' => $credential['student_username'],
+                            'password' => $credential['student_password'],
+                            'teacher_name' => $teacherName,
+                            'login_url' => "https://shattor.com/ar/student/login",
+                            'settings_url' => "https://shattor.com/ar/student/account/personal",
+                        ];
+                    }
+                );
+            }
 
             return $this->successResponse(trans('main.imported'));
         }, trans('toasts.ownershipError'));

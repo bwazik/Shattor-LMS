@@ -21,7 +21,6 @@ class StudentsImport implements ToCollection, WithHeadingRow
     protected $studentsData = [];
     protected $parentCache = [];
     protected $studentPhones = [];
-    protected $skippedRows = [];
 
     public function __construct($groupId, $gradeId, $teacherId)
     {
@@ -36,18 +35,22 @@ class StudentsImport implements ToCollection, WithHeadingRow
         $studentGroupData = [];
 
         foreach ($rows as $index => $row) {
-            // Format phone numbers
-            $parentPhone = '0' . ltrim($row['parent_phone'], '0');
-            $studentPhone = '0' . ltrim($row['student_phone'], '0');
-            $studentName = $row['student_name'];
+            // Validate required fields
+            $studentPhone = !empty($row['student_phone']) ? '0' . ltrim($row['student_phone'], '0') : null;
+            $parentPhone = !empty($row['parent_phone']) ? '0' . ltrim($row['parent_phone'], '0') : null;
+            $studentName = !empty($row['student_name']) ? trim($row['student_name']) : null;
+
+            // Skip if student_phone, parent_phone, or student_name is missing/invalid
+            if (
+                empty($studentPhone) || !preg_match('/^0[0-9]{10}$/', $studentPhone) ||
+                empty($parentPhone) || !preg_match('/^0[0-9]{10}$/', $parentPhone) ||
+                empty($studentName)
+            ) {
+                continue;
+            }
 
             // Skip duplicate student phones
             if (in_array($studentPhone, $this->studentPhones)) {
-                $this->skippedRows[] = [
-                    'row' => $index + 2, // Excel row number (header + 1)
-                    'student_phone' => $studentPhone,
-                    'reason' => 'Duplicate student phone',
-                ];
                 continue;
             }
             $this->studentPhones[] = $studentPhone;
@@ -62,20 +65,25 @@ class StudentsImport implements ToCollection, WithHeadingRow
             $this->credentials[] = [
                 'student_id' => null, // Updated after student creation
                 'student_phone' => $studentPhone,
+                'student_name' => $studentName,
                 'student_username' => $studentUsername,
                 'student_password' => $studentPassword,
             ];
 
-            // Cache and collect parent data (only once per parent_phone)
+            // Cache and collect parent data
             if (!isset($this->parentCache[$parentPhone])) {
                 $parent = MyParent::where('phone', $parentPhone)->first();
                 $this->parentCache[$parentPhone] = $parent;
                 if (!$parent && !isset($this->parentsData[$parentPhone])) {
+                    $studentFirstName = explode(' ', trim($studentName))[0];
                     $this->parentsData[$parentPhone] = [
                         'uuid' => (string) Str::uuid(),
                         'username' => $parentUsername,
                         'password' => Hash::make($parentPassword, ['rounds' => 8]),
-                        'name' => json_encode(['ar' => 'افتراضي', 'en' => 'افتراضي']),
+                        'name' => json_encode([
+                            'ar' => "ولي أمر {$studentFirstName}",
+                            'en' => "Parent of {$studentFirstName}",
+                        ]),
                         'phone' => $parentPhone,
                         'gender' => 1,
                         'created_at' => now(),
@@ -89,7 +97,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 'uuid' => (string) Str::uuid(),
                 'username' => $studentUsername,
                 'password' => Hash::make($studentPassword, ['rounds' => 8]),
-                'name' => json_encode(['ar' => $studentName, 'en' => '-----']),
+                'name' => json_encode(['ar' => $studentName, 'en' => 'Default']),
                 'phone' => $studentPhone,
                 'gender' => 1,
                 'grade_id' => $this->gradeId,
@@ -104,18 +112,13 @@ class StudentsImport implements ToCollection, WithHeadingRow
             DB::table('parents')->insert(array_values($this->parentsData));
         }
 
-        // Update parent_id in studentsData and refresh parent cache
+        // Update parent_id in studentsData
         foreach ($this->studentsData as $index => $student) {
             if (!$student['parent_id']) {
                 $parentPhone = '0' . ltrim($rows[$index]['parent_phone'], '0');
                 $parent = $this->parentCache[$parentPhone] ?? MyParent::where('phone', $parentPhone)->first();
                 if (!$parent) {
-                    $this->skippedRows[] = [
-                        'row' => $index + 2,
-                        'student_phone' => $student['phone'],
-                        'reason' => 'Parent not found for phone: ' . $parentPhone,
-                    ];
-                    unset($this->studentsData[$index]); // Skip student if parent not found
+                    unset($this->studentsData[$index]);
                     unset($this->credentials[$index]);
                     continue;
                 }
@@ -124,7 +127,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
             }
         }
 
-        // Reindex arrays to avoid gaps
+        // Reindex arrays
         $this->studentsData = array_values($this->studentsData);
         $this->credentials = array_values($this->credentials);
 
@@ -141,11 +144,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
         foreach ($this->studentsData as $index => $studentData) {
             $student = $students[$studentData['phone']] ?? null;
             if (!$student) {
-                $this->skippedRows[] = [
-                    'row' => $index + 2,
-                    'student_phone' => $studentData['phone'],
-                    'reason' => 'Student not found after insert',
-                ];
+                unset($this->credentials[$index]);
                 continue;
             }
             $this->credentials[$index]['student_id'] = $student->id;
@@ -162,6 +161,9 @@ class StudentsImport implements ToCollection, WithHeadingRow
             ];
         }
 
+        // Reindex credentials
+        $this->credentials = array_values($this->credentials);
+
         // Batch insert pivot tables
         if (!empty($studentTeacherData)) {
             DB::table('student_teacher')->insert($studentTeacherData);
@@ -174,11 +176,6 @@ class StudentsImport implements ToCollection, WithHeadingRow
     public function getCredentials()
     {
         return $this->credentials;
-    }
-
-    public function getSkippedRows()
-    {
-        return $this->skippedRows;
     }
 
     private function generateRandomString($length = 8)
