@@ -23,7 +23,7 @@ class LandingController extends Controller
             return [
                 'teachers' => Teacher::count(),
                 'students' => Student::count(),
-                'lessons' => Lesson::count(),
+                'lessons' => Lesson::completed()->count(),
                 'groups' => Group::count(),
             ];
         });

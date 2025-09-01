@@ -18,7 +18,7 @@ class GroupsRequest extends FormRequest
             'name_en' => 'required|min:3|max:100',
             'grade_id' => 'required|integer|exists:grades,id',
             'day_1' => 'required|integer|between:1,7',
-            'day_2' => 'required|integer|between:1,7|different:day_1',
+            'day_2' => 'required|integer|between:1,7',
             'time' => 'required|date_format:H:i',
             'is_active' => 'nullable|boolean',
         ];
