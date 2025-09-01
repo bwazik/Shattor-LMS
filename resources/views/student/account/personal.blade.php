@@ -40,7 +40,8 @@
 
             <!-- Student Data -->
             <div class="card mb-6">
-                <x-account.profile-picture action="{{ route('student.account.updateProfilePic') }}" guard="students" qrcode="{{ $qrcode }}"/>
+                <x-account.profile-picture action="{{ route('student.account.updateProfilePic') }}" guard="students"
+                    qrcode="{{ $qrcode }}" />
                 <div class="card-body pt-0">
                     <form id="edit-form" action="{{ route('student.account.personal.update') }}" method="POST"
                         autocomplete="off">
@@ -53,7 +54,7 @@
                             <x-basic-input context="modal" type="text" name="name_en"
                                 label="{{ trans('main.realName_en') }}"
                                 placeholder="{{ $data['student']->getTranslation('name', 'en') }}"
-                                value="{{ $data['student']->getTranslation('name', 'en') }}" disabled />
+                                value="{{ $data['student']->getTranslation('name', 'en') }}" />
                             <x-basic-input context="modal" type="text" name="username"
                                 label="{{ trans('main.username') }}" placeholder="{{ $data['student']->username }}"
                                 value="{{ $data['student']->username }}" required />
@@ -68,10 +69,8 @@
                             <x-basic-input context="modal" type="text" name="birth_date" classes="flatpickr-date"
                                 label="{{ trans('main.birth_date') }}" placeholder="YYYY-MM-DD"
                                 value="{{ $data['student']->birth_date }}" />
-                            <x-basic-input context="modal" type="text" name="gender" label="{{ trans('main.gender') }}"
-                                placeholder="{{ $data['student']->gender == 1 ? trans('main.male') : trans('main.female') }}"
-                                value="{{ $data['student']->gender == 1 ? trans('main.male') : trans('main.female') }}"
-                                disabled />
+                            <x-select-input context="modal" name="gender" label="{{ trans('main.gender') }}"
+                                :options="[1 => trans('main.male'), 2 => trans('main.female')]" value="{{ $data['student']->gender }}" required />
                             <x-select-input context="modal" name="teachers" label="{{ trans('main.teachers') }}"
                                 :options="$data['teachers']" multiple disabled />
                             <x-select-input context="modal" name="groups" label="{{ trans('main.groups') }}"
@@ -128,11 +127,13 @@
 
     <script>
         const allowedExtensions = ['jpg', 'jpeg', 'png'];
+        const gender = '{{ $data['student']->gender }}';
         const teachers = '{{ $data['student']->teachers }}'.split(',');
         const groups = '{{ $data['student']->groups }}'.split(',');
-        let fields = ['name_ar', 'name_en', 'username', 'email', 'phone', 'subject_id', 'grades'];
+        let fields = ['name_en', 'username', 'email', 'birth_date', 'gender'];
 
         handleProfilePicSubmit('#update-profile-form', 2, allowedExtensions);
+        initializeSelect2('edit-form', 'gender', gender);
         initializeSelect2('edit-form', 'teachers', teachers, true);
         initializeSelect2('edit-form', 'groups', groups, true);
         handleFormSubmit('#edit-form', fields);

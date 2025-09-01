@@ -32,9 +32,11 @@ class PersonalDataRequest extends FormRequest
         elseif(isStudent())
         {
             $rules = [
+                'name_en' => 'required|min:3|max:100',
                 'username' => ['required','min:5','max:20',new UniqueFieldAcrossModels('username', Auth::user()->id)],
                 'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', Auth::user()->id)],
                 'birth_date' => 'nullable|date|date_format:Y-m-d',
+                'gender' => 'required|integer|in:1,2',
             ];
         }
         elseif(isParent())

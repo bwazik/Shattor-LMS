@@ -249,6 +249,7 @@ Route::group(
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                     Route::post('generate-lessons', 'generateLessons')->name('generateLessons');
+                    Route::post('import-students', 'importStudents')->name('importStudents');
                 });
             });
 

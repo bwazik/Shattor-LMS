@@ -228,4 +228,15 @@ class GroupsController extends Controller
 
         return $text;
     }
+
+    public function importStudents(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        $result = $this->groupService->importStudents($request->id, $request->file('file'));
+
+        return $this->conrtollerJsonResponse($result);
+    }
 }

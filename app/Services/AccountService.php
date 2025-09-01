@@ -48,9 +48,11 @@ class AccountService
                 $student = Student::findOrFail($userId);
 
                 $student->update([
+                    'name' => ['en' => $request['name_en']],
                     'username' => $request['username'],
                     'email' => $request['email'],
                     'birth_date' => $request['birth_date'],
+                    'gender' => $request['gender'],
                 ]);
             } elseif ($guard === 'parent') {
                 $parent = MyParent::findOrFail($userId);

@@ -35,3 +35,8 @@
     <x-basic-input context="offcanvas" type="text" name="start_date" classes="flatpickr-date" label="{{ trans('main.date') }}" placeholder="YYYY-MM-DD" value="{{ now()->format('Y-m-d') }}" required/>
     <x-basic-input context="offcanvas" type="text" name="end_date" classes="flatpickr-date" label="{{ trans('main.date') }}" placeholder="YYYY-MM-DD" value="{{ now()->addMonth()->format('Y-m-d') }}" required/>
 </x-offcanvas>
+<!-- Excel import Modal -->
+<x-offcanvas offcanvasType="excel-import" offcanvasTitle="{{ trans('main.excelImport') }}" action="{{ route('admin.groups.importStudents') }}" id>
+    <x-basic-input context="offcanvas" type="text" name="name" label="{{ trans('main.name_ar') }}" placeholder="{{ trans('admin/groups.placeholders.name_ar') }}" disabled/>
+    <x-basic-input context="offcanvas" type="file" name="file" label="{{ trans('main.files') }}" required/>
+</x-offcanvas>
