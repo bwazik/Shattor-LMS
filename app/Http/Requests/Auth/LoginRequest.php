@@ -4,7 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use App\Services\WhatsappService;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Log;

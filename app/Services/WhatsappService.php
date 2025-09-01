@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\WhatsappMessage;
+use App\Models\WhatsAppMessage;
 use App\Jobs\SendWhatsAppMessage;
 use Illuminate\Support\Facades\Log;
 
