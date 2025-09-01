@@ -121,10 +121,13 @@ class LoginRequest extends FormRequest
 
         // Send WhatsApp message for new device (exclude parent guard)
         if (!$isAuthorized && $guard !== 'parent' && !empty($user->phone)) {
+            $name = explode(' ', trim($user->name))[0];
+            $name = $guard === 'teacher' ? "مستر {$name}" : $name;
+
             $whatsAppService = app(WhatsAppService::class);
             $whatsAppService->sendMessage($user->phone, 'new_device_login',
                 [
-                    'name' => explode(' ', trim($user->name))[0],
+                    'name' => $name,
                     'date' => now()->translatedFormat('l j F Y'),
                     'time' => now()->translatedFormat('h:i A'),
                 ]
