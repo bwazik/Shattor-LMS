@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Auth;
 
+use Carbon\Carbon;
 use Illuminate\Support\Str;
+use App\Services\WhatsappService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +12,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use App\Services\WhatsappService;
 
 class LoginRequest extends FormRequest
 {
@@ -121,8 +122,13 @@ class LoginRequest extends FormRequest
 
         // Send WhatsApp message for new device (exclude parent guard)
         if (!$isAuthorized && $guard !== 'parent' && !empty($user->phone)) {
-            $name = explode(' ', trim($user->name))[0];
+            $name = $guard === 'web'
+                ? explode(' ', trim($user->name))[0]
+                : explode(' ', trim($user->getTranslation('name', 'ar')))[0];
+
             $name = $guard === 'teacher' ? "مستر {$name}" : $name;
+
+            Carbon::setLocale('ar');
 
             $whatsAppService = app(WhatsAppService::class);
             $whatsAppService->sendMessage($user->phone, 'new_device_login',
