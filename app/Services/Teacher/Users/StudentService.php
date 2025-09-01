@@ -16,10 +16,12 @@ class StudentService
 {
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
     protected $teacherId;
+    protected $whatsAppService;
 
-    public function __construct()
+    public function __construct(WhatsAppService $whatsAppService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
+        $this->whatsAppService = $whatsAppService;
     }
 
     public function getStudentsForDatatable($studentsQuery)
@@ -114,8 +116,7 @@ class StudentService
 
             $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
 
-            $whatsAppService = app(WhatsAppService::class);
-            $whatsAppService->sendMessage($student->phone, 'student_credentials', [
+            $this->whatsAppService->sendMessage($student->phone, 'student_credentials', [
                 'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
                 'username'     => $student->username,
                 'password'     => $request['password'],

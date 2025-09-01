@@ -17,10 +17,12 @@ class GroupService
     protected $relationships = ['students', 'attendances', 'zooms', 'lessons'];
     protected $transModelKey = 'admin/groups.groups';
     protected $lessonService;
+    protected $whatsAppService;
 
-    public function __construct(LessonService $lessonService)
+    public function __construct(LessonService $lessonService, WhatsAppService $whatsAppService)
     {
         $this->lessonService = $lessonService;
+        $this->whatsAppService = $whatsAppService;
     }
 
     public function getGroupsForDatatable($groupsQuery)
@@ -200,11 +202,10 @@ class GroupService
 
             $credentials = $import->getCredentials();
 
-            $whatsAppService = app(WhatsAppService::class);
             $teacherName = 'مستر ' . $group->teacher->name;
 
             if (!empty($credentials)) {
-                $whatsAppService->sendBulkMessages(
+                $this->whatsAppService->sendBulkMessages(
                     $credentials,
                     'student_credentials',
                     function ($credential) use ($teacherName) {

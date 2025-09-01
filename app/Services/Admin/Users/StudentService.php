@@ -16,6 +16,12 @@ class StudentService
 
     protected $relationships = ['attendances', 'assignmentSubmissions'];
     protected $transModelKey = 'admin/students.students';
+    protected $whatsAppService;
+
+    public function __construct(WhatsAppService $whatsAppService)
+    {
+        $this->whatsAppService = $whatsAppService;
+    }
 
     public function getStudentsForDatatable($studentsQuery)
     {
@@ -170,8 +176,7 @@ class StudentService
                 }
             }
 
-            $whatsAppService = app(WhatsAppService::class);
-            $whatsAppService->sendMessage($student->phone, 'student_credentials', [
+            $this->whatsAppService->sendMessage($student->phone, 'student_credentials', [
                 'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
                 'username'     => $student->username,
                 'password'     => $request['password'],

@@ -17,11 +17,13 @@ class GroupService
 
     protected $teacherId;
     protected $lessonService;
+    protected $whatsAppService;
 
-    public function __construct(LessonService $lessonService)
+    public function __construct(LessonService $lessonService, WhatsAppService $whatsAppService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
         $this->lessonService = $lessonService;
+        $this->whatsAppService = $whatsAppService;
     }
 
     public function getGroupsForDatatable($groupsQuery)
@@ -205,11 +207,10 @@ class GroupService
 
             $credentials = $import->getCredentials();
 
-            $whatsAppService = app(WhatsAppService::class);
             $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
 
             if (!empty($credentials)) {
-                $whatsAppService->sendBulkMessages(
+                $this->whatsAppService->sendBulkMessages(
                     $credentials,
                     'student_credentials',
                     function ($credential) use ($teacherName) {
