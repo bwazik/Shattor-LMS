@@ -28,11 +28,11 @@ class AccountService
             'model' => MyParent::class,
         ],
     ];
-    protected $whatsAppService;
+    protected $WhatsappService;
 
-    public function __construct(WhatsAppService $whatsAppService)
+    public function __construct(WhatsappService $WhatsappService)
     {
-        $this->whatsAppService = $whatsAppService;
+        $this->WhatsappService = $WhatsappService;
     }
 
     public function updatePersonalInfo(string $guard, int $userId, array $request): array
@@ -91,7 +91,7 @@ class AccountService
                 'password' => Hash::make($request['newPassword'])
             ]);
 
-            $this->whatsAppService->sendMessage($user->phone, 'password_updated', []);
+            $this->WhatsappService->sendMessage($user->phone, 'password_updated', []);
 
             return $this->successResponse(trans('toasts.passwordUpdated'));
         });
