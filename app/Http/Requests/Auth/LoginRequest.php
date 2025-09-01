@@ -15,6 +15,13 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    protected $whatsAppService;
+
+    public function __construct(WhatsAppService $whatsAppService)
+    {
+        $this->whatsAppService = $whatsAppService;
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -130,8 +137,7 @@ class LoginRequest extends FormRequest
 
             Carbon::setLocale('ar');
 
-            $whatsAppService = app(WhatsAppService::class);
-            $whatsAppService->sendMessage($user->phone, 'new_device_login',
+            $this->whatsAppService->sendMessage($user->phone, 'new_device_login',
                 [
                     'name' => $name,
                     'date' => now()->translatedFormat('l j F Y'),
