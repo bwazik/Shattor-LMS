@@ -2,27 +2,35 @@
 
 namespace App\Services\Admin;
 
+use App\Models\Resource;
 use App\Models\Assignment;
-use App\Models\AssignmentSubmission;
 use Illuminate\Http\Request;
 use App\Models\AssignmentFile;
-use App\Models\Resource;
 use App\Models\SubmissionFile;
-use Illuminate\Database\Eloquent\Collection;
+use App\Services\WhatsappService;
 use Illuminate\Support\Facades\Log;
+use App\Models\AssignmentSubmission;
 use App\Traits\PublicValidatesTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\DatabaseTransactionTrait;
+use Illuminate\Database\Eloquent\Collection;
 
 class FileUploadService
 {
     use PublicValidatesTrait, DatabaseTransactionTrait;
 
+    protected $WhatsappService;
+
+    public function __construct(WhatsappService $WhatsappService)
+    {
+        $this->WhatsappService = $WhatsappService;
+    }
+
     public function updateProfilePic($request, $model, $id, $directory = 'students')
     {
         return $this->executeTransaction(function () use ($request, $model, $id, $directory) {
-            $entity = $model::select('id', 'profile_pic')->findOrFail($id);
+            $entity = $model::select('id', 'name', 'profile_pic')->findOrFail($id);
 
             if ($request->hasFile('profile')) {
                 $file = $request->file('profile');
@@ -36,6 +44,11 @@ class FileUploadService
 
                 $entity->profile_pic = $fileName;
                 $entity->save();
+
+                $this->WhatsappService->sendMessage('01098617164', 'updated_profile_pic', [
+                    'name' => $entity->name,
+                    'model' => $model,
+                ]);
 
                 return $this->successResponse(trans('toasts.profilePicUpdated'));
             }

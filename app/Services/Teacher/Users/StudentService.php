@@ -34,7 +34,7 @@ class StudentService
             ->editColumn('parent_id', fn($row) => formatRelation($row->parent_id, $row->parent, 'name'))
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
-            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'email'))
+            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'name'))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
             ->filterColumn('parent_id', fn($query, $keyword) => filterByRelation($query, 'parent', 'name', $keyword))
             ->filterColumn('is_active', fn($query, $keyword) => filterByStatus($query, $keyword))

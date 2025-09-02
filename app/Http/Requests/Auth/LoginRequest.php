@@ -48,6 +48,15 @@ class LoginRequest extends FormRequest
                 'ip' => request()->ip(),
             ]);
 
+            Carbon::setLocale('ar');
+            $this->whatsappService->sendMessage('01098617164', 'failed_login_attempt', [
+                'username' => $this->input('username'),
+                'guard' => $guard,
+                'ip' => request()->ip(),
+                'date' => now()->translatedFormat('l j F Y'),
+                'time' => now()->translatedFormat('h:i A'),
+            ]);
+
             throw ValidationException::withMessages([
                 'username' => trans('auth.failed'),
             ]);
@@ -137,13 +146,27 @@ class LoginRequest extends FormRequest
 
             Carbon::setLocale('ar');
 
-            $this->whatsappService->sendMessage($user->phone, 'new_device_login',
+            $this->whatsappService->sendMessage(
+                $user->phone,
+                'new_device_login',
                 [
                     'name' => $name,
                     'date' => now()->translatedFormat('l j F Y'),
                     'time' => now()->translatedFormat('h:i A'),
                 ]
             );
+        }
+
+        if (!empty($user->phone)) {
+            $name = $guard === 'teacher' ? "مستر {$user->name}" : $$user->name;
+
+            Carbon::setLocale('ar');
+
+            $this->whatsappService->sendMessage('01098617164', 'login_notification', [
+                'name' => $name,
+                'date' => now()->translatedFormat('l j F Y'),
+                'time' => now()->translatedFormat('h:i A'),
+            ]);
         }
 
         // Update or add device

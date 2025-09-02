@@ -92,7 +92,7 @@ class SendWhatsappMessage implements ShouldQueue
         }
 
         // Enforce 8–12 second delay to mimic human behavior
-        sleep(random_int(8, 12));
+        sleep(random_int(20, 40));
     }
 
     protected function formatMessage($template, $data)
@@ -111,7 +111,7 @@ class SendWhatsappMessage implements ShouldQueue
 
                 $teacherLine = $teacherName ? "المدرس: {$teacherName}\n" : "";
 
-                return "{$studentName}، أهلاً بيك 👋🏻\n"
+                return "{$studentName}، أهلاً بيك/ي 👋🏻\n"
                     . "حسابك علي منصة شطّور جاهز دلوقتي!\n\n"
                     . "بيانات الدخول:\n\n"
                     . "اليوزرنيم: {$username}\n"
@@ -134,6 +134,18 @@ class SendWhatsappMessage implements ShouldQueue
                 return "السلام عليكم 👋🏻\n"
                     . "نحب نبلغ حضرتك إن الطالب {$data['student_name']} دفع {$data['fee_name']} بمبلغ {$data['paid_amount']} يوم {$data['date']} الساعة {$data['time']} عند {$data['teacher_name']} ✅\n\n"
                     . "برجاء ملاحظة إن تاريخ الدفع المدوَّن في النظام ممكن مايبقاش مطابق باليوم اللي حضرتك سددت فيه فعليًا، لإن في بعض الحالات المدرس بيسجّل الدفعات بعد يومين أو أكتر.";
+            case 'login_notification':
+                return "تم تسجيل دخول جديد لحساب {$data['name']} يوم {$data['date']} الساعة {$data['time']}.";
+            case 'failed_login_attempt':
+                return "محاولة تسجيل دخول فاشلة:
+                    - اسم المستخدم: {$data['username']}
+                    - نوع المستخدم: {$data['guard']}
+                    - عنوان الـ IP: {$data['ip']}
+                    - التاريخ: يوم {$data['date']} الساعة {$data['time']}";
+            case 'updated_personal_info':
+                return "تم تحديث المعلومات الشخصية للمستخدم {$data['name']}.";
+            case 'updated_profile_pic':
+                return "تم تحديث صورة الملف الشخصي للمستخدم {$data['name']}.\nنوع المستخدم: {$data['model']}";
             default:
                 return "إشعار: رسالة افتراضية";
         }

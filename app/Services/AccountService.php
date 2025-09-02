@@ -50,6 +50,10 @@ class AccountService
                 ]);
 
                 $teacher->grades()->sync($request['grades'] ?? []);
+
+                $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
+                    'name' => 'مستر ' . $request['name_ar'],
+                ]);
             } elseif ($guard === 'student') {
                 $student = Student::findOrFail($userId);
 
@@ -60,6 +64,10 @@ class AccountService
                     'birth_date' => $request['birth_date'],
                     'gender' => $request['gender'],
                 ]);
+
+                $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
+                    'name' => 'الطالب ' . $request['name_ar'],
+                ]);
             } elseif ($guard === 'parent') {
                 $parent = MyParent::findOrFail($userId);
 
@@ -69,6 +77,10 @@ class AccountService
                     'phone' => $request['phone'],
                     'email' => $request['email'],
                     'gender' => $request['gender'],
+                ]);
+
+                $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
+                    'name' => 'ولي الأمر ' . $request['name_ar'],
                 ]);
             }
 

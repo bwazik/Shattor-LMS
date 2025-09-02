@@ -25,7 +25,7 @@ class TeacherService
             ->editColumn('plan_id', fn($row) => formatRelation($row->plan_id, $row->plan, 'name'))
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
             ->addColumn('actions', fn($row) => $this->generateUnarchivedActionButtons($row))
-            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'email'))
+            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'name'))
             ->filterColumn('subject_id', fn($query, $keyword) => filterByRelation($query, 'subject', 'name', $keyword))
             ->filterColumn('plan_id', fn($query, $keyword) => filterByRelation($query, 'plan', 'name', $keyword))
             ->filterColumn('is_active', fn($query, $keyword) => filterByStatus($query, $keyword))
@@ -98,7 +98,7 @@ class TeacherService
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
             ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/teachers', $row->email, 'admin.teachers.details', $row->id))
             ->addColumn('actions', fn($row) => $this->generateArchivedActionButtons($row))
-            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'email'))
+            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'name'))
             ->rawColumns(['selectbox', 'details', 'actions'])
             ->make(true);
     }
