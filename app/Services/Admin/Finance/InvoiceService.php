@@ -267,9 +267,11 @@ class InvoiceService
         return $this->executeTransaction(function () use ($id, $request)
         {
             $invoice = Invoice::with([
+                'student:id,name,parent_id',
+                'student.parent:id,phone',
                 'studentFee',
-                'fee:id,teacher_id',
-                'fee.teacher:id',
+                'fee:id,name,teacher_id',
+                'fee.teacher:id,name',
                 'transactions' => fn($query) => $query->whereIn('type', [2, 3]),
             ])
                 ->whereIn('status', [1, 3])
@@ -284,7 +286,16 @@ class InvoiceService
             if ($remaining <= 0 || $invoice->studentFee->is_exempted) {
                 $invoice->update(['status' => 2]);
 
-
+                $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
+                    [
+                        'student_name' => explode(' ', trim($invoice->student->getTranslation('name', 'ar')))[0],
+                        'fee_name' => $invoice->fee->name,
+                        'paid_amount' => $invoice->studentFee->name,
+                        'date' => now()->translatedFormat('l j F Y'),
+                        'time' => now()->translatedFormat('h:i A'),
+                        'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
+                    ]
+                );
 
                 return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
             }

@@ -124,12 +124,16 @@ class SendWhatsappMessage implements ShouldQueue
                 return "تم تغيير الباسوورد الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
             case 'compensatory_accepted':
                 return "ازيك يا {$data['student_name']} 👋🏻\n"
-                    . "طلب التعويض بتاعك اتقبل عند {$data['teacher_name']} 🫣\n\n"
+                    . "طلب التعويض بتاعك اتقبل من {$data['teacher_name']} 🫣\n\n"
                     . "الحصة: {$data['lesson_title']}";
             case 'compensatory_rejected':
                 return "ازيك يا {$data['student_name']} 👋🏻\n"
-                    . "للأسف طلب التعويض بتاعك اترفض عند {$data['teacher_name']} 😔\n\n"
+                    . "للأسف طلب التعويض بتاعك اترفض من {$data['teacher_name']} 😔\n\n"
                     . "الحصة: {$data['lesson_title']}";
+            case 'fees_paid':
+                return "السلام عليكم 👋🏻\n"
+                    . "نحب نبلغ حضرتك إن الطالب {$data['student_name']} دفع {$data['fee_name']} بمبلغ {$data['paid_amount']} يوم {$data['date']} الساعة {$data['time']} عند {$data['teacher_name']} ✅\n\n"
+                    . "برجاء ملاحظة إن تاريخ الدفع المدوَّن في النظام ممكن مايبقاش مطابق باليوم اللي حضرتك سددت فيه فعليًا، لإن في بعض الحالات المدرس بيسجّل الدفعات بعد يومين أو أكتر.";
             default:
                 return "إشعار: رسالة افتراضية";
         }
