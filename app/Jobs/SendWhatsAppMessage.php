@@ -111,7 +111,7 @@ class SendWhatsappMessage implements ShouldQueue
 
                 $teacherLine = $teacherName ? "المدرس: {$teacherName}\n" : "";
 
-                return "{$studentName}، أهلاً بيك 👋\n"
+                return "{$studentName}، أهلاً بيك 👋🏻\n"
                     . "حسابك علي منصة شطّور جاهز دلوقتي!\n\n"
                     . "بيانات الدخول:\n\n"
                     . "اليوزرنيم: {$username}\n"
@@ -122,6 +122,14 @@ class SendWhatsappMessage implements ShouldQueue
                     . "ممكن تقولنا المجموعة بتعتك عشان نربط حسابك بيها؟ 🤔";
             case 'password_updated':
                 return "تم تغيير الباسوورد الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
+            case 'compensatory_accepted':
+                return "ازيك يا {$data['student_name']} 👋🏻\n"
+                    . "طلب التعويض بتاعك اتقبل عند {$data['teacher_name']} 🫣\n\n"
+                    . "الحصة: {$data['lesson_name']}";
+            case 'compensatory_rejected':
+                return "ازيك يا {$data['student_name']} 👋🏻\n"
+                    . "للأسف طلب التعويض بتاعك اترفض عند {$data['teacher_name']} 😔\n\n"
+                    . "الحصة: {$data['lesson_name']}";
             default:
                 return "إشعار: رسالة افتراضية";
         }

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Lesson;
 use App\Models\Student;
 use App\Models\Compensatory;
+use App\Services\WhatsappService;
 use App\Traits\PublicValidatesTrait;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
@@ -15,10 +16,12 @@ class CompensatoryService
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
 
     protected $teacherId;
+    protected $WhatsappService;
 
-    public function __construct()
+    public function __construct(WhatsappService $WhatsappService)
     {
         $this->teacherId = auth()->guard('teacher')->user()->id;
+        $this->WhatsappService = $WhatsappService;
     }
 
     public function getCompensatoriesForDatatable($compensatoriesQuery)
@@ -55,42 +58,42 @@ class CompensatoryService
     {
         return
             '<div class="d-inline-block">' .
-                '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
-                    '<i class="ri-more-2-line"></i>' .
-                '</a>' .
-                '<ul class="dropdown-menu dropdown-menu-end m-0">' .
-                    '<li>' .
-                        '<a href="javascript:;" class="dropdown-item" ' .
-                            'id="accept-button" ' .
-                            'data-id="' . $row->uuid . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
-                            'data-reason="' . $row->reason . '" ' .
-                            'data-bs-target="#accept-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                            trans('main.accept') .
-                        '</a>' .
-                    '</li>' .
-                    '<li>' .
-                        '<a href="javascript:;" class="dropdown-item" ' .
-                            'id="reject-button" ' .
-                            'data-id="' . $row->uuid . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
-                            'data-reason="' . $row->reason . '" ' .
-                            'data-bs-target="#reject-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                            trans('main.reject') .
-                        '</a>' .
-                    '</li>' .
-                    '<div class="dropdown-divider"></div>' .
-                    '<li>' .
-                        '<a href="javascript:;" class="dropdown-item text-danger" ' .
-                            'id="delete-button" ' .
-                            'data-id="' . $row->uuid . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
-                            'data-reason="' . $row->reason . '" ' .
-                            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
-                            trans('main.delete') .
-                        '</a>' .
-                    '</li>' .
-                '</ul>' .
+            '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
+            '<i class="ri-more-2-line"></i>' .
+            '</a>' .
+            '<ul class="dropdown-menu dropdown-menu-end m-0">' .
+            '<li>' .
+            '<a href="javascript:;" class="dropdown-item" ' .
+            'id="accept-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-student="' . $row->student->name . '" ' .
+            'data-reason="' . $row->reason . '" ' .
+            'data-bs-target="#accept-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            trans('main.accept') .
+            '</a>' .
+            '</li>' .
+            '<li>' .
+            '<a href="javascript:;" class="dropdown-item" ' .
+            'id="reject-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-student="' . $row->student->name . '" ' .
+            'data-reason="' . $row->reason . '" ' .
+            'data-bs-target="#reject-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            trans('main.reject') .
+            '</a>' .
+            '</li>' .
+            '<div class="dropdown-divider"></div>' .
+            '<li>' .
+            '<a href="javascript:;" class="dropdown-item text-danger" ' .
+            'id="delete-button" ' .
+            'data-id="' . $row->uuid . '" ' .
+            'data-student="' . $row->student->name . '" ' .
+            'data-reason="' . $row->reason . '" ' .
+            'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+            trans('main.delete') .
+            '</a>' .
+            '</li>' .
+            '</ul>' .
             '</div>';
     }
 
@@ -186,14 +189,22 @@ class CompensatoryService
 
     public function acceptCompensatory($id)
     {
-        return $this->executeTransaction(function () use ($id)
-        {
-            $compensatory = Compensatory::where('id', $id)
+        return $this->executeTransaction(function () use ($id) {
+            $compensatory = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
+                ->where('id', $id)
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->firstOrFail();
 
             $compensatory->update(['status' => 2]);
+
+            $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_accepted',
+                [
+                    'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                    'lesson_title' => $compensatory->originalLesson->title,
+                    'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
+                ]
+            );
 
             return $this->successResponse(trans('main.approvedE', ['item' => trans('admin/compensatories.compensatory')]));
         }, trans('toasts.ownershipError'));
@@ -201,14 +212,20 @@ class CompensatoryService
 
     public function rejectCompensatory($id)
     {
-        return $this->executeTransaction(function () use ($id)
-        {
-            $compensatory = Compensatory::where('id', $id)
+        return $this->executeTransaction(function () use ($id) {
+            $compensatory = Compensatory::with('student:id,name,phone')
+                ->where('id', $id)
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->firstOrFail();
 
             $compensatory->update(['status' => 3]);
+
+            $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_rejected',
+                [
+                    'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                ]
+            );
 
             return $this->successResponse(trans('main.rejectedE', ['item' => trans('admin/compensatories.compensatory')]));
         }, trans('toasts.ownershipError'));
@@ -220,16 +237,24 @@ class CompensatoryService
             return $validationResult;
         }
 
-        return $this->executeTransaction(function () use ($ids)
-        {
-            $compensatories = Compensatory::whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
+        return $this->executeTransaction(function () use ($ids) {
+            $compensatories = Compensatory::with('student:id,name,phone')
+                ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
                 ->where('status', 1)
-                ->select('id')
+                ->select('id', 'student_id')
                 ->get();
 
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 2]);
+
+            foreach ($compensatories as $compensatory) {
+                $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_accepted',
+                    [
+                        'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                    ]
+                );
+            }
 
             return $this->successResponse(trans('main.approvedSelected', ['item' => trans('admin/compensatories.compensatories')]));
         }, trans('toasts.ownershipError'));
@@ -241,16 +266,24 @@ class CompensatoryService
             return $validationResult;
         }
 
-        return $this->executeTransaction(function () use ($ids)
-        {
-            $compensatories = Compensatory::whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
+        return $this->executeTransaction(function () use ($ids) {
+            $compensatories = Compensatory::with('student:id,name,phone')
+                ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
                 ->where('status', 1)
-                ->select('id')
+                ->select('id', 'student_id')
                 ->get();
 
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 3]);
+
+            foreach ($compensatories as $compensatory) {
+                $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_rejected',
+                    [
+                        'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                    ]
+                );
+            }
 
             return $this->successResponse(trans('main.rejectedSelected', ['item' => trans('admin/compensatories.compensatories')]));
         }, trans('toasts.ownershipError'));
