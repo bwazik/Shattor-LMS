@@ -119,7 +119,7 @@ class SendWhatsappMessage implements ShouldQueue
                     . $teacherLine . "\n"
                     . "تسجيل الدخول:\n{$loginUrl}\n"
                     . "تقدر تغيّر اليوزرنيم أو الباسوورد من الإعدادات:\n{$settingsUrl}\n\n"
-                    . "ممكن تقولنا المجموعة بتعتك عشان نربط حسابك بيها؟ 🤔";
+                    . "ممكن تقولنا المجموعة بتاعتك عشان نربط حسابك بيها؟ 🤔";
             case 'password_updated':
                 return "تم تغيير الباسوورد الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
             case 'compensatory_accepted':
