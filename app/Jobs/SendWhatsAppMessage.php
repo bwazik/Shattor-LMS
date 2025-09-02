@@ -97,8 +97,6 @@ class SendWhatsappMessage implements ShouldQueue
 
     protected function formatMessage($template, $data)
     {
-        $data = is_array($data) ? $data : json_decode($data, true) ?? [];
-
         switch ($template) {
             case 'new_device_login':
                 return "{$data['name']}, عامل ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
