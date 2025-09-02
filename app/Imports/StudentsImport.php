@@ -49,6 +49,11 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            // Skip if student_phone already exists in the database
+            if (Student::where('phone', $studentPhone)->exists()) {
+                continue;
+            }
+
             // Skip duplicate student phones
             if (in_array($studentPhone, $this->studentPhones)) {
                 continue;
