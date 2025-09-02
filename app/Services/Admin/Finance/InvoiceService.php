@@ -285,18 +285,6 @@ class InvoiceService
 
             if ($remaining <= 0 || $invoice->studentFee->is_exempted) {
                 $invoice->update(['status' => 2]);
-
-                $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
-                    [
-                        'student_name' => explode(' ', trim($invoice->student->getTranslation('name', 'ar')))[0],
-                        'fee_name' => $invoice->fee->name,
-                        'paid_amount' => $invoice->studentFee->name,
-                        'date' => now()->translatedFormat('l j F Y'),
-                        'time' => now()->translatedFormat('h:i A'),
-                        'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
-                    ]
-                );
-
                 return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
             }
 
@@ -320,6 +308,17 @@ class InvoiceService
             $netPaid = bcadd((string)$netPaid, (string)$request['amount'], 2);
             if ($netPaid >= $invoice->amount) {
                 $invoice->update(['status' => 2]);
+
+                $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
+                    [
+                        'student_name' => $invoice->student->getTranslation('name', 'ar'),
+                        'fee_name' => $invoice->fee->name,
+                        'paid_amount' => formatCurrency($invoice->studentFee->amount) . ' ' . trans('main.currency'),
+                        'date' => now()->translatedFormat('l j F Y'),
+                        'time' => now()->translatedFormat('h:i A'),
+                        'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
+                    ]
+                );
             }
 
             return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
