@@ -221,34 +221,9 @@ class InvoiceService
 
             $netPaid = $invoice->transactions->sum('amount');
             $remaining = bcsub((string)$invoice->amount, (string)$netPaid, 2);
-            \Log::info('Invoice payment attempt', [
-                'invoice_id' => $invoice->id,
-                'student_id' => $invoice->student_id,
-                'requested_amount' => $request['amount'],
-                'remaining_before' => $remaining,
-                'status' => $invoice->status,
-                'timestamp' => now()->toDateTimeString(),
-            ]);
+
             if ($remaining <= 0 || $invoice->studentFee->is_exempted) {
                 $invoice->update(['status' => 2]);
-                \Log::info('Invoice marked as paid', [
-                    'invoice_id' => $invoice->id,
-                    'student_id' => $invoice->student_id,
-                    'amount' => $invoice->amount,
-                    'status' => $invoice->status,
-                    'paid_at' => now()->toDateTimeString(),
-                ]);
-                $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
-                    [
-                        'student_name' => explode(' ', trim($invoice->student->getTranslation('name', 'ar')))[0],
-                        'fee_name' => $invoice->fee->name,
-                        'paid_amount' => $invoice->studentFee->name,
-                        'date' => now()->translatedFormat('l j F Y'),
-                        'time' => now()->translatedFormat('h:i A'),
-                        'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
-                    ]
-                );
-
                 return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
             }
 
@@ -272,6 +247,17 @@ class InvoiceService
             $netPaid = bcadd((string)$netPaid, (string)$request['amount'], 2);
             if ($netPaid >= $invoice->amount) {
                 $invoice->update(['status' => 2]);
+
+                $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
+                    [
+                        'student_name' => explode(' ', trim($invoice->student->getTranslation('name', 'ar')))[0],
+                        'fee_name' => $invoice->fee->name,
+                        'paid_amount' => $invoice->studentFee->name,
+                        'date' => now()->translatedFormat('l j F Y'),
+                        'time' => now()->translatedFormat('h:i A'),
+                        'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
+                    ]
+                );
             }
 
             return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
