@@ -97,6 +97,8 @@ class SendWhatsappMessage implements ShouldQueue
 
     protected function formatMessage($template, $data)
     {
+        $data = is_array($data) ? $data : json_decode($data, true) ?? [];
+
         switch ($template) {
             case 'new_device_login':
                 return "{$data['name']}, عامل ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
@@ -123,7 +125,7 @@ class SendWhatsappMessage implements ShouldQueue
             case 'password_updated':
                 return "تم تغيير الباسوورد الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
             default:
-                return "إشعار: {$data['message']}";
+                return "إشعار: " . ($data['message'] ?? 'رسالة افتراضية');
         }
     }
 }
