@@ -249,7 +249,7 @@ class CompensatoryService
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
                 ->where('status', 1)
-                ->select('id', 'student_id')
+                ->select('id', 'student_id', 'makeup_lesson_id')
                 ->get();
 
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 2]);
@@ -282,7 +282,7 @@ class CompensatoryService
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
                 ->where('status', 1)
-                ->select('id', 'student_id')
+                ->select('id', 'student_id', 'makeup_lesson_id')
                 ->get();
 
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 3]);
