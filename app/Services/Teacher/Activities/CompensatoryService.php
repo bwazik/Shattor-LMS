@@ -190,7 +190,7 @@ class CompensatoryService
     public function acceptCompensatory($id)
     {
         return $this->executeTransaction(function () use ($id) {
-            $compensatory = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
+            $compensatory = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])
                 ->where('id', $id)
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
@@ -203,8 +203,8 @@ class CompensatoryService
                 'compensatory_accepted',
                 [
                     'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
-                    'lesson_title' => $compensatory->originalLesson->title,
-                    'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
+                    'lesson_title' => $compensatory->makeupLesson->title,
+                    'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
                 ]
             );
 
@@ -215,7 +215,7 @@ class CompensatoryService
     public function rejectCompensatory($id)
     {
         return $this->executeTransaction(function () use ($id) {
-            $compensatory = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
+            $compensatory = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])
                 ->where('id', $id)
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
@@ -228,8 +228,8 @@ class CompensatoryService
                 'compensatory_rejected',
                 [
                     'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
-                    'lesson_title' => $compensatory->originalLesson->title,
-                    'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
+                    'lesson_title' => $compensatory->makeupLesson->title,
+                    'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
                 ]
             );
 
@@ -244,7 +244,7 @@ class CompensatoryService
         }
 
         return $this->executeTransaction(function () use ($ids) {
-            $compensatories = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
+            $compensatories = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
@@ -260,8 +260,8 @@ class CompensatoryService
                     'compensatory_accepted',
                     [
                         'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
-                        'lesson_title' => $compensatory->originalLesson->title,
-                        'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
+                        'lesson_title' => $compensatory->makeupLesson->title,
+                        'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
                     ]
                 );
             }
@@ -277,7 +277,7 @@ class CompensatoryService
         }
 
         return $this->executeTransaction(function () use ($ids) {
-            $compensatories = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
+            $compensatories = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
@@ -293,8 +293,8 @@ class CompensatoryService
                     'compensatory_rejected',
                     [
                         'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
-                        'lesson_title' => $compensatory->originalLesson->title,
-                        'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
+                        'lesson_title' => $compensatory->makeupLesson->title,
+                        'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
                     ]
                 );
             }
