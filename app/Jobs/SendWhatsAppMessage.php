@@ -125,11 +125,11 @@ class SendWhatsappMessage implements ShouldQueue
             case 'compensatory_accepted':
                 return "ازيك يا {$data['student_name']} 👋🏻\n"
                     . "طلب التعويض بتاعك اتقبل عند {$data['teacher_name']} 🫣\n\n"
-                    . "الحصة: {$data['lesson_name']}";
+                    . "الحصة: {$data['lesson_title']}";
             case 'compensatory_rejected':
                 return "ازيك يا {$data['student_name']} 👋🏻\n"
                     . "للأسف طلب التعويض بتاعك اترفض عند {$data['teacher_name']} 😔\n\n"
-                    . "الحصة: {$data['lesson_name']}";
+                    . "الحصة: {$data['lesson_title']}";
             default:
                 return "إشعار: رسالة افتراضية";
         }

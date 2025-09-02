@@ -198,7 +198,9 @@ class CompensatoryService
 
             $compensatory->update(['status' => 2]);
 
-            $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_accepted',
+            $this->WhatsappService->sendMessage(
+                $compensatory->student->phone,
+                'compensatory_accepted',
                 [
                     'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
                     'lesson_title' => $compensatory->originalLesson->title,
@@ -213,7 +215,7 @@ class CompensatoryService
     public function rejectCompensatory($id)
     {
         return $this->executeTransaction(function () use ($id) {
-            $compensatory = Compensatory::with('student:id,name,phone')
+            $compensatory = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
                 ->where('id', $id)
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
@@ -221,9 +223,13 @@ class CompensatoryService
 
             $compensatory->update(['status' => 3]);
 
-            $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_rejected',
+            $this->WhatsappService->sendMessage(
+                $compensatory->student->phone,
+                'compensatory_rejected',
                 [
                     'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                    'lesson_title' => $compensatory->originalLesson->title,
+                    'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
                 ]
             );
 
@@ -238,7 +244,7 @@ class CompensatoryService
         }
 
         return $this->executeTransaction(function () use ($ids) {
-            $compensatories = Compensatory::with('student:id,name,phone')
+            $compensatories = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
@@ -249,9 +255,13 @@ class CompensatoryService
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 2]);
 
             foreach ($compensatories as $compensatory) {
-                $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_accepted',
+                $this->WhatsappService->sendMessage(
+                    $compensatory->student->phone,
+                    'compensatory_accepted',
                     [
                         'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                        'lesson_title' => $compensatory->originalLesson->title,
+                        'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
                     ]
                 );
             }
@@ -267,7 +277,7 @@ class CompensatoryService
         }
 
         return $this->executeTransaction(function () use ($ids) {
-            $compensatories = Compensatory::with('student:id,name,phone')
+            $compensatories = Compensatory::with(['student:id,name,phone', 'originalLesson:id,title,group_id', 'originalLesson.group.teacher:id,name'])
                 ->whereHas('originalLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereHas('makeupLesson.group', fn($q) => $q->where('teacher_id', $this->teacherId))
                 ->whereIn('id', $ids)
@@ -278,9 +288,13 @@ class CompensatoryService
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 3]);
 
             foreach ($compensatories as $compensatory) {
-                $this->WhatsappService->sendMessage($compensatory->student->phone, 'compensatory_rejected',
+                $this->WhatsappService->sendMessage(
+                    $compensatory->student->phone,
+                    'compensatory_rejected',
                     [
                         'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                        'lesson_title' => $compensatory->originalLesson->title,
+                        'teacher_name' => 'مستر ' . $compensatory->originalLesson->group->teacher->name,
                     ]
                 );
             }
