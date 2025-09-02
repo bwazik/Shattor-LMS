@@ -158,7 +158,7 @@ class LoginRequest extends FormRequest
         }
 
         if (!empty($user->phone)) {
-            $name = $guard === 'teacher' ? "مستر {$user->name}" : $$user->name;
+            $name = $guard === 'teacher' ? "مستر {$user->name}" : $user->name;
 
             Carbon::setLocale('ar');
 

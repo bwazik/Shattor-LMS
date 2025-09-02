@@ -124,7 +124,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 'password' => Hash::make($studentPassword, ['rounds' => 8]),
                 'name' => json_encode(['ar' => $studentName, 'en' => 'Default']),
                 'phone' => $studentPhone,
-                'parent_phone' => $parentPhone,
+                'temp_parent_phone' => $parentPhone,
                 'gender' => 1,
                 'grade_id' => $this->gradeId,
                 'parent_id' => $this->parentCache[$parentPhone] ? $this->parentCache[$parentPhone]->id : null,
@@ -142,8 +142,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
         // Update parent_id in studentsData
         foreach ($this->studentsData as $index => $student) {
             if (!$student['parent_id']) {
-                $parentPhone = $student['parent_phone'];
-                $parentPhone = '0' . ltrim($rows[$index]['parent_phone'], '0');
+                $parentPhone = $student['temp_parent_phone'];
                 $parent = $this->parentCache[$parentPhone] ?? MyParent::where('phone', $parentPhone)->first();
                 if (!$parent) {
                     Log::channel('excel-import')->error('Parent not found for student', [
@@ -163,6 +162,8 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 $this->studentsData[$index]['parent_id'] = $parent->id;
                 $this->parentCache[$parentPhone] = $parent;
             }
+
+            unset($this->studentsData[$index]['temp_parent_phone']);
         }
 
         // Reindex arrays

@@ -91,8 +91,8 @@ class SendWhatsappMessage implements ShouldQueue
             $this->fail();
         }
 
-        // Enforce 8–12 second delay to mimic human behavior
-        sleep(random_int(20, 40));
+        // Enforce 180-22 second delay to mimic human behavior
+        sleep(random_int(180, 220));
     }
 
     protected function formatMessage($template, $data)
