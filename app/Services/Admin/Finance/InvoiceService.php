@@ -5,6 +5,7 @@ use App\Models\Wallet;
 use App\Models\Invoice;
 use App\Models\StudentFee;
 use App\Models\Transaction;
+use App\Services\WhatsappService;
 use App\Models\TeacherSubscription;
 use App\Traits\PublicValidatesTrait;
 use App\Traits\DatabaseTransactionTrait;
@@ -15,8 +16,13 @@ class InvoiceService
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
 
     protected $relationships = [];
-
     protected $transModelKey = 'admin/invoices.invoices';
+    protected $WhatsappService;
+
+    public function __construct(WhatsappService $WhatsappService)
+    {
+        $this->WhatsappService = $WhatsappService;
+    }
 
     public function getInvoicesForDatatable($invoicesQuery)
     {
@@ -277,6 +283,9 @@ class InvoiceService
 
             if ($remaining <= 0 || $invoice->studentFee->is_exempted) {
                 $invoice->update(['status' => 2]);
+
+
+
                 return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
             }
 
@@ -873,7 +882,6 @@ class InvoiceService
             return $this->successResponse(trans('main.canceledE', ['item' => trans('admin/invoices.invoice')]));
         });
     }
-
 
     public function checkDependenciesForSingleDeletion($invoice)
     {

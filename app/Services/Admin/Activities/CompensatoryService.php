@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Lesson;
 use App\Models\Student;
 use App\Models\Compensatory;
+use App\Services\WhatsappService;
 use App\Traits\PublicValidatesTrait;
 use App\Traits\DatabaseTransactionTrait;
 use App\Traits\PreventDeletionIfRelated;
@@ -13,6 +14,12 @@ use App\Traits\PreventDeletionIfRelated;
 class CompensatoryService
 {
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
+    protected $WhatsappService;
+
+    public function __construct(WhatsappService $WhatsappService)
+    {
+        $this->WhatsappService = $WhatsappService;
+    }
 
     public function getCompensatoriesForDatatable($compensatoriesQuery)
     {
@@ -177,8 +184,18 @@ class CompensatoryService
     {
         return $this->executeTransaction(function () use ($id)
         {
-            $compensatory = Compensatory::findOrFail($id);
+            $compensatory = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])->findOrFail($id);
             $compensatory->update(['status' => 2]);
+
+            $this->WhatsappService->sendMessage(
+                $compensatory->student->phone,
+                'compensatory_accepted',
+                [
+                    'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                    'lesson_title' => $compensatory->makeupLesson->title,
+                    'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
+                ]
+            );
 
             return $this->successResponse(trans('main.approvedE', ['item' => trans('admin/compensatories.compensatory')]));
         }, trans('toasts.ownershipError'));
@@ -188,8 +205,18 @@ class CompensatoryService
     {
         return $this->executeTransaction(function () use ($id)
         {
-            $compensatory = Compensatory::findOrFail($id);
+            $compensatory = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])->findOrFail($id);
             $compensatory->update(['status' => 3]);
+
+            $this->WhatsappService->sendMessage(
+                $compensatory->student->phone,
+                'compensatory_rejected',
+                [
+                    'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                    'lesson_title' => $compensatory->makeupLesson->title,
+                    'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
+                ]
+            );
 
             return $this->successResponse(trans('main.rejectedE', ['item' => trans('admin/compensatories.compensatory')]));
         }, trans('toasts.ownershipError'));
@@ -203,12 +230,25 @@ class CompensatoryService
 
         return $this->executeTransaction(function () use ($ids)
         {
-            $compensatories = Compensatory::whereIn('id', $ids)
+            $compensatories = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])
+                ->whereIn('id', $ids)
                 ->where('status', 1)
-                ->select('id')
+                ->select('id', 'student_id', 'makeup_lesson_id')
                 ->get();
 
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 2]);
+
+            foreach ($compensatories as $compensatory) {
+                $this->WhatsappService->sendMessage(
+                    $compensatory->student->phone,
+                    'compensatory_accepted',
+                    [
+                        'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                        'lesson_title' => $compensatory->makeupLesson->title,
+                        'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
+                    ]
+                );
+            }
 
             return $this->successResponse(trans('main.approvedSelected', ['item' => trans('admin/compensatories.compensatories')]));
         }, trans('toasts.ownershipError'));
@@ -222,12 +262,25 @@ class CompensatoryService
 
         return $this->executeTransaction(function () use ($ids)
         {
-            $compensatories = Compensatory::whereIn('id', $ids)
+            $compensatories = Compensatory::with(['student:id,name,phone', 'makeupLesson:id,title,group_id', 'makeupLesson.group.teacher:id,name'])
+                ->whereIn('id', $ids)
                 ->where('status', 1)
-                ->select('id')
+                ->select('id', 'student_id', 'makeup_lesson_id')
                 ->get();
 
             Compensatory::whereIn('id', $compensatories->pluck('id'))->update(['status' => 3]);
+
+            foreach ($compensatories as $compensatory) {
+                $this->WhatsappService->sendMessage(
+                    $compensatory->student->phone,
+                    'compensatory_rejected',
+                    [
+                        'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
+                        'lesson_title' => $compensatory->makeupLesson->title,
+                        'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
+                    ]
+                );
+            }
 
             return $this->successResponse(trans('main.rejectedSelected', ['item' => trans('admin/compensatories.compensatories')]));
         }, trans('toasts.ownershipError'));
