@@ -97,6 +97,7 @@ class SendWhatsappMessage implements ShouldQueue
 
     protected function formatMessage($template, $data)
     {
+        Log::channel('whatsapp')->info('Formatting message', ['template' => $template, 'data' => $data]);
         switch ($template) {
             case 'new_device_login':
                 return "{$data['name']}, عامل ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
