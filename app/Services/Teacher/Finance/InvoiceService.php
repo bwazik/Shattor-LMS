@@ -221,10 +221,23 @@ class InvoiceService
 
             $netPaid = $invoice->transactions->sum('amount');
             $remaining = bcsub((string)$invoice->amount, (string)$netPaid, 2);
-
+            \Log::info('Invoice payment attempt', [
+                'invoice_id' => $invoice->id,
+                'student_id' => $invoice->student_id,
+                'requested_amount' => $request['amount'],
+                'remaining_before' => $remaining,
+                'status' => $invoice->status,
+                'timestamp' => now()->toDateTimeString(),
+            ]);
             if ($remaining <= 0 || $invoice->studentFee->is_exempted) {
                 $invoice->update(['status' => 2]);
-
+                \Log::info('Invoice marked as paid', [
+                    'invoice_id' => $invoice->id,
+                    'student_id' => $invoice->student_id,
+                    'amount' => $invoice->amount,
+                    'status' => $invoice->status,
+                    'paid_at' => now()->toDateTimeString(),
+                ]);
                 $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
                     [
                         'student_name' => explode(' ', trim($invoice->student->getTranslation('name', 'ar')))[0],
