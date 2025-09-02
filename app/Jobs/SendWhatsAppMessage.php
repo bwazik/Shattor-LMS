@@ -97,11 +97,6 @@ class SendWhatsappMessage implements ShouldQueue
 
     protected function formatMessage($template, $data)
     {
-        Log::channel('whatsapp')->debug('Processing template in formatMessage', [
-            'template' => $template,
-            'data' => $data,
-        ]);
-
         switch ($template) {
             case 'new_device_login':
                 return "{$data['name']}, عامل ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
@@ -128,7 +123,6 @@ class SendWhatsappMessage implements ShouldQueue
             case 'password_updated':
                 return "تم تغيير الباسوورد الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
             default:
-                Log::channel('whatsapp')->warning('Unknown template, using fallback', ['template' => $template]);
                 return "إشعار: رسالة افتراضية";
         }
     }
