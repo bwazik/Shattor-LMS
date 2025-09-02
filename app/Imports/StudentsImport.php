@@ -2,14 +2,15 @@
 
 namespace App\Imports;
 
-use App\Models\MyParent;
 use App\Models\Student;
-use Illuminate\Support\Facades\Hash;
+use App\Models\MyParent;
+use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class StudentsImport implements ToCollection, WithHeadingRow
 {
@@ -46,16 +47,30 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 empty($parentPhone) || !preg_match('/^0[0-9]{10}$/', $parentPhone) ||
                 empty($studentName)
             ) {
+                Log::channel('excel-import')->warning('Skipping row due to invalid data', [
+                    'index' => $index,
+                    'student_phone' => $studentPhone,
+                    'parent_phone' => $parentPhone,
+                    'student_name' => $studentName,
+                ]);
                 continue;
             }
 
             // Skip if student_phone already exists in the database
             if (Student::where('phone', $studentPhone)->exists()) {
+                Log::channel('excel-import')->warning('Skipping row due to existing student phone', [
+                    'index' => $index,
+                    'student_phone' => $studentPhone,
+                ]);
                 continue;
             }
 
             // Skip duplicate student phones
             if (in_array($studentPhone, $this->studentPhones)) {
+                Log::channel('excel-import')->warning('Skipping row due to duplicate student phone in import', [
+                    'index' => $index,
+                    'student_phone' => $studentPhone,
+                ]);
                 continue;
             }
             $this->studentPhones[] = $studentPhone;
@@ -81,6 +96,11 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 $this->parentCache[$parentPhone] = $parent;
                 if (!$parent && !isset($this->parentsData[$parentPhone])) {
                     $studentFirstName = explode(' ', trim($studentName))[0];
+                    Log::channel('excel-import')->debug('Creating new parent', [
+                        'parent_phone' => $parentPhone,
+                        'student_name' => $studentName,
+                        'student_first_name' => $studentFirstName,
+                    ]);
                     $this->parentsData[$parentPhone] = [
                         'uuid' => (string) Str::uuid(),
                         'username' => $parentUsername,
@@ -104,6 +124,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 'password' => Hash::make($studentPassword, ['rounds' => 8]),
                 'name' => json_encode(['ar' => $studentName, 'en' => 'Default']),
                 'phone' => $studentPhone,
+                'parent_phone' => $parentPhone,
                 'gender' => 1,
                 'grade_id' => $this->gradeId,
                 'parent_id' => $this->parentCache[$parentPhone] ? $this->parentCache[$parentPhone]->id : null,
@@ -114,19 +135,31 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
         // Batch insert parents (deduplicated by phone)
         if (!empty($this->parentsData)) {
+            Log::channel('excel-import')->info('Inserting parents', ['count' => count($this->parentsData)]);
             DB::table('parents')->insert(array_values($this->parentsData));
         }
 
         // Update parent_id in studentsData
         foreach ($this->studentsData as $index => $student) {
             if (!$student['parent_id']) {
+                $parentPhone = $student['parent_phone'];
                 $parentPhone = '0' . ltrim($rows[$index]['parent_phone'], '0');
                 $parent = $this->parentCache[$parentPhone] ?? MyParent::where('phone', $parentPhone)->first();
                 if (!$parent) {
+                    Log::channel('excel-import')->error('Parent not found for student', [
+                        'index' => $index,
+                        'student_phone' => $student['phone'],
+                        'parent_phone' => $parentPhone,
+                    ]);
                     unset($this->studentsData[$index]);
                     unset($this->credentials[$index]);
                     continue;
                 }
+                Log::channel('excel-import')->debug('Assigning parent to student', [
+                    'student_phone' => $student['phone'],
+                    'parent_phone' => $parentPhone,
+                    'parent_id' => $parent->id,
+                ]);
                 $this->studentsData[$index]['parent_id'] = $parent->id;
                 $this->parentCache[$parentPhone] = $parent;
             }
@@ -138,6 +171,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
         // Batch insert students
         if (!empty($this->studentsData)) {
+            Log::channel('excel-import')->info('Inserting students', ['count' => count($this->studentsData)]);
             DB::table('students')->insert($this->studentsData);
         }
 
@@ -149,6 +183,10 @@ class StudentsImport implements ToCollection, WithHeadingRow
         foreach ($this->studentsData as $index => $studentData) {
             $student = $students[$studentData['phone']] ?? null;
             if (!$student) {
+                Log::channel('excel-import')->error('Student not found after insert', [
+                'index' => $index,
+                'student_phone' => $studentData['phone'],
+            ]);
                 unset($this->credentials[$index]);
                 continue;
             }
@@ -171,9 +209,11 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
         // Batch insert pivot tables
         if (!empty($studentTeacherData)) {
+            Log::channel('excel-import')->info('Inserting student_teacher records', ['count' => count($studentTeacherData)]);
             DB::table('student_teacher')->insert($studentTeacherData);
         }
         if (!empty($studentGroupData)) {
+            Log::channel('excel-import')->info('Inserting student_teacher records', ['count' => count($studentTeacherData)]);
             DB::table('student_group')->insert($studentGroupData);
         }
     }

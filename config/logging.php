@@ -78,7 +78,13 @@ return [
             'path' => storage_path('logs/whatsapp.log'),
             'level' => env('LOG_LEVEL', 'debug'),
         ],
-        
+
+        'excel-import' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/excel-import.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
