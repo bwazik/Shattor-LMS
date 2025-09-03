@@ -31,13 +31,6 @@ class SendWhatsappMessage implements ShouldQueue
         $isUrgent = $this->message->data['is_urgent'] ?? false;
         $queue = $isUrgent ? 'urgent' : 'default';
 
-        // Apply delay before API call: 40-60s for urgent, 180-220s for non-urgent
-        if (!$isUrgent) {
-            sleep(random_int(180, 220));
-        } else {
-            sleep(random_int(40, 60));
-        }
-
         $apiUrl = env('WHATSAPP_API_URL', 'https://noti-fire.com/api/send/message');
         $deviceId = env('WHATSAPP_DEVICE_ID', '');
 
@@ -74,7 +67,6 @@ class SendWhatsappMessage implements ShouldQueue
                     'template' => $this->message->template,
                     'queue' => $queue,
                 ]);
-                $this->delete();
             } else {
                 $error = $response->json('error', $response->body());
                 $this->message->update([
