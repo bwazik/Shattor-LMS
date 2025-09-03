@@ -194,7 +194,7 @@ class CompensatoryService
                     'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
                     'lesson_title' => $compensatory->makeupLesson->title,
                     'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
-                ]
+                ], true
             );
 
             return $this->successResponse(trans('main.approvedE', ['item' => trans('admin/compensatories.compensatory')]));
@@ -215,7 +215,7 @@ class CompensatoryService
                     'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
                     'lesson_title' => $compensatory->makeupLesson->title,
                     'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
-                ]
+                ], true
             );
 
             return $this->successResponse(trans('main.rejectedE', ['item' => trans('admin/compensatories.compensatory')]));
@@ -246,7 +246,7 @@ class CompensatoryService
                         'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
                         'lesson_title' => $compensatory->makeupLesson->title,
                         'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
-                    ]
+                    ], true
                 );
             }
 
@@ -278,7 +278,7 @@ class CompensatoryService
                         'student_name' => explode(' ', trim($compensatory->student->getTranslation('name', 'ar')))[0],
                         'lesson_title' => $compensatory->makeupLesson->title,
                         'teacher_name' => 'مستر ' . $compensatory->makeupLesson->group->teacher->name,
-                    ]
+                    ], true
                 );
             }
 

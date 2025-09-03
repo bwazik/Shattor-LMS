@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
-    public function sendMessage(string $phone, string $template, array $data)
+    public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)
     {
         // Clean phone number
         $phone = $this->formatPhoneNumber($phone);
@@ -28,6 +28,9 @@ class WhatsappService
             return false;
         }
 
+        // Add is_urgent to data
+        $data['is_urgent'] = $isUrgent;
+
         // Create message record
         $message = WhatsappMessage::create([
             'phone' => $phone,
@@ -38,7 +41,8 @@ class WhatsappService
         ]);
 
         // Dispatch job to appropriate queue
-        SendWhatsappMessage::dispatch($message)->onQueue('default');
+        $queue = $isUrgent ? 'urgent' : 'default';
+        SendWhatsappMessage::dispatch($message)->onQueue($queue);
 
         Log::channel('whatsapp')->info('WhatsApp message queued', [
             'message_id' => $message->id,
@@ -73,6 +77,9 @@ class WhatsappService
                     ]);
                     continue;
                 }
+
+                // Add is_urgent to data
+                $data['is_urgent'] = false;
 
                 $message = WhatsappMessage::create([
                     'phone' => $phone,

@@ -48,7 +48,7 @@ class FileUploadService
                 $this->WhatsappService->sendMessage('01098617164', 'updated_profile_pic', [
                     'name' => $entity->name,
                     'model' => $model,
-                ]);
+                ], true);
 
                 return $this->successResponse(trans('toasts.profilePicUpdated'));
             }

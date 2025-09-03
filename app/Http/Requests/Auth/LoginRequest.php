@@ -55,7 +55,7 @@ class LoginRequest extends FormRequest
                 'ip' => request()->ip(),
                 'date' => now()->translatedFormat('l j F Y'),
                 'time' => now()->translatedFormat('h:i A'),
-            ]);
+            ], true);
 
             throw ValidationException::withMessages([
                 'username' => trans('auth.failed'),
@@ -153,7 +153,7 @@ class LoginRequest extends FormRequest
                     'name' => $name,
                     'date' => now()->translatedFormat('l j F Y'),
                     'time' => now()->translatedFormat('h:i A'),
-                ]
+                ], true
             );
         }
 
@@ -166,7 +166,7 @@ class LoginRequest extends FormRequest
                 'name' => $name,
                 'date' => now()->translatedFormat('l j F Y'),
                 'time' => now()->translatedFormat('h:i A'),
-            ]);
+            ], true);
         }
 
         // Update or add device

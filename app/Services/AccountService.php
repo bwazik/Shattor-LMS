@@ -53,7 +53,7 @@ class AccountService
 
                 $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
                     'name' => 'مستر ' . $request['name_ar'],
-                ]);
+                ], true);
             } elseif ($guard === 'student') {
                 $student = Student::findOrFail($userId);
 
@@ -67,7 +67,7 @@ class AccountService
 
                 $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
                     'name' => 'الطالب ' . $request['name_ar'],
-                ]);
+                ], true);
             } elseif ($guard === 'parent') {
                 $parent = MyParent::findOrFail($userId);
 
@@ -81,7 +81,7 @@ class AccountService
 
                 $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
                     'name' => 'ولي الأمر ' . $request['name_ar'],
-                ]);
+                ], true);
             }
 
             return $this->successResponse(trans('toasts.personalInfoUpdated'));
@@ -103,7 +103,7 @@ class AccountService
                 'password' => Hash::make($request['newPassword'])
             ]);
 
-            $this->WhatsappService->sendMessage($user->phone, 'password_updated', []);
+            $this->WhatsappService->sendMessage($user->phone, 'password_updated', [], true);
 
             return $this->successResponse(trans('toasts.passwordUpdated'));
         });

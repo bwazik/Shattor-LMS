@@ -256,8 +256,7 @@ class InvoiceService
                         'date' => now()->translatedFormat('l j F Y'),
                         'time' => now()->translatedFormat('h:i A'),
                         'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
-                    ]
-                );
+                    ], true);
             }
 
             return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));

@@ -23,11 +23,13 @@ class SendWhatsappMessage implements ShouldQueue
     public function __construct(WhatsappMessage $message)
     {
         $this->message = $message;
-        $this->queue = 'default';
     }
 
     public function handle()
     {
+        // Set queue based on data['is_urgent']
+        $isUrgent = $this->message->data['is_urgent'] ?? false;
+
         $apiUrl = env('WHATSAPP_API_URL', 'https://noti-fire.com/api/send/message');
         $deviceId = env('WHATSAPP_DEVICE_ID', '');
 
@@ -91,8 +93,12 @@ class SendWhatsappMessage implements ShouldQueue
             $this->fail();
         }
 
-        // Enforce 180-22 second delay to mimic human behavior
-        sleep(random_int(180, 220));
+        // Apply delay: 40-60s for urgent, 180-220s for non-urgent
+        if (!$isUrgent) {
+            sleep(random_int(180, 220));
+        } else {
+            sleep(random_int(40, 60));
+        }
     }
 
     protected function formatMessage($template, $data)
