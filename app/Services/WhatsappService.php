@@ -10,11 +10,6 @@ class WhatsappService
 {
     public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)
     {
-        // $planLimitService = new PlanLimitService(auth()->guard('teacher')->user()->id);
-        // if (!$planLimitService->hasFeature('whatsapp_messages')) {
-        //     return response()->json(['error' => trans('toasts.limitReached')], 422);
-        // }
-
         // Clean phone number
         $phone = $this->formatPhoneNumber($phone);
 
@@ -22,7 +17,7 @@ class WhatsappService
         $recentMessage = WhatsappMessage::where('phone', $phone)
             ->where('template', $template)
             ->whereIn('status', [1, 2])
-            ->where('sent_at', '>=', now()->subHours(24))
+            ->where('created_at', '>=', now()->subHours(24))
             ->exists();
 
         if ($recentMessage) {
@@ -56,6 +51,7 @@ class WhatsappService
             'message_id' => $message->id,
             'phone' => $phone,
             'template' => $template,
+            'delay_seconds' => $delay->diffInSeconds(now()),
         ]);
 
         return true;
@@ -75,7 +71,7 @@ class WhatsappService
                 $recentMessage = WhatsappMessage::where('phone', $phone)
                     ->where('template', $template)
                     ->whereIn('status', [1, 2])
-                    ->where('sent_at', '>=', now()->subHours(24))
+                    ->where('created_at', '>=', now()->subHours(24))
                     ->exists();
 
                 if ($recentMessage) {
@@ -97,10 +93,12 @@ class WhatsappService
                     'attempts' => 0,
                 ]);
 
+                $delay = now()->addSeconds($index * 60 + random_int(180, 220));
+
                 // Dispatch with batch delay to spread load
                 SendWhatsappMessage::dispatch($message)
                     ->onQueue('default')
-                    ->delay(now()->addSeconds($index * 60 + random_int(180, 220))); // Delay each batch by 60 seconds
+                    ->delay($delay); // Delay each batch by 60 seconds
             }
         }
 

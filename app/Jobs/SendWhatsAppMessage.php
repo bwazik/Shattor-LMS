@@ -27,10 +27,6 @@ class SendWhatsappMessage implements ShouldQueue
 
     public function handle()
     {
-        // Set queue based on data['is_urgent']
-        $isUrgent = $this->message->data['is_urgent'] ?? false;
-        $queue = $isUrgent ? 'urgent' : 'default';
-
         $apiUrl = env('WHATSAPP_API_URL', 'https://noti-fire.com/api/send/message');
         $deviceId = env('WHATSAPP_DEVICE_ID', '');
 
@@ -65,7 +61,7 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'template' => $this->message->template,
-                    'queue' => $queue,
+                    'attempt' => $this->message->attempts + 1,
                 ]);
             } else {
                 $error = $response->json('error', $response->body());
@@ -78,22 +74,24 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'response' => $error,
-                    'queue' => $queue,
+                    'attempt' => $this->message->attempts + 1,
                 ]);
-                $this->fail();
             }
         } catch (\Exception $e) {
             $this->message->update([
-                'status' => 3,
-                'error_message' => $e->getMessage(),
                 'attempts' => $this->message->attempts + 1,
             ]);
+
+            // Only mark as failed on final attempt
+            if ($this->message->attempts >= $this->tries) {
+                $this->message->update(['status' => 3, 'error_message' => $e->getMessage()]);
+            }
+
             Log::channel('whatsapp')->error('WhatsApp message exception', [
                 'message_id' => $this->message->id,
                 'phone' => $this->message->phone,
-                'error' => $e->getMessage(),
+                'attempt' => $this->message->attempts,
             ]);
-            $this->fail();
         }
     }
 
