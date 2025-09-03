@@ -10,6 +10,11 @@ class WhatsappService
 {
     public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)
     {
+        // $planLimitService = new PlanLimitService(auth()->guard('teacher')->user()->id);
+        // if (!$planLimitService->hasFeature('whatsapp_messages')) {
+        //     return response()->json(['error' => trans('toasts.limitReached')], 422);
+        // }
+
         // Clean phone number
         $phone = $this->formatPhoneNumber($phone);
 

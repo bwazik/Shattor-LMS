@@ -66,7 +66,7 @@ class AccountService
                 ]);
 
                 $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [
-                    'name' => 'الطالب ' . $request['name_ar'],
+                    'name' => 'الطالب ' . $student->getTranslation('name', 'ar'),
                 ], true);
             } elseif ($guard === 'parent') {
                 $parent = MyParent::findOrFail($userId);
