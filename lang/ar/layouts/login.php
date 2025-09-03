@@ -8,7 +8,7 @@ return [
     'remember_me' => 'افتكرني!',
     'sign_in' => 'يلا بينا',
     'placeholders' => [
-        'username'=> 'example@gmail.com',
+        'username'=> 'Shattorxxxxxxxxxxx',
     ],
     'or_divider_text' => 'أو',
     'back_to_selection' => 'الرجوع لإختيار طريقة التسجيل',
