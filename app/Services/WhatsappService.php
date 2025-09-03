@@ -21,7 +21,7 @@ class WhatsappService
         // Check for duplicates within 24 hours
         $recentMessage = WhatsappMessage::where('phone', $phone)
             ->where('template', $template)
-            ->where('status', 'sent')
+            ->whereIn('status', [1, 2])
             ->where('sent_at', '>=', now()->subHours(24))
             ->exists();
 
@@ -71,7 +71,7 @@ class WhatsappService
                 // Skip duplicates within 24 hours
                 $recentMessage = WhatsappMessage::where('phone', $phone)
                     ->where('template', $template)
-                    ->where('status', 'sent')
+                    ->whereIn('status', [1, 2])
                     ->where('sent_at', '>=', now()->subHours(24))
                     ->exists();
 

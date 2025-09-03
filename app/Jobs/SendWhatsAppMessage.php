@@ -105,7 +105,7 @@ class SendWhatsappMessage implements ShouldQueue
     {
         switch ($template) {
             case 'new_device_login':
-                return "{$data['name']}, عامل ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
+                return "{$data['name']}, عامل/ه ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
                     . "{$data['date']} الساعة {$data['time']}.";
             case 'student_credentials':
                 $studentName = $data['student_name'];
@@ -122,10 +122,10 @@ class SendWhatsappMessage implements ShouldQueue
                     . "بيانات الدخول:\n\n"
                     . "اليوزرنيم: {$username}\n"
                     . "الباسوورد: {$password}\n"
-                    . $teacherLine . "\n"
+                    . $teacherLine . "\n\n"
+                    . "ملحوظة: لو حصل معاك مشكلة في تسجيل الدخول انسخ اليوزرنيم لوحده كوبي والباسوورد لوحده كوبي من غير أي مسافات\n\n"
                     . "تسجيل الدخول:\n{$loginUrl}\n"
                     . "تقدر تغيّر اليوزرنيم أو الباسوورد من الإعدادات:\n{$settingsUrl}\n\n"
-                    . "ملحوظة: لو حصل معاك مشكلة في تسجيل الدخول حاول تنقل الباسوورد من غير اي مسافات\n"
                     . "ممكن تقولنا المجموعة بتاعتك عشان نربط حسابك بيها؟ 🤔";
             case 'password_updated':
                 return "تم تغيير الباسوورد الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
