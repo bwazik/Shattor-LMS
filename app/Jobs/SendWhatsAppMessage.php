@@ -17,8 +17,8 @@ class SendWhatsappMessage implements ShouldQueue
 
     protected $message;
 
-    public $tries = 3; // Retry up to 3 times
-    public $backoff = [30, 60, 120]; // Delay retries by 30s, 60s, 120s
+    public $tries = 2; // Retry up to 2 times
+    public $backoff = [30, 60]; // Delay retries by 30s, 60s
 
     public function __construct(WhatsappMessage $message)
     {
@@ -29,6 +29,14 @@ class SendWhatsappMessage implements ShouldQueue
     {
         // Set queue based on data['is_urgent']
         $isUrgent = $this->message->data['is_urgent'] ?? false;
+        $queue = $isUrgent ? 'urgent' : 'default';
+
+        // Apply delay before API call: 40-60s for urgent, 180-220s for non-urgent
+        if (!$isUrgent) {
+            sleep(random_int(180, 220));
+        } else {
+            sleep(random_int(40, 60));
+        }
 
         $apiUrl = env('WHATSAPP_API_URL', 'https://noti-fire.com/api/send/message');
         $deviceId = env('WHATSAPP_DEVICE_ID', '');
@@ -64,7 +72,9 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'template' => $this->message->template,
+                    'queue' => $queue,
                 ]);
+                $this->delete();
             } else {
                 $error = $response->json('error', $response->body());
                 $this->message->update([
@@ -76,6 +86,7 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'response' => $error,
+                    'queue' => $queue,
                 ]);
                 $this->fail();
             }
@@ -91,13 +102,6 @@ class SendWhatsappMessage implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
             $this->fail();
-        }
-
-        // Apply delay: 40-60s for urgent, 180-220s for non-urgent
-        if (!$isUrgent) {
-            sleep(random_int(180, 220));
-        } else {
-            sleep(random_int(40, 60));
         }
     }
 
