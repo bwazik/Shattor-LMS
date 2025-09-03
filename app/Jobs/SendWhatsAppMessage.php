@@ -95,7 +95,7 @@ class SendWhatsappMessage implements ShouldQueue
 
         // Apply delay: 40-60s for urgent, 180-220s for non-urgent
         if (!$isUrgent) {
-            sleep(random_int(40, 60));
+            sleep(random_int(180, 220));
         } else {
             sleep(random_int(40, 60));
         }
