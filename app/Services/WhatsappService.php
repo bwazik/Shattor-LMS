@@ -9,28 +9,42 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappService
 {
+    protected $allowMultipleTemplates = [
+        'new_device_login',
+        'password_updated',
+        'login_notification',
+        'failed_login_attempt',
+        'updated_personal_info',
+        'updated_profile_pic',
+    ];
+
     public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)
     {
         // Clean phone number
         $phone = $this->formatPhoneNumber($phone);
 
-        // Cache lock to prevent rapid triggers (5-minute lock)
+        // Skip cache lock and duplicate check for specific templates
+        $allowMultiple = in_array($template, $this->allowMultipleTemplates);
         $lockKey = "whatsapp_lock_{$phone}_{$template}";
-        if (Cache::lock($lockKey, 300)->get()) {
-            // Check for duplicates within 24 hours
-            $recentMessage = WhatsappMessage::where('phone', $phone)
-                ->where('template', $template)
-                ->whereIn('status', [1, 2])
-                ->where('created_at', '>=', now()->subHours(24)) // Use created_at
-                ->exists();
+        $lockAcquired = $allowMultiple || Cache::lock($lockKey, 300)->get();
 
-            if ($recentMessage) {
-                Log::channel('whatsapp')->warning("Duplicate message skipped", [
-                    'phone' => $phone,
-                    'template' => $template,
-                ]);
-                Cache::lock($lockKey)->release();
-                return false;
+        if ($lockAcquired) {
+            // Check for duplicates within 24 hours for non-allowed templates
+            if (!$allowMultiple) {
+                $recentMessage = WhatsappMessage::where('phone', $phone)
+                    ->where('template', $template)
+                    ->whereIn('status', [1, 2])
+                    ->where('created_at', '>=', now()->subHours(5))
+                    ->exists();
+
+                if ($recentMessage) {
+                    Log::channel('whatsapp')->warning("Duplicate message skipped", [
+                        'phone' => $phone,
+                        'template' => $template,
+                    ]);
+                    Cache::lock($lockKey)->release();
+                    return false;
+                }
             }
 
             // Add is_urgent to data
@@ -45,11 +59,19 @@ class WhatsappService
                 'attempts' => 0,
             ]);
 
-            // Global delay counter for 40–60s gap between sends
+            // Global delay counter with lock for consistent gaps
             $globalLockKey = 'whatsapp_send_message_delay';
-            $baseDelay = Cache::get($globalLockKey, 0);
-            $delaySeconds = $baseDelay + random_int(40, 60);
-            Cache::put($globalLockKey, $delaySeconds, 3600);
+            $globalDelayLock = Cache::lock('whatsapp_send_message_delay_lock', 10);
+            if ($globalDelayLock->get()) {
+                $baseDelay = Cache::get($globalLockKey, 0);
+                // Use 30–50s for urgent, 180–220s for non-urgent
+                $delaySeconds = $baseDelay + ($isUrgent ? random_int(30, 50) : random_int(180, 220));
+                Cache::put($globalLockKey, $delaySeconds, 3600);
+                $globalDelayLock->release();
+            } else {
+                // Fallback: random delay based on urgency
+                $delaySeconds = $isUrgent ? random_int(30, 50) : random_int(180, 220);
+            }
 
             // Dispatch job to appropriate queue with delay
             $queue = $isUrgent ? 'urgent' : 'default';
@@ -64,7 +86,9 @@ class WhatsappService
                 'delay_seconds' => $delaySeconds,
             ]);
 
-            Cache::lock($lockKey)->release();
+            if (!$allowMultiple) {
+                Cache::lock($lockKey)->release();
+            }
             return true;
         }
 
@@ -117,7 +141,8 @@ class WhatsappService
                     ]);
 
                     // Stagger delays: 180–220s per message
-                    $delay = now()->addSeconds($baseDelay + random_int(180, 220));
+                    $delayedSeconds = random_int(180, 220);
+                    $delay = now()->addSeconds($baseDelay + $delayedSeconds);
 
                     // Dispatch with staggered delay
                     SendWhatsappMessage::dispatch($message)
@@ -129,13 +154,13 @@ class WhatsappService
                         'phone' => $phone,
                         'template' => $template,
                         'queue' => 'default',
-                        'delay_seconds' => $baseDelay + random_int(180, 220),
+                        'delay_seconds' => $baseDelay + $delayedSeconds,
                     ]);
 
                     Cache::lock($lockKey)->release();
 
                     // Increment base delay for next message
-                    $baseDelay += random_int(180, 220);
+                    $baseDelay += $delayedSeconds;
                 } else {
                     Log::channel('whatsapp')->warning("Bulk message blocked by cache lock", [
                         'phone' => $phone,
