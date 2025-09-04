@@ -15,7 +15,7 @@ class WhatsappMessageService
         return datatables()->eloquent($whatsappMessagesQuery)
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
             ->addColumn('status', fn($row) => $this->formatStatusSpan($row->status))
-            ->editColumn('sent_at', fn($row) => isoFormat($row->sent_at))
+            ->editColumn('sent_at', fn($row) => $row->sent_at ? isoFormat($row->sent_at) : '-')
             ->addColumn('data', fn($row) => $this->showDataButton($row->data))
             ->editColumn('error_message', fn($row) => $row->error_message ? $row->error_message : '-')
             ->addColumn('queue', fn($row) => $row->data['is_urgent'] ? trans('admin/whatsappMessages.urgent') : trans('admin/whatsappMessages.default'))
