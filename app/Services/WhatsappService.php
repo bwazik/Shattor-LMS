@@ -90,10 +90,12 @@ class WhatsappService
                     'attempts' => 0,
                 ]);
 
+                $delay = now()->addSeconds(random_int(180, 220) + ($index * 60));
+
                 // Dispatch with batch delay to spread load
                 SendWhatsappMessage::dispatch($message)
                     ->onQueue('default')
-                    ->delay(now()->addSeconds($index * 60) + random_int(180, 220)); // Delay each batch by 60 seconds
+                    ->delay($delay); // Delay each batch by 60 seconds
             }
         }
 
