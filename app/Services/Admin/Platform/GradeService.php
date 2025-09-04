@@ -17,7 +17,7 @@ class GradeService
     {
         return datatables()->eloquent($gradesQuery)
             ->addIndexColumn()
-->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
+            ->addColumn('selectbox', fn($row) => generateSelectbox($row->id))
             ->editColumn('name', function ($row) {
                 return $row->name;
             })

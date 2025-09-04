@@ -54,6 +54,7 @@ return [
 
     # Support
     'misc' => 'Misc',
+    'whatsappMessages' => 'Whatsapp Messages',
     'support' => 'Support',
     'categories' => 'Categories',
     'faqs' => 'FAQs',

@@ -78,8 +78,8 @@ class StudentsImport implements ToCollection, WithHeadingRow
             // Generate usernames and passwords
             $studentUsername = 'Shattor' . $this->generateRandomString(8) . 's';
             $parentUsername = 'Shattor' . $this->generateRandomString(8) . 'p';
-            $studentPassword = $this->generateStrongPassword(12);
-            $parentPassword = $this->generateStrongPassword(12);
+            $studentPassword = $this->generateNumericPassword(12);
+            $parentPassword = $this->generateNumericPassword(12);
 
             // Store credentials
             $this->credentials[] = [
@@ -223,7 +223,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
     private function generateRandomString($length = 8)
     {
-        $chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+        $chars = '123456789abcdefghijklmnopqrstuvwxyz';
         $string = '';
         for ($i = 0; $i < $length; $i++) {
             $string .= $chars[random_int(0, strlen($chars) - 1)];
@@ -231,22 +231,15 @@ class StudentsImport implements ToCollection, WithHeadingRow
         return $string;
     }
 
-    private function generateStrongPassword($length = 12)
+    private function generateNumericPassword($length = 12)
     {
-        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
-        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $numbers = '0123456789';
-        $allChars = $lowercase . $uppercase . $numbers;
-
         $password = '';
-        $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
-        $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
-        $password .= $numbers[random_int(0, strlen($numbers) - 1)];
 
-        for ($i = 3; $i < $length; $i++) {
-            $password .= $allChars[random_int(0, strlen($allChars) - 1)];
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $numbers[random_int(0, strlen($numbers) - 1)];
         }
 
-        return str_shuffle($password);
+        return $password;
     }
 }

@@ -55,6 +55,7 @@ return [
 
     # Support
     'misc' => 'المزيد',
+    'whatsappMessages' => 'رسائل الواتساب',
     'support' => 'الدعم',
     'categories' => 'الأقسام',
     'faqs' => 'الأسئلة الشائعة',

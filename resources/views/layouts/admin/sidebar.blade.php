@@ -295,6 +295,12 @@
         <li class="menu-header mt-5">
             <span class="menu-header-text">{{ trans('layouts/sidebar.misc') }}</span>
         </li>
+        <li class="menu-item {{ isActiveRoute('admin.whatsapp-messages.index') ? 'active' : '' }}">
+            <a href="{{ route('admin.whatsapp-messages.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons ri-whatsapp-line"></i>
+                <div>{{ trans('layouts/sidebar.whatsappMessages') }}</div>
+            </a>
+        </li>
         <li class="menu-item {{ isActiveRoute(['admin.categories.index', 'admin.faqs.index']) ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-customer-service-2-line"></i>

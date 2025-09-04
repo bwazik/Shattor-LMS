@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\Finance\CouponsController;
 use App\Http\Controllers\Admin\Finance\TeacherSubscriptionsController;
 use App\Http\Controllers\Admin\Finance\TeachersInvoicesController;
 
+use App\Http\Controllers\Admin\Misc\WhatsappMessagesController;
 use App\Http\Controllers\Admin\Misc\CategoriesController;
 use App\Http\Controllers\Admin\Misc\FaqsController;
 use App\Http\Controllers\Admin\Misc\HelpCenterController;
@@ -479,6 +480,13 @@ Route::group(
         # End Finance Managment
 
         # Start Misc
+            Route::prefix('whatsapp-messages')->controller(WhatsappMessagesController::class)->name('whatsapp-messages.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::middleware('throttle:10,1')->group(function () {
+                    Route::post('delete', 'delete')->name('delete');
+                    Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                });
+            });
             Route::prefix('categories')->controller(CategoriesController::class)->name('categories.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::middleware('throttle:10,1')->group(function () {
