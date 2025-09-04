@@ -17,8 +17,8 @@ class SendWhatsappMessage implements ShouldQueue
 
     protected $message;
 
-    public $tries = 2; // Retry up to 2 times
-    public $backoff = [30, 60]; // Delay retries by 30s, 60s
+    public $tries = 3; // Retry up to 3 times
+    public $backoff = [30, 60, 120]; // Delay retries by 30s, 60s, 120s
 
     public function __construct(WhatsappMessage $message)
     {
@@ -61,7 +61,6 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'template' => $this->message->template,
-                    'attempt' => $this->message->attempts + 1,
                 ]);
             } else {
                 $error = $response->json('error', $response->body());
@@ -74,24 +73,21 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'response' => $error,
-                    'attempt' => $this->message->attempts + 1,
                 ]);
+                $this->fail();
             }
         } catch (\Exception $e) {
             $this->message->update([
+                'status' => 3,
+                'error_message' => $e->getMessage(),
                 'attempts' => $this->message->attempts + 1,
             ]);
-
-            // Only mark as failed on final attempt
-            if ($this->message->attempts >= $this->tries) {
-                $this->message->update(['status' => 3, 'error_message' => $e->getMessage()]);
-            }
-
             Log::channel('whatsapp')->error('WhatsApp message exception', [
                 'message_id' => $this->message->id,
                 'phone' => $this->message->phone,
-                'attempt' => $this->message->attempts,
+                'error' => $e->getMessage(),
             ]);
+            $this->fail();
         }
     }
 
