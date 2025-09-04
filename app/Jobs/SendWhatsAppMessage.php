@@ -36,7 +36,11 @@ class SendWhatsappMessage implements ShouldQueue
                 'error_message' => 'WhatsApp API configuration missing',
                 'attempts' => $this->message->attempts + 1,
             ]);
-            Log::channel('whatsapp')->error('WhatsApp API configuration missing', ['message_id' => $this->message->id]);
+            Log::channel('whatsapp')->error('WhatsApp API configuration missing', [
+                'message_id' => $this->message->id,
+                'queue' => $this->queue,
+            ]);
+            $this->fail();
             return;
         }
 
@@ -45,7 +49,7 @@ class SendWhatsappMessage implements ShouldQueue
 
         try {
             // Send message via Noti Fire API
-            $response = Http::post($apiUrl, [
+            $response = Http::timeout(60)->post($apiUrl, [
                 'device_id' => $deviceId,
                 'to' => $this->message->phone,
                 'message' => $content,
@@ -61,7 +65,9 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'template' => $this->message->template,
+                    'queue' => $this->queue,
                 ]);
+                $this->delete(); // Explicitly delete job from queue
             } else {
                 $error = $response->json('error', $response->body());
                 $this->message->update([
@@ -73,6 +79,7 @@ class SendWhatsappMessage implements ShouldQueue
                     'message_id' => $this->message->id,
                     'phone' => $this->message->phone,
                     'response' => $error,
+                    'queue' => $this->queue,
                 ]);
                 $this->fail();
             }
@@ -86,11 +93,12 @@ class SendWhatsappMessage implements ShouldQueue
                 'message_id' => $this->message->id,
                 'phone' => $this->message->phone,
                 'error' => $e->getMessage(),
+                'queue' => $this->queue,
             ]);
             $this->fail();
         }
     }
-
+    
     protected function formatMessage($template, $data)
     {
         switch ($template) {
