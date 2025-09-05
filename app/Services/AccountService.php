@@ -114,8 +114,10 @@ class AccountService
         return $this->executeTransaction(function () use ($teacherId, $request) {
             $teacher = Teacher::select('id', 'phone', 'financal_pin')->findOrFail($teacherId);
 
-            if (!Hash::check($request['currentSecurityCode'], $teacher->financal_pin)) {
-                return $this->errorResponse(trans('toasts.invalidCurrentSecurityCode'));
+            if (!empty($teacher->financal_pin)) {
+                if (!Hash::check($request['currentSecurityCode'], $teacher->financal_pin)) {
+                    return $this->errorResponse(trans('toasts.invalidCurrentSecurityCode'));
+                }
             }
 
             $teacher->update(['financal_pin' => Hash::make($request['newSecurityCode'])]);
