@@ -27,18 +27,132 @@
 @endsection
 
 @section('page-js')
+    <script src="{{ asset('assets/js/pages-auth-two-steps.js') }}"></script>
+
+    <script>
+        const formId = $("#verify-pin-form");
+        const pinSubmitButton = formId.find('button[type="submit"]');
+        const originalButtonContent = pinSubmitButton.html();
+
+        $(formId).on('submit', function(e) {
+            e.preventDefault();
+
+            pinSubmitButton.find('.waves-ripple').remove();
+            pinSubmitButton.prop('disabled', true);
+            pinSubmitButton.html(
+                `<i class="ri-loader-4-line ri-spin ri-20px me-1"></i> {{ trans('main.processing') }}...`
+            );
+
+            const pin = $('.numeral-mask').map(function() {
+                return $(this).val();
+            }).get().join('');
+            $('#pin').val(pin);
+
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: $(this).attr('method'),
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message)
+                        $('#pin-form-container').hide();
+                        $('#paid-amount').text(response.paid);
+                        $('#unpaid-amount').text(response.unpaid);
+                        resetButtonState(pinSubmitButton, originalButtonContent);
+                    } else {
+                        toastr.error(response.error || '{{ trans('main.errorMessage') }}');
+                        resetButtonState(pinSubmitButton, originalButtonContent);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.status === 429) {
+                        toastr.error(tooManyRequestsMessage);
+                    } else if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            $.each(xhr.responseJSON.errors, function(key, val) {
+                                toastr.error(val);
+                            });
+                        } else if (xhr.responseJSON.error) {
+                            toastr.error(xhr.responseJSON.error);
+                        } else {
+                            toastr.error('{{ trans('main.errorMessage') }}');
+                        }
+                    } else {
+                        toastr.error('{{ trans('main.errorMessage') }}');
+                    }
+
+                    resetButtonState(pinSubmitButton, originalButtonContent);
+                },
+                complete: function() {
+                    resetButtonState(pinSubmitButton, originalButtonContent);
+                }
+            });
+        });
+
+        function resetButtonState(pinSubmitButton, originalButtonContent) {
+            setTimeout(function() {
+                pinSubmitButton.prop('disabled', false);
+                pinSubmitButton.html(originalButtonContent);
+                pinSubmitButton.blur();
+                pinSubmitButton.find('.waves-ripple').remove();
+                if (typeof Waves !== 'undefined') {
+                    Waves.init();
+                    Waves.attach(pinSubmitButton[0]);
+                }
+            }, 1500);
+        }
+    </script>
+
     <script>
         initializeDataTable('#datatable', "{{ route('teacher.invoices.index') }}", [2, 3, 4, 5, 6, 7],
-            [
-                { data: "", orderable: false, searchable: false },
-                { data: 'uuid', name: 'uuid' },
-                { data: 'balance', name: 'balance', orderable: false, searchable: false },
-                { data: 'details', name: 'student_id' },
-                { data: 'fee_id', name: 'fee_id' },
-                { data: 'date', name: 'date' },
-                { data: 'amount', name: 'amount', orderable: false, searchable: false },
-                { data: 'status', name: 'status' },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false }
+            [{
+                    data: "",
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'uuid',
+                    name: 'uuid'
+                },
+                {
+                    data: 'balance',
+                    name: 'balance',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'details',
+                    name: 'student_id'
+                },
+                {
+                    data: 'fee_id',
+                    name: 'fee_id'
+                },
+                {
+                    data: 'date',
+                    name: 'date'
+                },
+                {
+                    data: 'amount',
+                    name: 'amount',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'status',
+                    name: 'status'
+                },
+                {
+                    data: 'actions',
+                    name: 'actions',
+                    orderable: false,
+                    searchable: false
+                }
             ],
         );
 

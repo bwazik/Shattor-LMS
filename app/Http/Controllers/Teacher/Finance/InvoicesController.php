@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
 use App\Traits\ServiceResponseTrait;
+use Illuminate\Support\Facades\Hash;
 use App\Services\Teacher\Finance\InvoiceService;
 use App\Http\Requests\Admin\Finance\InvoicesRequest;
 use App\Http\Requests\Admin\Finance\PaymentsRequest;
@@ -41,9 +42,9 @@ class InvoicesController extends Controller
         $pageStatistics = [
             'clients' => Student::whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))->distinct('id')->count('id'),
             'invoices' => $invoicesQuery->count(),
-            'paid' => $invoicesQuery->clone()->where('status', 2)->sum('amount'),
-            'unpaid' => $invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount'),
         ];
+        // 'paid' => $invoicesQuery->clone()->where('status', 2)->sum('amount'),
+        // 'unpaid' => $invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount'),
 
         if ($request->ajax()) {
             return $this->invoiceService->getInvoicesForDatatable($invoicesQuery);
@@ -52,17 +53,43 @@ class InvoicesController extends Controller
         return view('teacher.finance.invoices.index', compact('pageStatistics'));
     }
 
+    public function verifyPin(Request $request)
+    {
+        $request->validate([
+            'pin' => 'required|digits:6',
+        ]);
+
+        if (Hash::check($request->pin, auth()->guard('teacher')->user()->financal_pin)) {
+            $invoicesQuery = Invoice::query()
+                ->fee()
+                ->whereNull('teacher_id')
+                ->whereNull('subscription_id')
+                ->select('id', 'amount', 'status')
+                ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+                ->whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId));
+
+            return response()->json([
+                'success' => true,
+                'message' => trans('toasts.validPin'),
+                'paid' => formatCurrency($invoicesQuery->clone()->where('status', 2)->sum('amount')) . ' ' . trans('main.currency'),
+                'unpaid' => formatCurrency($invoicesQuery->clone()->whereIn('status', [1, 3])->sum('amount')) . ' ' . trans('main.currency'),
+            ]);
+        }
+
+        return response()->json(['error' => trans('toasts.invalidPin')], 422);
+    }
+
     public function preview($uuid)
     {
         $invoice = Invoice::with([
-                'student:id,name,phone,email,grade_id,parent_id',
-                'student.parent:id,name,phone,email',
-                'student.grade:id,name',
-                'studentFee:id,discount,is_exempted,fee_id',
-                'fee:id,amount,teacher_id',
-                'fee.teacher:id,name,phone,email',
-                'transactions:id,invoice_id,amount,description,type',
-            ])
+            'student:id,name,phone,email,grade_id,parent_id',
+            'student.parent:id,name,phone,email',
+            'student.grade:id,name',
+            'studentFee:id,discount,is_exempted,fee_id',
+            'fee:id,amount,teacher_id',
+            'fee.teacher:id,name,phone,email',
+            'transactions:id,invoice_id,amount,description,type',
+        ])
             ->select('id', 'uuid', 'student_id', 'student_fee_id', 'fee_id', 'date', 'due_date', 'amount', 'status')
             ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
             ->whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId))
@@ -77,20 +104,20 @@ class InvoicesController extends Controller
             abort(422, trans('toasts.noFeesFound'));
         }
 
-        return view('teacher.finance.invoices.preview', compact( 'invoice'));
+        return view('teacher.finance.invoices.preview', compact('invoice'));
     }
 
     public function print($uuid)
     {
         $invoice = Invoice::with([
-                'student:id,name,phone,email,grade_id,parent_id',
-                'student.parent:id,name,phone,email',
-                'student.grade:id,name',
-                'studentFee:id,discount,is_exempted,fee_id',
-                'fee:id,amount,teacher_id',
-                'fee.teacher:id,name,phone,email',
-                'transactions:id,invoice_id,amount,description,type',
-            ])
+            'student:id,name,phone,email,grade_id,parent_id',
+            'student.parent:id,name,phone,email',
+            'student.grade:id,name',
+            'studentFee:id,discount,is_exempted,fee_id',
+            'fee:id,amount,teacher_id',
+            'fee.teacher:id,name,phone,email',
+            'transactions:id,invoice_id,amount,description,type',
+        ])
             ->select('id', 'uuid', 'student_id', 'student_fee_id', 'fee_id', 'date', 'due_date', 'status')
             ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
             ->whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId))
@@ -105,7 +132,7 @@ class InvoicesController extends Controller
             abort(422, trans('toasts.noFeesFound'));
         }
 
-        return view('teacher.finance.invoices.print', compact( 'invoice'));
+        return view('teacher.finance.invoices.print', compact('invoice'));
     }
 
     public function create()
@@ -129,14 +156,14 @@ class InvoicesController extends Controller
     public function edit($uuid)
     {
         $invoice = Invoice::with([
-                'student:id,uuid,name,phone,email,grade_id,parent_id',
-                'student.parent:id,name,phone,email',
-                'student.grade:id,name',
-                'studentFee:id,uuid,discount,is_exempted,fee_id',
-                'fee:id,name,amount,teacher_id',
-                'fee.teacher:id,name,phone,email',
-                'transactions:id,invoice_id,amount,description,type',
-            ])
+            'student:id,uuid,name,phone,email,grade_id,parent_id',
+            'student.parent:id,name,phone,email',
+            'student.grade:id,name',
+            'studentFee:id,uuid,discount,is_exempted,fee_id',
+            'fee:id,name,amount,teacher_id',
+            'fee.teacher:id,name,phone,email',
+            'transactions:id,invoice_id,amount,description,type',
+        ])
             ->select('id', 'uuid', 'student_id', 'student_fee_id', 'fee_id', 'date', 'due_date', 'amount', 'status')
             ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
             ->whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId))
@@ -148,7 +175,7 @@ class InvoicesController extends Controller
         $invoice->description = $transaction && $transaction->description ? $transaction->description : null;
 
         $netPaid = $invoice->transactions->whereIn('type', [2, 3])->sum('amount');
-        $balance = max(0, bcsub((string)$invoice->amount, (string)$netPaid, 2));
+        $balance = max(0, bcsub((string) $invoice->amount, (string) $netPaid, 2));
         $dueAmount = number_format($balance, 2);
 
         if (!$invoice->studentFee) {
@@ -173,7 +200,7 @@ class InvoicesController extends Controller
             })
             ->toArray();
 
-        return view('teacher.finance.invoices.edit', compact( 'invoice', 'students', 'studentFees', 'dueAmount'));
+        return view('teacher.finance.invoices.edit', compact('invoice', 'students', 'studentFees', 'dueAmount'));
     }
 
     public function update(InvoicesRequest $request, $uuid)
@@ -253,23 +280,23 @@ class InvoicesController extends Controller
 
         if ($request->ajax()) {
             return datatables()->eloquent($transactionsQuery)
-            ->editColumn('invoice_id', function($row) {
-                if (!$row->invoice_id) {
-                    return 'N/A';
-                }
-                return formatInvoiceReference($row->invoice->uuid, route('teacher.invoices.preview', $row->invoice->uuid));
-            })
-            ->editColumn('type', fn($row) => formatTransactionType($row->type))
-            ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'teacher.students.profile.index'))
-            ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
-            ->editColumn('balance_after', fn($row) => formatCurrency($row->balance_after) . ' ' . trans('main.currency'))
-            ->editColumn('description', fn($row) => $row->description ?: '-')
-            ->editColumn('payment_method', fn($row) => formatPaymentMethod($row->payment_method))
-            ->editColumn('date', fn($row) => formatDate($row->date))
-            ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
-            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
-            ->rawColumns(['selectbox', 'invoice_id', 'type', 'student_id', 'amount', 'balance_after', 'payment_method', 'date'])
-            ->make(true);
+                ->editColumn('invoice_id', function ($row) {
+                    if (!$row->invoice_id) {
+                        return 'N/A';
+                    }
+                    return formatInvoiceReference($row->invoice->uuid, route('teacher.invoices.preview', $row->invoice->uuid));
+                })
+                ->editColumn('type', fn($row) => formatTransactionType($row->type))
+                ->editColumn('student_id', fn($row) => formatRelation($row->student_id, $row->student, 'name', 'teacher.students.profile.index'))
+                ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
+                ->editColumn('balance_after', fn($row) => formatCurrency($row->balance_after) . ' ' . trans('main.currency'))
+                ->editColumn('description', fn($row) => $row->description ?: '-')
+                ->editColumn('payment_method', fn($row) => formatPaymentMethod($row->payment_method))
+                ->editColumn('date', fn($row) => formatDate($row->date))
+                ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
+                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+                ->rawColumns(['selectbox', 'invoice_id', 'type', 'student_id', 'amount', 'balance_after', 'payment_method', 'date'])
+                ->make(true);
         }
 
         return view('teacher.finance.invoices.transactions', compact('invoice'));

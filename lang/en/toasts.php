@@ -95,4 +95,8 @@ return [
     'cannotEditNonPending' => 'You cannot edit this request. It must be in pending status.',
     'cannotDeleteNonPending' => 'You cannot delete this request. It must be in pending status.',
     'noStudentsFound' => 'No students registered with you. Please check the data.',
+    'validPin' => 'The code is valid, loading the requested data...',
+    'invalidPin' => 'The code you entered is incorrect, please try again.',
+    'invalidCurrentSecurityCode' => 'Current Security Code is invalid. Please try again.',
+    'securityCodeUpdated' => 'Security Code is updated successfully',
 ];

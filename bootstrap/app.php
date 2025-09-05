@@ -1,11 +1,13 @@
 <?php
 
-use App\Http\Middleware\Authenticate;
 use Jubaer\Zoom\Facades\Zoom;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Middleware\Authenticate;
 use Illuminate\Foundation\Application;
 use Yajra\DataTables\Facades\DataTables;
-use App\Http\Middleware\EnsureTeacherIsSubscribed;
+use App\Http\Middleware\RestrictFinancials;
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\EnsureTeacherIsSubscribed;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Mcamara\LaravelLocalization\Middleware\LocaleCookieRedirect;
@@ -33,7 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'subscribed' => EnsureTeacherIsSubscribed::class,
             'auth' => Authenticate::class,
             'guest' => RedirectIfAuthenticated::class,
-            'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+            'Excel' => Excel::class,
+            'restrict.financials' => RestrictFinancials::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

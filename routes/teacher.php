@@ -25,6 +25,7 @@ use App\Http\Controllers\Teacher\Activities\QuestionsController;
 use App\Http\Controllers\Teacher\Activities\AnswersController;
 use App\Http\Controllers\Teacher\Activities\AssignmentsController;
 
+use App\Http\Controllers\Teacher\Finance\VerifyFinancalPinController;
 use App\Http\Controllers\Teacher\Finance\FeesController;
 use App\Http\Controllers\Teacher\Finance\StudentFeesController;
 use App\Http\Controllers\Teacher\Finance\InvoicesController;
@@ -83,6 +84,7 @@ Route::group(
                 Route::post('personal', 'updatePersonalInfo')->name('personal.update')->middleware('throttle:5,1');
                 Route::get('security', 'securityIndex')->name('security.index');
                 Route::post('security/password/update', 'updatePassword')->name('password.update')->middleware('throttle:5,1');
+                Route::post('security/security-code/update', 'updateSecurityCode')->name('security-code.update')->middleware('throttle:5,1');
                 Route::post('zoom-account/update', 'updateZoomAccount')->name('zoom.update')->middleware('throttle:5,1');
                 Route::get('coupons', 'getCoupons')->name('coupons.index');
                 Route::post('coupons/redeem', 'redeemCoupon')->name('coupons.redeem')->middleware('throttle:5,1');
@@ -334,6 +336,11 @@ Route::group(
             # End Activities
 
             # Start Finance Managment
+                Route::prefix('verify-pin')->controller(VerifyFinancalPinController::class)->name('verify-pin.')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::post('/', 'verify')->middleware('throttle:5,1')->name('insert');
+                });
+
                 # Fees
                 Route::prefix('fees')->controller(FeesController::class)->name('fees.')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -343,7 +350,7 @@ Route::group(
                         Route::post('delete', 'delete')->name('delete');
                         Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                     });
-                    Route::get('{uuid}/reports', 'reports')->name('reports');
+                    Route::get('{uuid}/reports', 'reports')->middleware('restrict.financials')->name('reports');
                     Route::get('{uuid}/students-paid-fees', 'studentsPaidFee')->name('studentsPaidFee');
                     Route::get('{uuid}/students-havenot-pay-fee', 'studentsHavenotPaidFee')->name('studentsHavenotPaidFee');
                     Route::get('{uuid}/students-without-fee', 'studentsWithoutFee')->name('studentsWithoutFee');
@@ -363,6 +370,7 @@ Route::group(
                 # Invoices
                 Route::prefix('invoices')->controller(InvoicesController::class)->name('invoices.')->group(function () {
                     Route::get('/', 'index')->name('index');
+                    Route::post('/verify-pin', 'verifyPin')->middleware('throttle:5,1')->name('verify-pin');
                     Route::get('{uuid}/print', 'print')->name('print');
                     Route::get('create', 'create')->name('create');
                     Route::get('{uuid}', 'preview')->name('preview');

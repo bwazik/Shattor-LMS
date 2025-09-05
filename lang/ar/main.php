@@ -232,7 +232,7 @@ return [
     'yes_restore' => 'آه, رجعهم',
     'yes_accept' => 'آه, قبول',
     'yes_reject' => 'آه, رفض',
-    'processing' => 'اصبر',
+    'processing' => 'اتقل',
     'next' => 'التالي',
     'previous' => 'السابق',
     'finish' => 'خلصت',

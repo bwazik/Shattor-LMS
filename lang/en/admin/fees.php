@@ -16,4 +16,6 @@ return [
     'studentsWithoutFee' => 'Students without fees',
     'studentsPaidFee' => 'Students (Paid fees)',
     'studentsHavenotPaidFee' => 'Students (Did not pay fees)',
+    'securityCode' => 'Security Code',
+    'enterSecurityCode' => 'Enter your 6-digit security code to continue',
 ];

@@ -98,7 +98,7 @@ class SendWhatsappMessage implements ShouldQueue
             $this->fail();
         }
     }
-    
+
     protected function formatMessage($template, $data)
     {
         switch ($template) {
@@ -151,6 +151,8 @@ class SendWhatsappMessage implements ShouldQueue
                 return "تم تحديث المعلومات الشخصية للمستخدم {$data['name']}.";
             case 'updated_profile_pic':
                 return "تم تحديث صورة الملف الشخصي للمستخدم {$data['name']}.\nنوع المستخدم: {$data['model']}";
+            case 'security_code_updated':
+                return "تم تغيير الكود السري الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
             default:
                 return "إشعار: رسالة افتراضية";
         }

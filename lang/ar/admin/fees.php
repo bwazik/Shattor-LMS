@@ -16,4 +16,6 @@ return [
     'studentsWithoutFee' => 'لم تسجل لهم المصاريف',
     'studentsPaidFee' => 'الطلاب (دفعو المصاريف)',
     'studentsHavenotPaidFee' => 'الطلاب (مدفعوش المصاريف)',
+    'securityCode' => 'الكود السري',
+    'enterSecurityCode' => 'اكتب الكود السري المكوَّن من 6 أرقام للمتابعة',
 ];

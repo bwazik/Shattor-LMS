@@ -109,6 +109,23 @@ class AccountService
         });
     }
 
+    public function updateSecurityCode(int $teacherId, array $request): array
+    {
+        return $this->executeTransaction(function () use ($teacherId, $request) {
+            $teacher = Teacher::select('id', 'phone', 'financal_pin')->findOrFail($teacherId);
+
+            if (!Hash::check($request['currentSecurityCode'], $teacher->financal_pin)) {
+                return $this->errorResponse(trans('toasts.invalidCurrentSecurityCode'));
+            }
+
+            $teacher->update(['financal_pin' => Hash::make($request['newSecurityCode'])]);
+
+            $this->WhatsappService->sendMessage($teacher->phone, 'security_code_updated', [], true);
+
+            return $this->successResponse(trans('toasts.securityCodeUpdated'));
+        });
+    }
+
     public function updateZoomAccount(string $guard, int $userId, array $request): array
     {
         return $this->executeTransaction(function () use ($guard, $userId, $request) {

@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\GradeFee;
+use App\Models\MyParent;
 use App\Models\ZoomAccount;
 use Illuminate\Http\Request;
 use App\Services\QRCodeService;
@@ -25,7 +26,7 @@ use App\Http\Requests\ZoomAccountRequest;
 use App\Services\Admin\FileUploadService;
 use App\Http\Requests\PersonalDataRequest;
 use App\Http\Requests\PasswordUpdateRequest;
-use App\Models\MyParent;
+use App\Http\Requests\SecurityCodeUpdateRequest;
 
 class AccountController extends Controller
 {
@@ -187,6 +188,13 @@ class AccountController extends Controller
     public function updatePassword(PasswordUpdateRequest $request)
     {
         $result = $this->accountService->updatePassword($this->guard, $this->userId, $request->validated());
+
+        return $this->conrtollerJsonResponse($result);
+    }
+
+    public function updateSecurityCode(SecurityCodeUpdateRequest $request)
+    {
+        $result = $this->accountService->updateSecurityCode($this->userId, $request->validated());
 
         return $this->conrtollerJsonResponse($result);
     }
