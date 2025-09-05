@@ -16,6 +16,7 @@ class WhatsappService
         'failed_login_attempt',
         'updated_personal_info',
         'updated_profile_pic',
+        'security_code_updated',
     ];
 
     public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)
