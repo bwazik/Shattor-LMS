@@ -71,6 +71,12 @@ class Group extends Model
         return $this->belongsToMany(Quiz::class, 'quiz_group');
     }
 
+    public function offlineQuizzes()
+    {
+        return $this->belongsToMany(Quiz::class, 'offline_quiz_group');
+    }
+
+
     public function assignments()
     {
         return $this->belongsToMany(Assignment::class, 'assignment_group');

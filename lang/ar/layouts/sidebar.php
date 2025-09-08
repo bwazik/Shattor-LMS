@@ -36,6 +36,8 @@ return [
     'attendance' => 'الحضور والغياب',
     'zooms' => 'حصص الزوم',
     'quizzes' => 'الكويزات',
+    'online' => 'الأونلاين',
+    'offline' => 'الأوفلاين',
     'assignments' => 'الواجبات',
 
     # Finance Managment

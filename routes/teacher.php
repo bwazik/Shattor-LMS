@@ -23,6 +23,7 @@ use App\Http\Controllers\Teacher\Activities\ZoomsController;
 use App\Http\Controllers\Teacher\Activities\QuizzesController;
 use App\Http\Controllers\Teacher\Activities\QuestionsController;
 use App\Http\Controllers\Teacher\Activities\AnswersController;
+use App\Http\Controllers\Teacher\Activities\OfflineQuizzesController;
 use App\Http\Controllers\Teacher\Activities\AssignmentsController;
 
 use App\Http\Controllers\Teacher\Finance\VerifyFinancalPinController;
@@ -41,12 +42,13 @@ use App\Http\Controllers\Teacher\Misc\HelpCenterController;
 Route::group(
     [
         'prefix' => LaravelLocalization::setLocale() . '/teacher',
-        'middleware' => [ 'localeSessionRedirect', 'localizationRedirect', 'localeViewPath', 'auth:teacher']
-    ], function(){
+        'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath', 'auth:teacher']
+    ],
+    function () {
 
-    Route::name('teacher.')->group(function() {
+        Route::name('teacher.')->group(function () {
 
-        # Start Unsubscriped Routes
+            # Start Unsubscriped Routes
             # Plans
             Route::prefix('plans')->controller(PlansController::class)->name('plans.')->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -96,33 +98,34 @@ Route::group(
 
 
             # Start Misc
-                Route::prefix('faqs')->controller(FaqsController::class)->name('faqs.')->group(function () {
-                    Route::get('/', 'index')->name('index');
-                });
-                Route::prefix('help-center')->controller(HelpCenterController::class)->name('help-center.')->group(function () {
-                    Route::get('/', 'index')->name('index');
-                    Route::get('/{categorySlug}/{articleSlug}', 'show')->name('show');
-                });
-            # End Misc
-        # End Unsubscriped Routes
-
-        Route::middleware('subscribed')->group(function () {
-            Route::get('/dashboard', function () { return view('teacher.dashboard');})->name('dashboard');
-
-            # Api Responses
-            Route::prefix('fetch')->controller(DataFetchController::class)->name('fetch.')->group(function () {
-                Route::get('grades/{grade}/groups', 'getTeacherGroupsByGrade')->name('grade.groups');
-                Route::get('students/{student}', 'getStudentData')->name('students.data');
-                Route::get('students/{student}/fees', 'getStudentFeesByStudent')->name('students.fees');
-                Route::get('students/{student}/student-fees', 'getStudentRegisteredFeesByStudent')->name('students.student-fees');
-                Route::get('fees/{fee}', 'getFeeData')->name('fees.data');
-                Route::get('student-fees/{studentFee}', 'getStudentFeeData')->name('student-fees.data');
-                Route::get('groups/{group}/lessons', 'getGroupLessons')->name('groups.lessons');
-                Route::get('lessons/{lesson}', 'getLessonData')->name('lessons.data');
-                Route::get('students/{student}/groups', 'getStudentGroups')->name('students.groups');
+            Route::prefix('faqs')->controller(FaqsController::class)->name('faqs.')->group(function () {
+                Route::get('/', 'index')->name('index');
             });
+            Route::prefix('help-center')->controller(HelpCenterController::class)->name('help-center.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/{categorySlug}/{articleSlug}', 'show')->name('show');
+            });
+            # End Misc
+            # End Unsubscriped Routes
 
-            # Start Tools
+            Route::middleware('subscribed')->group(function () {
+                Route::get('/dashboard', function () {
+                    return view('teacher.dashboard'); })->name('dashboard');
+
+                # Api Responses
+                Route::prefix('fetch')->controller(DataFetchController::class)->name('fetch.')->group(function () {
+                    Route::get('grades/{grade}/groups', 'getTeacherGroupsByGrade')->name('grade.groups');
+                    Route::get('students/{student}', 'getStudentData')->name('students.data');
+                    Route::get('students/{student}/fees', 'getStudentFeesByStudent')->name('students.fees');
+                    Route::get('students/{student}/student-fees', 'getStudentRegisteredFeesByStudent')->name('students.student-fees');
+                    Route::get('fees/{fee}', 'getFeeData')->name('fees.data');
+                    Route::get('student-fees/{studentFee}', 'getStudentFeeData')->name('student-fees.data');
+                    Route::get('groups/{group}/lessons', 'getGroupLessons')->name('groups.lessons');
+                    Route::get('lessons/{lesson}', 'getLessonData')->name('lessons.data');
+                    Route::get('students/{student}/groups', 'getStudentGroups')->name('students.groups');
+                });
+
+                # Start Tools
                 # Grades
                 Route::prefix('grades')->controller(GradesController::class)->name('grades.')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -130,12 +133,12 @@ Route::group(
                 });
 
                 # Groups
-                Route::prefix('groups')->controller(GroupsController::class)->name('groups.')->group(function() {
+                Route::prefix('groups')->controller(GroupsController::class)->name('groups.')->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('{uuid}/lessons', 'lessons')->name('lessons');
                     Route::get('{uuid}/students', 'students')->name('students');
                     Route::get('{uuid}/export-qr-codes', 'exportQrCodes')->name('exportQrCodes');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
@@ -165,25 +168,25 @@ Route::group(
                 });
 
                 # Resources
-                Route::prefix('resources')->controller(ResourcesController::class)->name('resources.')->group(function() {
+                Route::prefix('resources')->controller(ResourcesController::class)->name('resources.')->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('{uuid}', 'details')->name('details');
                     Route::post('{uuid}/upload', 'uploadFile')->name('upload');
                     Route::get('{uuid}/download', 'downloadFile')->name('download');
                     Route::post('files/delete', 'deleteFile')->name('files.delete');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
                     });
                 });
-            # End Tools
+                # End Tools
 
-            # Start Users Managment
+                # Start Users Managment
                 # Assistants
-                Route::prefix('assistants')->controller(AssistantsController::class)->name('assistants.')->group(function() {
+                Route::prefix('assistants')->controller(AssistantsController::class)->name('assistants.')->group(function () {
                     Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
@@ -192,18 +195,18 @@ Route::group(
                 });
 
                 # Students
-                Route::prefix('students')->name('students.')->group(function() {
-                    Route::controller(StudentsController::class)->group(function() {
+                Route::prefix('students')->name('students.')->group(function () {
+                    Route::controller(StudentsController::class)->group(function () {
                         Route::get('/', 'index')->name('index');
-                        Route::middleware('throttle:10,1')->group(function() {
+                        Route::middleware('throttle:10,1')->group(function () {
                             Route::post('insert', 'insert')->name('insert');
                             Route::post('update', 'update')->name('update');
                             Route::post('delete', 'delete')->name('delete');
                             Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                         });
                     });
-                    Route::controller(StudentsProfileController::class)->group(function() {
-                        Route::prefix('{uuid}')->name('profile.')->group(function() {
+                    Route::controller(StudentsProfileController::class)->group(function () {
+                        Route::prefix('{uuid}')->name('profile.')->group(function () {
                             Route::get('profile', 'profile')->name('index');
                             Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                             Route::get('attendance', 'attendance')->name('attendance');
@@ -215,26 +218,26 @@ Route::group(
                     });
                 });
                 # Parents
-                Route::prefix('parents')->name('parents.')->group(function() {
-                    Route::controller(ParentsController::class)->group(function() {
+                Route::prefix('parents')->name('parents.')->group(function () {
+                    Route::controller(ParentsController::class)->group(function () {
                         Route::get('/', 'index')->name('index');
-                        Route::middleware('throttle:10,1')->group(function() {
+                        Route::middleware('throttle:10,1')->group(function () {
                             Route::post('insert', 'insert')->name('insert');
                             Route::post('update', 'update')->name('update');
                             Route::post('delete', 'delete')->name('delete');
                             Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                         });
                     });
-                    Route::controller(ParentsProfileController::class)->group(function() {
-                        Route::prefix('{uuid}')->name('profile.')->group(function() {
+                    Route::controller(ParentsProfileController::class)->group(function () {
+                        Route::prefix('{uuid}')->name('profile.')->group(function () {
                             Route::get('profile', 'profile')->name('index');
                             Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                         });
                     });
                 });
-            # End Users Managment
+                # End Users Managment
 
-            # Start Activities
+                # Start Activities
                 # Compensatories
                 Route::prefix('compensatories')->controller(CompensatoriesController::class)->name('compensatories.')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -249,20 +252,20 @@ Route::group(
                 });
 
                 # Attendance
-                Route::prefix('attendance')->controller(AttendanceController::class)->name('attendance.')->group(function() {
+                Route::prefix('attendance')->controller(AttendanceController::class)->name('attendance.')->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::post('students', 'getStudentsByFilter')->name('students');
                     Route::post('scan', 'scanAttendance')->name('scan');
                     Route::get('{lessonUuid}/export', 'exportAttendance')->name('export');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                     });
                 });
 
                 # Zooms
-                Route::prefix('zooms')->controller(ZoomsController::class)->name('zooms.')->group(function() {
+                Route::prefix('zooms')->controller(ZoomsController::class)->name('zooms.')->group(function () {
                     Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
@@ -271,9 +274,9 @@ Route::group(
                 });
 
                 # Quizzes
-                Route::prefix('quizzes')->controller(QuizzesController::class)->name('quizzes.')->group(function() {
+                Route::prefix('quizzes')->controller(QuizzesController::class)->name('quizzes.')->group(function () {
                     Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
@@ -287,36 +290,53 @@ Route::group(
                 });
 
                 # Questions
-                Route::prefix('quizzes/{quizId}/questions')->controller(QuestionsController::class)->name('questions.')->group(function() {
+                Route::prefix('quizzes/{quizId}/questions')->controller(QuestionsController::class)->name('questions.')->group(function () {
                     Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                     });
                 });
-                Route::prefix('questions')->controller(QuestionsController::class)->name('questions.')->middleware('throttle:10,1')->group(function() {
+                Route::prefix('questions')->controller(QuestionsController::class)->name('questions.')->middleware('throttle:10,1')->group(function () {
                     Route::post('update', 'update')->name('update');
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                 });
 
                 # Answers
-                Route::prefix('questions/{questionId}/answers')->controller(AnswersController::class)->name('answers.')->group(function() {
+                Route::prefix('questions/{questionId}/answers')->controller(AnswersController::class)->name('answers.')->group(function () {
                     Route::get('/', 'index')->name('index');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                     });
                 });
-                Route::prefix('answers')->controller(AnswersController::class)->name('answers.')->middleware('throttle:10,1')->group(function() {
+                Route::prefix('answers')->controller(AnswersController::class)->name('answers.')->middleware('throttle:10,1')->group(function () {
                     Route::post('update', 'update')->name('update');
                     Route::post('delete', 'delete')->name('delete');
                 });
 
+                # Offline Quizzes
+                Route::prefix('offline-quizzes')->controller(OfflineQuizzesController::class)->name('offline-quizzes.')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::middleware('throttle:10,1')->group(function () {
+                        Route::post('insert', 'insert')->name('insert');
+                        Route::post('update', 'update')->name('update');
+                        Route::post('delete', 'delete')->name('delete');
+                        Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                        Route::post('{uuid}/reset', 'resetStudentOfflineQuiz')->name('resetStudentOfflineQuiz');
+                        Route::post('{uuid}/scores/insert', 'insertScores')->name('scores.insert');
+                    });
+                    Route::get('{uuid}/scores', 'scores')->name('scores');
+                    Route::get('{uuid}/reports', 'reports')->name('reports');
+                    Route::get('{uuid}/students-taken-offline-quiz', 'studentsTakenOfflineQuiz')->name('studentsTakenOfflineQuiz');
+                    Route::get('{uuid}/students-not-taken-offline-quiz', 'studentsNotTakenOfflineQuiz')->name('studentsNotTakenOfflineQuiz');
+                });
+
                 # Assignments
-                Route::prefix('assignments')->controller(AssignmentsController::class)->name('assignments.')->group(function() {
+                Route::prefix('assignments')->controller(AssignmentsController::class)->name('assignments.')->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::get('{uuid}', 'details')->name('details');
                     Route::get('files/{fileId}/download', 'downloadFile')->name('files.download');
-                    Route::middleware('throttle:10,1')->group(function() {
+                    Route::middleware('throttle:10,1')->group(function () {
                         Route::post('insert', 'insert')->name('insert');
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
@@ -333,9 +353,9 @@ Route::group(
                     Route::get('submissions/{fileId}/download', 'downloadSubmission')->name('submissions.download');
                     Route::get('submissions/{fileId}/view', 'viewSubmission')->name('submissions.view');
                 });
-            # End Activities
+                # End Activities
 
-            # Start Finance Managment
+                # Start Finance Managment
                 Route::prefix('verify-pin')->controller(VerifyFinancalPinController::class)->name('verify-pin.')->group(function () {
                     Route::get('/', 'index')->name('index');
                     Route::post('/', 'verify')->middleware('throttle:5,1')->name('insert');
@@ -390,7 +410,8 @@ Route::group(
                 Route::prefix('transactions')->controller(TransactionsController::class)->name('transactions.')->group(function () {
                     Route::get('/', 'index')->name('index');
                 });
-            # End Finance Managment
+                # End Finance Managment
+            });
         });
-    });
-});
+    }
+);

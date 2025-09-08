@@ -116,11 +116,24 @@
                 <div>{{ trans('layouts/sidebar.zooms') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute('teacher.quizzes.index') ? 'active' : '' }}">
-            <a href="{{ route('teacher.quizzes.index') }}" class="menu-link">
+        <li
+            class="menu-item {{ isActiveRoute(['teacher.quizzes.index', 'teacher.offline-quizzes.index']) ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-brain-line"></i>
                 <div>{{ trans('layouts/sidebar.quizzes') }}</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ isActiveRoute('teacher.quizzes.index') ? 'active' : '' }}">
+                    <a href="{{ route('teacher.quizzes.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.online') }}</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ isActiveRoute('teacher.offline-quizzes.index') ? 'active' : '' }}">
+                    <a href="{{ route('teacher.offline-quizzes.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.offline') }}</div>
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="menu-item {{ isActiveRoute('teacher.assignments.index') ? 'active' : '' }}">
             <a href="{{ route('teacher.assignments.index') }}" class="menu-link">

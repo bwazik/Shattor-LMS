@@ -126,6 +126,11 @@ class Student extends Authenticatable
         return $this->hasMany(Coupon::class, 'student_id');
     }
 
+    public function offlineQuizResults()
+    {
+        return $this->hasMany(OfflineQuizResult::class, 'student_id');
+    }
+
     # Scopes
     public function scopeUuid($query, $uuid)
     {

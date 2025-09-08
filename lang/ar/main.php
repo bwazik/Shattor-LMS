@@ -31,6 +31,7 @@ return [
     'detailsOf' => 'تفاصيل ال',
     'reports' => 'التقارير',
     'reportsOf' => 'تقارير :dependency',
+    'scores' => 'الدرجات',
 
     # Datatable headers
     'name' => 'الإسم',
@@ -77,6 +78,7 @@ return [
     'academicDetails' => 'المعلومات الدراسية',
     'submitted' => 'تم التسليم',
     'notSubmitted' => 'متسلمش',
+    'conducted_at' => 'تاريخ البدأ',
 
     # Weekdays
     'weekdays' => [

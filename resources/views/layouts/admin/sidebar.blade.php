@@ -186,11 +186,24 @@
                 <div>{{ trans('layouts/sidebar.zooms') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute('admin.quizzes.index') ? 'active' : '' }}">
-            <a href="{{ route('admin.quizzes.index') }}" class="menu-link">
+        <li
+            class="menu-item {{ isActiveRoute(['admin.quizzes.index', 'admin.offline-quizzes.index']) ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-brain-line"></i>
                 <div>{{ trans('layouts/sidebar.quizzes') }}</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ isActiveRoute('admin.quizzes.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.quizzes.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.online') }}</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ isActiveRoute('admin.offline-quizzes.index') ? 'active' : '' }}">
+                    <a href="{{ route('admin.offline-quizzes.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.offline') }}</div>
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="menu-item {{ isActiveRoute('admin.assignments.index') ? 'active' : '' }}">
             <a href="{{ route('admin.assignments.index') }}" class="menu-link">
@@ -221,13 +234,15 @@
                 <div>{{ trans('layouts/sidebar.teacher-subscriptions') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute(['admin.invoices.index', 'admin.invoices.archived', 'admin.invoices.teachers.index', 'admin.invoices.teachers.archived']) ? 'active open' : '' }}">
+        <li
+            class="menu-item {{ isActiveRoute(['admin.invoices.index', 'admin.invoices.archived', 'admin.invoices.teachers.index', 'admin.invoices.teachers.archived']) ? 'active open' : '' }}">
             <a href="javascript:void(0)" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-money-dollar-circle-line"></i>
                 <div>{{ trans('layouts/sidebar.invoices') }}</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item {{ isActiveRoute(['admin.invoices.index', 'admin.invoices.archived']) ? 'active open' : '' }}">
+                <li
+                    class="menu-item {{ isActiveRoute(['admin.invoices.index', 'admin.invoices.archived']) ? 'active open' : '' }}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle waves-effect">
                         <div>{{ trans('admin/students.students') }}</div>
                     </a>
@@ -246,7 +261,8 @@
                 </li>
             </ul>
             <ul class="menu-sub">
-                <li class="menu-item {{ isActiveRoute(['admin.invoices.teachers.index', 'admin.invoices.teachers.archived']) ? 'active open' : '' }}">
+                <li
+                    class="menu-item {{ isActiveRoute(['admin.invoices.teachers.index', 'admin.invoices.teachers.archived']) ? 'active open' : '' }}">
                     <a href="javascript:void(0)" class="menu-link menu-toggle waves-effect">
                         <div>{{ trans('admin/teachers.teachers') }}</div>
                     </a>
@@ -256,7 +272,8 @@
                                 <div>{{ trans('layouts/sidebar.invoices') }}</div>
                             </a>
                         </li>
-                        <li class="menu-item {{ isActiveRoute('admin.invoices.teachers.archived') ? 'active' : '' }}">
+                        <li
+                            class="menu-item {{ isActiveRoute('admin.invoices.teachers.archived') ? 'active' : '' }}">
                             <a href="{{ route('admin.invoices.teachers.archived') }}" class="menu-link">
                                 <div>{{ trans('layouts/sidebar.archived') }}</div>
                             </a>
@@ -301,7 +318,8 @@
                 <div>{{ trans('layouts/sidebar.whatsappMessages') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute(['admin.categories.index', 'admin.faqs.index']) ? 'active open' : '' }}">
+        <li
+            class="menu-item {{ isActiveRoute(['admin.categories.index', 'admin.faqs.index']) ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-customer-service-2-line"></i>
                 <div>{{ trans('layouts/sidebar.support') }}</div>

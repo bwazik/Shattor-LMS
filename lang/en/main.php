@@ -31,7 +31,7 @@ return [
     'detailsOf' => 'Details of',
     'reports' => 'Reports',
     'reportsOf' => ':dependency Reports',
-
+    'scores' => 'Scores',
 
     # Datatable headers
     'name' => 'Name',
@@ -76,6 +76,7 @@ return [
     'academicDetails' => 'Academic Details',
     'submitted' => 'Submitted',
     'notSubmitted' => 'Not Submitted',
+    'conducted_at' => 'Conducted At',
 
     # Weekdays
     'weekdays' => [
@@ -270,7 +271,7 @@ return [
     'error' => 'Error!',
     'generated' => 'Lessons have been generated successfully!',
     'imported' => 'File has been imported successfully!',
-    
+
     # Other
     'mr' => 'Mr',
     'mrs' => 'Mrs',

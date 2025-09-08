@@ -41,24 +41,26 @@ class UniqueFieldAcrossModels implements ValidationRule
             Teacher::class,
         ];
 
-        foreach ($models as $model) {
-            // Check if the field exists in the model
-            $query = $model::where($this->field, $value);
+        if (!isAdmin()) {
+            foreach ($models as $model) {
+                // Check if the field exists in the model
+                $query = $model::where($this->field, $value);
 
-            // Exclude the current record from the check (for update operations)
-            if ($this->exceptModelId) {
-                // Check if the identifier is a UUID or numeric ID
-                if (is_numeric($this->exceptModelId)) {
-                    $query->where('id', '!=', $this->exceptModelId);
-                } else {
-                    $query->where('uuid', '!=', $this->exceptModelId);
+                // Exclude the current record from the check (for update operations)
+                if ($this->exceptModelId) {
+                    // Check if the identifier is a UUID or numeric ID
+                    if (is_numeric($this->exceptModelId)) {
+                        $query->where('id', '!=', $this->exceptModelId);
+                    } else {
+                        $query->where('uuid', '!=', $this->exceptModelId);
+                    }
                 }
-            }
 
-            // If the field value exists, fail validation
-            if ($query->exists()) {
-                $fail($this->errorMessage);
-                return; // Stop further checks once a match is found
+                // If the field value exists, fail validation
+                if ($query->exists()) {
+                    $fail($this->errorMessage);
+                    return; // Stop further checks once a match is found
+                }
             }
         }
     }

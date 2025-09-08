@@ -35,6 +35,8 @@ return [
     'attendance' => 'Attendance',
     'zooms' => 'Zooms',
     'quizzes' => 'Quizzes',
+    'online' => 'Online',
+    'offline' => 'Offline',
     'assignments' => 'Assignments',
 
     # Finance Managment

@@ -252,7 +252,7 @@ class QuizzesController extends Controller
                         'uuid' => $item->student->uuid ?? 'N/A',
                         'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
-                        'profile_pic' => $item->student->profile_pic ?? 'N/A',
+                        'profile_pic' => $item->student->profile_pic,
                         'quiz_score' => number_format($item->quiz_score, 2),
                     ];
                 });
