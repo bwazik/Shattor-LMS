@@ -364,6 +364,23 @@ Route::group(
                 Route::post('delete', 'delete')->name('delete');
             });
 
+            # Offline Quizzes
+            Route::prefix('offline-quizzes')->controller(OfflineQuizzesController::class)->name('offline-quizzes.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::middleware('throttle:10,1')->group(function () {
+                    Route::post('insert', 'insert')->name('insert');
+                    Route::post('update', 'update')->name('update');
+                    Route::post('delete', 'delete')->name('delete');
+                    Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                    Route::post('{uuid}/reset', 'resetStudentOfflineQuiz')->name('resetStudentOfflineQuiz');
+                    Route::post('{uuid}/scores/insert', 'insertScores')->name('scores.insert');
+                });
+                Route::get('{uuid}/scores', 'scores')->name('scores');
+                Route::get('{uuid}/reports', 'reports')->name('reports');
+                Route::get('{uuid}/students-taken-offline-quiz', 'studentsTakenOfflineQuiz')->name('studentsTakenOfflineQuiz');
+                Route::get('{uuid}/students-not-taken-offline-quiz', 'studentsNotTakenOfflineQuiz')->name('studentsNotTakenOfflineQuiz');
+            });
+
             # Assignments
             Route::prefix('assignments')->controller(AssignmentsController::class)->name('assignments.')->group(function () {
                 Route::get('/', 'index')->name('index');
