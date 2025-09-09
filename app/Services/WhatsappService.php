@@ -11,11 +11,7 @@ class WhatsappService
 {
     protected $allowMultipleTemplates = [
         'new_device_login',
-        'password_updated',
         'login_notification',
-        'failed_login_attempt',
-        'updated_personal_info',
-        'updated_profile_pic',
         'security_code_updated',
     ];
 
