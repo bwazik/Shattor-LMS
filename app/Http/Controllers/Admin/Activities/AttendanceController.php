@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Activities;
 
+use App\Models\Lesson;
 use App\Models\Teacher;
+use App\Exports\AttendanceExport;
 use App\Http\Controllers\Controller;
+use App\Traits\PublicValidatesTrait;
 use App\Traits\ServiceResponseTrait;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Services\Admin\Activities\AttendanceService;
 use App\Http\Requests\Admin\Activities\AttendanceRequest;
 use App\Http\Requests\Admin\Activities\StudentSearchRequest;
@@ -12,7 +16,7 @@ use App\Http\Requests\Admin\Activities\ScanAttendanceRequest;
 
 class AttendanceController extends Controller
 {
-    use ServiceResponseTrait;
+    use ServiceResponseTrait, PublicValidatesTrait;
 
     protected $attendanceService;
 
@@ -57,5 +61,21 @@ class AttendanceController extends Controller
         $result = $this->attendanceService->scanAttendance($request->validated());
 
         return $this->conrtollerJsonResponse($result);
+    }
+
+    public function exportAttendance($lessonId)
+    {
+        $lesson = Lesson::with('group:id,grade_id,teacher_id', 'group.teacher:id')
+            ->select('id', 'uuid', 'title', 'group_id', 'date')
+            ->findOrFail($lessonId);
+
+        if ($validationResult = $this->validateTeacherGradeAndGroups($lesson->group->teacher->id, $lesson->group_id, $lesson->group->grade_id, true)) {
+            abort(404);
+        }
+
+        return Excel::download(
+            new AttendanceExport($lesson->id, $lesson->group->teacher->id, $lesson->group_id, $lesson->group->grade_id, $lesson->date),
+            'attendance_' . $lesson->id . '_' . now()->format('Ymd_His') . '.xlsx'
+        );
     }
 }

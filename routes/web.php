@@ -307,6 +307,7 @@ Route::group(
                 Route::get('/', 'index')->name('index');
                 Route::post('students', 'getStudentsByFilter')->name('students');
                 Route::post('scan', 'scanAttendance')->name('scan');
+                Route::get('{lessonId}/export', 'exportAttendance')->name('export');
                 Route::middleware('throttle:10,1')->group(function () {
                     Route::post('insert', 'insert')->name('insert');
                 });
