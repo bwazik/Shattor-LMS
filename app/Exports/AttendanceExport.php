@@ -85,15 +85,15 @@ class AttendanceExport implements FromQuery, WithHeadings, WithMapping
     public function map($student): array
     {
         $statusMap = [
-            1 => 'P', // Present
-            2 => 'A', // Absent
-            3 => 'L', // Late
-            4 => 'C', // Compensatory
-            null => $student->is_compensatory ? 'OG' : '', // Other Group for compensatory without attendance
+            1 => 'ح', // Present
+            2 => 'غ', // Absent
+            3 => 'م', // Late
+            4 => 'ت', // Compensatory
+            null => $student->is_compensatory ? 'ت (مجموعة أخري)' : '', // Other Group for compensatory without attendance
         ];
 
         return [
-            $statusMap[$student->status] ?? ($student->is_compensatory ? 'OG' : ''), // Status (left)
+            $statusMap[$student->status] ?? ($student->is_compensatory ? 'ت (مجموعة أخري)' : ''), // Status (left)
             $student->name, // Name (right)
         ];
     }
