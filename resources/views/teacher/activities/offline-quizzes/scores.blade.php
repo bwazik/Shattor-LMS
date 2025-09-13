@@ -10,8 +10,7 @@
     <!-- DataTable with Buttons -->
     <x-datatable
         datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('main.scores')]) }} - {{ $offlineQuiz->name }} - {{ $offlineQuiz->grade->name }}"
-        otherButton="{{ trans('admin/offlineQuizzes.submit') }}" otherIcon="ri-checkbox-circle-line"
-        excelButton="ss" excelButtonRoute="{{ route('teacher.offline-quizzes.export', $offlineQuiz->uuid) }}">
+        otherButton="{{ trans('admin/offlineQuizzes.submit') }}" otherIcon="ri-checkbox-circle-line">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.name') }}</th>
