@@ -96,7 +96,7 @@ class SessionService
             $devices = DB::table('user_devices')
                 ->where('user_id', $userId)
                 ->where('guard', $guard)
-                ->get(['id', 'device_fingerprint', 'user_agent', 'last_ip', 'last_used_at']);
+                ->get(['id', 'device_id', 'device_fingerprint', 'user_agent', 'last_ip', 'last_used_at']);
 
             return $devices->map(function ($device) use ($guard, $userId) {
                 $agent = new Agent();
@@ -143,14 +143,22 @@ class SessionService
                             return strpos($key, $sessionKeyPrefix) === 0;
                         });
                         if ($hasGuardKey) {
-                            $sessionFingerprint = hash('sha256', $session->user_agent . '|' . $session->ip_address);
-                            if ($sessionFingerprint === $device->device_fingerprint) {
+                            $sessionDeviceId = $decodedPayload['device_id'] ?? null;
+                            if ($sessionDeviceId === $device->device_id) {
                                 $lastActivityTime = Carbon::createFromTimestamp($session->last_activity);
                                 $lastActivity = now()->diffInMinutes($lastActivityTime) < 5
                                     ? trans('account.online')
                                     : $lastActivityTime->diffForHumans();
                                 break;
                             }
+                            // $sessionFingerprint = hash('sha256', $session->user_agent . '|' . $session->ip_address);
+                            // if ($sessionFingerprint === $device->device_fingerprint) {
+                            //     $lastActivityTime = Carbon::createFromTimestamp($session->last_activity);
+                            //     $lastActivity = now()->diffInMinutes($lastActivityTime) < 5
+                            //         ? trans('account.online')
+                            //         : $lastActivityTime->diffForHumans();
+                            //     break;
+                            // }
                         }
                     } catch (\Exception $e) {
                         Log::error('Session payload decode failed', [

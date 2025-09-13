@@ -15,7 +15,7 @@ return new class extends Migration
             $table->increments('id');
             $table->integer('user_id')->unsigned()->nullable();
             $table->string('guard');
-            $table->string('device_fingerprint'); // Hash of user agent + IP
+            $table->string('device_fingerprint'); // Hash of user agent + device_id
             $table->string('user_agent')->nullable();
             $table->string('last_ip')->nullable();
             $table->timestamp('last_used_at')->nullable();

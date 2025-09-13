@@ -80,7 +80,12 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        $deviceFingerprint = hash('sha256', request()->userAgent() . '|' . request()->ip());
+        // Get or create device ID from cookie
+        $deviceId = $this->getOrCreateDeviceId();
+
+        // Create device fingerprint using device_id + user_agent
+        $deviceFingerprint = hash('sha256', $deviceId . '|' . request()->userAgent());
+
         $deviceCount = DB::table('user_devices')
             ->where('user_id', $user->id)
             ->where('guard', $guard)
@@ -89,7 +94,7 @@ class LoginRequest extends FormRequest
         $isAuthorized = DB::table('user_devices')
             ->where('user_id', $user->id)
             ->where('guard', $guard)
-            ->where('device_fingerprint', $deviceFingerprint)
+            ->where('device_id', $deviceId)
             ->exists();
 
         if ($guard === 'web') {
@@ -153,7 +158,8 @@ class LoginRequest extends FormRequest
                     'name' => $name,
                     'date' => now()->translatedFormat('l j F Y'),
                     'time' => now()->translatedFormat('h:i A'),
-                ], true
+                ],
+                true
             );
         }
 
@@ -174,9 +180,10 @@ class LoginRequest extends FormRequest
             [
                 'user_id' => $user->id,
                 'guard' => $guard,
-                'device_fingerprint' => $deviceFingerprint,
+                'device_id' => $deviceId,
             ],
             [
+                'device_fingerprint' => $deviceFingerprint,
                 'user_agent' => request()->userAgent(),
                 'last_ip' => request()->ip(),
                 'last_used_at' => now(),
@@ -184,6 +191,9 @@ class LoginRequest extends FormRequest
                 'created_at' => DB::raw('COALESCE(created_at, NOW())'),
             ]
         );
+
+        // Store device_id in session for session matching
+        session(['device_id' => $deviceId]);
 
         RateLimiter::clear($this->throttleKey());
     }
@@ -209,5 +219,37 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('username')) . '|' . $this->ip());
+    }
+
+    private function getOrCreateDeviceId(): string
+    {
+        $cookieName = 'device_id';
+        $deviceId = request()->cookie($cookieName);
+
+        if (!$deviceId) {
+            // Generate new device ID
+            $deviceId = 'dev_' . time() . '_' . bin2hex(random_bytes(8));
+
+            // Set cookie for 10 years
+            cookie()->queue(cookie(
+                $cookieName,
+                $deviceId,
+                60 * 24 * 365, // 1 years in minutes
+                '/', // path
+                null, // domain
+                request()->isSecure(), // secure (HTTPS only)
+                true, // httpOnly
+                false, // raw
+                'Lax' // sameSite
+            ));
+
+            Log::info('New device ID created', [
+                'device_id' => $deviceId,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        }
+
+        return $deviceId;
     }
 }
