@@ -128,8 +128,7 @@
         <div class="tab-pane fade active show" id="datatable-tab" role="tabpanel">
             <x-datatable
                 datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/attendance.attendance')]) }}"
-                dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-checkbox-circle-line"
-                excelButton="ss" excelButtonRoute="{{ route('teacher.attendance.export', $lesson->id) }}">
+                dataToggle="offcanvas" otherButton="{{ trans('admin/attendance.submit') }}" otherIcon="ri-checkbox-circle-line">
                 <th></th>
                 <th>#</th>
                 <th>{{ trans('main.student') }}</th>
