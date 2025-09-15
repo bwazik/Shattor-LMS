@@ -46,7 +46,7 @@ class StudentsProfileController extends Controller
                 'attendances' => fn($query) => $query->select('student_id', 'status', 'teacher_id'),
                 'teachers:id'
             ])
-            ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.grade_id', 'students.specialization', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
+            ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.grade_id', 'students.specialization', 'students.specialization', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
             ->findOrFail($id);
     }
 
@@ -445,8 +445,12 @@ class StudentsProfileController extends Controller
                     ->with(['transactions' => fn($q) => $q->where('type', 2)->select('id', 'invoice_id', 'payment_method', 'created_at')])
                     ->select('id', 'uuid', 'fee_id', 'student_id', 'amount', 'date', 'status')
             ])
-            ->select('fees.id', 'fees.uuid', 'fees.name', 'fees.grade_id', 'fees.created_at')
+            ->select('fees.id', 'fees.uuid', 'fees.name', 'fees.grade_id', 'fees.specialization', 'fees.created_at')
             ->where('fees.grade_id', $student->grade_id)
+            ->where(function ($query) use ($student) {
+                $query->whereNull('fees.specialization')
+                    ->orWhere('fees.specialization', $student->specialization);
+            })
             ->orderBy('fees.created_at', 'desc');
 
         if ($request->ajax()) {
@@ -468,7 +472,11 @@ class StudentsProfileController extends Controller
 
     private function getFeeStats($student)
     {
-        $feesQuery = Fee::where('grade_id', $student->grade_id);
+        $feesQuery = Fee::where('grade_id', $student->grade_id)
+            ->where(function ($query) use ($student) {
+                $query->whereNull('specialization')
+                    ->orWhere('specialization', $student->specialization);
+            });;
         $totalFees = $feesQuery->count();
         $invoices = Invoice::where('student_id', $student->id)
             ->where('type', 2)
