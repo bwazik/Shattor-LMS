@@ -79,7 +79,7 @@ class OfflineQuizzesController extends Controller
         $id = OfflineQuiz::uuid($request->id)->value('id');
         $request->merge(['id' => $id]);
 
-        $this->validateExistence($request, 'quizzes');
+        $this->validateExistence($request, 'offline_quizzes');
 
         $result = $this->offlineQuizService->deleteOfflineQuiz($request->id);
 
@@ -91,7 +91,7 @@ class OfflineQuizzesController extends Controller
         $ids = OfflineQuiz::whereIn('uuid', $request->ids ?? [])->pluck('id')->toArray();
         !empty($ids) ? $request->merge(['ids' => $ids]) : null;
 
-        $this->validateExistence($request, 'quizzes');
+        $this->validateExistence($request, 'offline_quizzes');
 
         $result = $this->offlineQuizService->deleteSelectedOfflineQuizzes($request->ids);
 

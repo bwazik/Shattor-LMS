@@ -71,7 +71,7 @@ class OfflineQuizzesController extends Controller
 
     public function delete(Request $request)
     {
-        $this->validateExistence($request, 'quizzes');
+        $this->validateExistence($request, 'offline_quizzes');
 
         $result = $this->offlineQuizService->deleteOfflineQuiz($request->id);
 
@@ -80,7 +80,7 @@ class OfflineQuizzesController extends Controller
 
     public function deleteSelected(Request $request)
     {
-        $this->validateExistence($request, 'quizzes');
+        $this->validateExistence($request, 'offline_quizzes');
 
         $result = $this->offlineQuizService->deleteSelectedOfflineQuizzes($request->ids);
 
