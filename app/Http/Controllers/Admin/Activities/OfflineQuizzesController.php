@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Teacher\Activities;
+namespace App\Http\Controllers\Admin\Activities;
 
 use App\Models\Grade;
 use App\Models\Group;
 use App\Models\Student;
+use App\Models\Teacher;
 use App\Models\OfflineQuiz;
 use Illuminate\Http\Request;
 use App\Models\StudentResult;
@@ -13,7 +14,7 @@ use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
 use App\Traits\ServiceResponseTrait;
 use Illuminate\Support\Facades\Cache;
-use App\Services\Teacher\Activities\OfflineQuizService;
+use App\Services\Admin\Activities\OfflineQuizService;
 use App\Http\Requests\Admin\Activities\OfflineQuizzesRequest;
 use App\Http\Requests\Admin\Activities\OfflineQuizzesScoresRequest;
 
@@ -21,41 +22,37 @@ class OfflineQuizzesController extends Controller
 {
     use ValidatesExistence, ServiceResponseTrait;
 
-    protected $teacherId;
     protected $offlineQuizService;
-    protected $planLimitService;
 
     public function __construct(OfflineQuizService $offlineQuizService)
     {
         $this->offlineQuizService = $offlineQuizService;
-        $this->teacherId = auth()->guard('teacher')->user()->id;
     }
 
     public function index(Request $request)
     {
         $offlineQuizzesQuery = OfflineQuiz::query()->with(['grade:id,name'])
-            ->select('id', 'uuid', 'grade_id', 'name', 'type', 'score', 'conducted_at')
-            ->where('teacher_id', $this->teacherId);
+            ->select('id', 'teacher_id', 'grade_id', 'name', 'type', 'score', 'conducted_at');
+        ;
 
         if ($request->ajax()) {
             return $this->offlineQuizService->getOfflineQuizzesForDatatable($offlineQuizzesQuery);
         }
 
-        $grades = Grade::whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->select('id', 'name')
-            ->orderBy('id')
-            ->pluck('name', 'id')
-            ->toArray();
-
-        $groups = Group::query()
-            ->select('id', 'uuid', 'name', 'grade_id')
-            ->where('teacher_id', $this->teacherId)
-            ->with('grade:id,name')
+        $teachers = Teacher::query()->select('id', 'name')->orderBy('id')->pluck('name', 'id')->toArray();
+        $grades = Grade::query()->select('id', 'name')->orderBy('id')->pluck('name', 'id')->toArray();
+        $groups = Group::query()->select('id', 'name', 'teacher_id', 'grade_id')
+            ->with(['teacher:id,name', 'grade:id,name'])
+            ->orderBy('teacher_id')
             ->orderBy('grade_id')
             ->get()
-            ->mapWithKeys(fn($group) => [$group->uuid => $group->name . ' - ' . $group->grade->name]);
+            ->mapWithKeys(function ($group) {
+                $gradeName = $group->grade->name ?? 'N/A';
+                $teacherName = $group->teacher->name ?? 'N/A';
+                return [$group->id => $group->name . ' - ' . $gradeName . ' - ' . $teacherName];
+            });
 
-        return view('teacher.activities.offline-quizzes.index', compact('grades', 'groups'));
+        return view('admin.activities.offline-quizzes.index', compact('teachers', 'grades', 'groups'));
     }
 
     public function insert(OfflineQuizzesRequest $request)
@@ -67,18 +64,13 @@ class OfflineQuizzesController extends Controller
 
     public function update(OfflineQuizzesRequest $request)
     {
-        $id = OfflineQuiz::uuid($request->id)->value('id');
-
-        $result = $this->offlineQuizService->updateOfflineQuiz($id, $request->validated());
+        $result = $this->offlineQuizService->updateOfflineQuiz($request->id, $request->validated());
 
         return $this->conrtollerJsonResponse($result);
     }
 
     public function delete(Request $request)
     {
-        $id = OfflineQuiz::uuid($request->id)->value('id');
-        $request->merge(['id' => $id]);
-
         $this->validateExistence($request, 'quizzes');
 
         $result = $this->offlineQuizService->deleteOfflineQuiz($request->id);
@@ -88,9 +80,6 @@ class OfflineQuizzesController extends Controller
 
     public function deleteSelected(Request $request)
     {
-        $ids = OfflineQuiz::whereIn('uuid', $request->ids ?? [])->pluck('id')->toArray();
-        !empty($ids) ? $request->merge(['ids' => $ids]) : null;
-
         $this->validateExistence($request, 'quizzes');
 
         $result = $this->offlineQuizService->deleteSelectedOfflineQuizzes($request->ids);
@@ -98,17 +87,13 @@ class OfflineQuizzesController extends Controller
         return $this->conrtollerJsonResponse($result);
     }
 
-    public function scores(Request $request, $uuid)
+    public function scores(Request $request, $id)
     {
-        $offlineQuiz = OfflineQuiz::uuid($uuid)
-            ->where('teacher_id', $this->teacherId)
-            ->with(['grade:id,name'])
-            ->firstOrFail();
+        $offlineQuiz = OfflineQuiz::with(['grade:id,name', 'teacher:id,name'])->findOrFail($id);
 
         if ($request->ajax()) {
             $studentsQuery = Student::query()
-                ->select('id', 'uuid', 'name', 'phone', 'profile_pic')
-                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->select('id', 'name', 'phone', 'profile_pic')
                 ->where('grade_id', $offlineQuiz->grade_id)
                 ->with(['offlineQuizResults' => fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id)]);
 
@@ -119,35 +104,29 @@ class OfflineQuizzesController extends Controller
             return $this->offlineQuizService->getOfflineQuizScoresForDatatable($studentsQuery, $offlineQuiz);
         }
 
-        return view('teacher.activities.offline-quizzes.scores', compact('offlineQuiz'));
+        return view('admin.activities.offline-quizzes.scores', compact('offlineQuiz'));
     }
 
-    public function insertScores(OfflineQuizzesScoresRequest $request, $uuid)
+    public function insertScores(OfflineQuizzesScoresRequest $request, $id)
     {
-        $offlineQuiz = OfflineQuiz::uuid($uuid)
-            ->where('teacher_id', $this->teacherId)
-            ->firstOrFail();
+        $offlineQuiz = OfflineQuiz::findOrFail($id);
 
         $result = $this->offlineQuizService->storeScores($offlineQuiz->id, $offlineQuiz->score, $request->validated());
 
         return $this->conrtollerJsonResponse($result);
     }
 
-    public function resetStudentOfflineQuiz(Request $request, $uuid)
+    public function resetStudentOfflineQuiz(Request $request, $id)
     {
-        $studentId = Student::uuid($request->id)->value('id');
-
-        $result = $this->offlineQuizService->resetStudentOfflineQuiz($uuid, $studentId);
+        $result = $this->offlineQuizService->resetStudentOfflineQuiz($id, $request->id);
 
         return $this->conrtollerJsonResponse($result);
     }
 
-    public function reports(Request $request, $uuid)
+    public function reports(Request $request, $id)
     {
         $offlineQuiz = OfflineQuiz::withCount(['groups', 'offlineQuizResults'])
-            ->uuid($uuid)
-            ->where('teacher_id', $this->teacherId)
-            ->firstOrFail();
+            ->findOrFail($id);
 
         $groupIds = $offlineQuiz->groups()->pluck('groups.id');
 
@@ -156,7 +135,6 @@ class OfflineQuizzesController extends Controller
             ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
                 ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
-            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->count();
 
         // Students who actually took the quiz
@@ -232,7 +210,7 @@ class OfflineQuizzesController extends Controller
         // Top 10 students by quiz score
         $topStudents = Cache::remember("top_students_offline_{$offlineQuiz->id}", 600, function () use ($offlineQuiz) {
             return OfflineQuizResult::where('offline_quiz_id', $offlineQuiz->id)
-                ->with(['student' => fn($q) => $q->select('id', 'uuid', 'name', 'profile_pic', 'phone')])
+                ->with(['student' => fn($q) => $q->select('id', 'name', 'profile_pic', 'phone')])
                 ->select('student_id', 'total_score')
                 ->orderBy('total_score', 'desc')
                 ->take(10)
@@ -240,7 +218,6 @@ class OfflineQuizzesController extends Controller
                 ->map(function ($item) {
                     return [
                         'id' => $item->student->id ?? 'N/A',
-                        'uuid' => $item->student->uuid ?? 'N/A',
                         'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
                         'profile_pic' => $item->student->profile_pic,
@@ -264,7 +241,7 @@ class OfflineQuizzesController extends Controller
             'topStudents' => $topStudents
         ];
 
-        return view('teacher.activities.offline-quizzes.reports', compact('offlineQuiz', 'data'));
+        return view('admin.activities.offline-quizzes.reports', compact('offlineQuiz', 'data'));
     }
 
     protected function avgScore($offlineQuizId)
@@ -283,13 +260,11 @@ class OfflineQuizzesController extends Controller
         });
     }
 
-    public function studentsTakenOfflineQuiz(Request $request, $uuid)
+    public function studentsTakenOfflineQuiz(Request $request, $id)
     {
         $offlineQuiz = OfflineQuiz::with('groups')
-            ->where('teacher_id', $this->teacherId)
-            ->select('id', 'uuid', 'conducted_at')
-            ->uuid($uuid)
-            ->firstOrFail();
+            ->select('id', 'conducted_at')
+            ->findOrFail($id);
 
         $groupIds = $offlineQuiz->groups()->pluck('groups.id');
 
@@ -298,9 +273,8 @@ class OfflineQuizzesController extends Controller
             ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
                 ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
-            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereHas('offlineQuizResults', fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id))
-            ->select('id', 'uuid', 'name', 'phone', 'profile_pic')
+            ->select('id', 'name', 'phone', 'profile_pic')
             ->addSelect([
                 'quiz_score' => OfflineQuizResult::select('total_score')
                     ->whereColumn('student_id', 'students.id')
@@ -315,7 +289,7 @@ class OfflineQuizzesController extends Controller
         if ($request->ajax()) {
             return datatables()->eloquent($studentsTakenQuery)
                 ->addColumn('rank', fn($row) => $this->getRank($offlineQuiz->id, $row->quiz_score))
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->addColumn('score', fn($row) => $row->quiz_score !== null ? number_format($row->quiz_score, 2) : 'N/A')
                 ->addColumn('percentage', fn($row) => $row->quiz_percentage !== null ? number_format($row->quiz_percentage, 2) : 'N/A')
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
@@ -325,12 +299,10 @@ class OfflineQuizzesController extends Controller
 
     }
 
-    public function studentsNotTakenOfflineQuiz(Request $request, $uuid)
+    public function studentsNotTakenOfflineQuiz(Request $request, $id)
     {
         $offlineQuiz = OfflineQuiz::select('id', 'grade_id', 'conducted_at')
-            ->where('teacher_id', $this->teacherId)
-            ->uuid($uuid)
-            ->firstOrFail();
+            ->findOrFail($id);
 
         $groupIds = $offlineQuiz->groups()->pluck('groups.id');
 
@@ -339,13 +311,12 @@ class OfflineQuizzesController extends Controller
             ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
                 ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
                 ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
-            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereDoesntHave('offlineQuizResults', fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id))
             ->select('id', 'name', 'phone', 'profile_pic');
 
         if ($request->ajax()) {
             return datatables()->eloquent($studentsNotTakenQuery)
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
                 ->rawColumns(['details'])
                 ->make(true);

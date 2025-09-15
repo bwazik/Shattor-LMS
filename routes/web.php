@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\Activities\ZoomsController;
 use App\Http\Controllers\Admin\Activities\QuizzesController;
 use App\Http\Controllers\Admin\Activities\QuestionsController;
 use App\Http\Controllers\Admin\Activities\AnswersController;
+use App\Http\Controllers\Admin\Activities\OfflineQuizzesController;
 use App\Http\Controllers\Admin\Activities\AssignmentsController;
 
 use App\Http\Controllers\Admin\Finance\FeesController;
@@ -211,6 +212,7 @@ Route::group(
                         Route::get('assignments', 'assignments')->name('assignments');
                         Route::get('fees', 'fees')->name('fees');
                         Route::get('security', 'security')->name('security');
+                        Route::post('security/devices/delete-device', 'deleteDevice')->name('deleteDevice');
                     });
                 });
             });
@@ -373,13 +375,13 @@ Route::group(
                     Route::post('update', 'update')->name('update');
                     Route::post('delete', 'delete')->name('delete');
                     Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
-                    Route::post('{uuid}/reset', 'resetStudentOfflineQuiz')->name('resetStudentOfflineQuiz');
-                    Route::post('{uuid}/scores/insert', 'insertScores')->name('scores.insert');
+                    Route::post('{id}/reset', 'resetStudentOfflineQuiz')->name('resetStudentOfflineQuiz');
+                    Route::post('{id}/scores/insert', 'insertScores')->name('scores.insert');
                 });
-                Route::get('{uuid}/scores', 'scores')->name('scores');
-                Route::get('{uuid}/reports', 'reports')->name('reports');
-                Route::get('{uuid}/students-taken-offline-quiz', 'studentsTakenOfflineQuiz')->name('studentsTakenOfflineQuiz');
-                Route::get('{uuid}/students-not-taken-offline-quiz', 'studentsNotTakenOfflineQuiz')->name('studentsNotTakenOfflineQuiz');
+                Route::get('{id}/scores', 'scores')->name('scores');
+                Route::get('{id}/reports', 'reports')->name('reports');
+                Route::get('{id}/students-taken-offline-quiz', 'studentsTakenOfflineQuiz')->name('studentsTakenOfflineQuiz');
+                Route::get('{id}/students-not-taken-offline-quiz', 'studentsNotTakenOfflineQuiz')->name('studentsNotTakenOfflineQuiz');
             });
 
             # Assignments

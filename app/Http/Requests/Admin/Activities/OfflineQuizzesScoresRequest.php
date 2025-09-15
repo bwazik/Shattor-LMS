@@ -11,10 +11,17 @@ class OfflineQuizzesScoresRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $uuid = $this->route('uuid');
+        if (isTeacher()) {
+            $uuid = $this->route('uuid');
 
-        $offlineQuiz = OfflineQuiz::uuid($uuid)->select('score')->first();
-        $this->maxScore = $offlineQuiz?->score;
+            $offlineQuiz = OfflineQuiz::uuid($uuid)->select('score')->first();
+            $this->maxScore = $offlineQuiz?->score;
+        } else {
+            $id = $this->route('id');
+
+            $offlineQuiz = OfflineQuiz::findOrFail($id, ['score']);
+            $this->maxScore = $offlineQuiz->score;
+        }
     }
 
     public function authorize()

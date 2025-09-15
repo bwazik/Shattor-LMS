@@ -14,15 +14,18 @@ use Illuminate\Http\Request;
 use App\Models\StudentResult;
 use App\Services\SessionService;
 use App\Traits\ValidatesExistence;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\AssignmentSubmission;
 use App\Traits\ServiceResponseTrait;
 use App\Http\Requests\ProfilePicRequest;
+use App\Traits\DatabaseTransactionTrait;
 use App\Services\Admin\FileUploadService;
 
 class StudentsProfileController extends Controller
 {
-    use ValidatesExistence, ServiceResponseTrait;
+    use ValidatesExistence, ServiceResponseTrait, DatabaseTransactionTrait;
 
     protected $profilePicService;
     protected $sessionService;
@@ -72,10 +75,10 @@ class StudentsProfileController extends Controller
     {
         // Attendance Rate
         $lessonsQuery = Lesson::whereHas('group.students', function ($query) use ($student) {
-                $query->where('students.id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
-            })
+            $query->where('students.id', $student->id)
+                ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+                ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
+        })
             ->where('lessons.date', '<=', now()->toDateString());
         $totalLessons = $lessonsQuery->count();
         $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->count();
@@ -185,10 +188,10 @@ class StudentsProfileController extends Controller
     private function getAttendanceStats($student)
     {
         $lessonsQuery = Lesson::whereHas('group.students', function ($query) use ($student) {
-                $query->where('students.id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
-            })
+            $query->where('students.id', $student->id)
+                ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+                ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
+        })
             ->where('lessons.date', '<=', now()->toDateString());
 
         $totalLessons = $lessonsQuery->count();
@@ -512,5 +515,75 @@ class StudentsProfileController extends Controller
         $devices = $this->sessionService->getUserDevices('student', $student->id);
 
         return view('admin.users.students.profile.security', compact('student', 'sessions', 'devices'));
+    }
+
+    public function deleteDevice(Request $request, $id)
+    {
+        $student = $this->getStudent($id);
+
+        $result = $this->deleteDeviceResult($request->id, $student->id);
+
+        return $this->conrtollerJsonResponse($result, "user_devices_student_{$student->id}");
+    }
+
+    private function deleteDeviceResult($deviceId, $userId): array
+    {
+        return $this->executeTransaction(function () use ($deviceId, $userId) {
+            $device = DB::table('user_devices')
+                ->where('id', $deviceId)
+                ->where('user_id', $userId)
+                ->where('guard', 'student')
+                ->first();
+
+            if (!$device) {
+                throw new \Exception(trans('toasts.ownershipError'));
+            }
+
+            $deleted = DB::table('user_devices')
+                ->where('id', $deviceId)
+                ->where('user_id', $userId)
+                ->where('guard', 'student')
+                ->delete();
+
+            if ($deleted) {
+                $this->invalidateDeviceSessionsByDeviceId($userId, $device->device_id);
+
+                Log::info('Device deleted by device_id', [
+                    'student_id' => $userId,
+                    'device_cookie_id' => $device->device_id,
+                    'deleted_by' => auth()->id(),
+                ]);
+            }
+
+            return $this->successResponse(trans('main.deleted', ['item' => trans('account.device')]));
+        }, trans('toasts.ownershipError'));
+    }
+
+    private function invalidateDeviceSessionsByDeviceId($userId, $deviceCookieId)
+    {
+        $sessions = DB::table('sessions')->where('user_id', $userId)->get();
+
+        foreach ($sessions as $session) {
+            try {
+                $decodedPayload = unserialize(base64_decode($session->payload));
+                $sessionDeviceId = $decodedPayload['device_id'] ?? null;
+
+                // If this session belongs to the deleted device, remove it
+                if ($sessionDeviceId === $deviceCookieId) {
+                    DB::table('sessions')->where('id', $session->id)->delete();
+
+                    Log::info('Session invalidated for deleted device', [
+                        'session_id' => $session->id,
+                        'device_cookie_id' => $deviceCookieId,
+                        'user_id' => $userId,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to decode session for device cleanup', [
+                    'session_id' => $session->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 }
