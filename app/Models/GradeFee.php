@@ -24,6 +24,8 @@ class GradeFee extends Model
         'uuid',
         'teacher_id',
         'grade_id',
+        'specialization', // 1- scientific , 2- literary
+        'applies_to_all_specializations',
         'amount',
         'month', // YYYY-MM format for specific month, null for default
     ];

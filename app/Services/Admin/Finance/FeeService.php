@@ -64,6 +64,7 @@ class FeeService
                 'data-amount="' . $row->amount . '" ' .
                 'data-teacher_id="' . $row->teacher_id . '" ' .
                 'data-grade_id="' . $row->grade_id . '" ' .
+                'data-specialization="' . $row->specialization . '" ' .
                 'data-frequency="' . $row->frequency . '" ' . '">' .
                 '<i class="ri-edit-box-line ri-20px"></i>' .
             '</button>';

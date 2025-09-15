@@ -167,7 +167,7 @@ class GroupsController extends Controller
             ->firstOrFail();
 
         $studentsQuery = Student::query()->with(['grade:id,name', 'parent:id,uuid,name'])
-            ->select('id', 'uuid', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'parent_id', 'is_active', 'profile_pic')
+            ->select('id', 'uuid', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'specialization', 'parent_id', 'is_active', 'profile_pic')
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereHas('groups', fn($query) => $query->where('group_id', $group->id));
 

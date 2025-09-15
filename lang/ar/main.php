@@ -194,6 +194,10 @@ return [
     'accept' => 'قبول',
     'reject' => 'رفض',
     'joined' => 'انضم',
+    'specialization' => 'الشعبة',
+    'scientific' => 'علمي',
+    'literary' => 'أدبي',
+    'applies_to_all_specializations' => 'تطبيق نفس المصاريف علي علمي وأدبي',
 
     # Modals
     'items' => 'عدد العناصر',

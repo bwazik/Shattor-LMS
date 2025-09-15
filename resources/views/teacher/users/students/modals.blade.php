@@ -12,7 +12,8 @@
         <x-select-input context="modal" name="gender" label="{{ trans('main.gender') }}" :options="[1 => trans('main.male'), 2 => trans('main.female')]" required/>
         <x-select-input context="modal" name="grade_id" label="{{ trans('main.grade') }}" :options="$grades"  required/>
         <x-select-input context="modal" name="parent_id" label="{{ trans('main.parent') }}" :options="$parents"/>
-        <x-select-input divClasses="col-12" name="groups" label="{{ trans('main.groups') }}" multiple required/>
+        <x-select-input context="modal" name="groups" label="{{ trans('main.groups') }}" multiple required/>
+        <x-select-input context="modal" name="specialization" label="{{ trans('main.specialization') }}" :options="[1 => trans('main.scientific'), 2 => trans('main.literary')]" required/>
     </div>
 </x-modal>
 <!-- Edit Modal -->
@@ -31,6 +32,7 @@
         <x-select-input context="modal" name="parent_id" label="{{ trans('main.parent') }}" :options="$parents"/>
         <x-select-input context="modal" name="groups" label="{{ trans('main.groups') }}" :options="$groups" multiple/>
         <x-select-input context="modal" name="is_active" label="{{ trans('main.status') }}" :options="[1 => trans('main.active'), 0 => trans('main.inactive')]" required/>
+        <x-select-input divClasses="col-12" name="specialization" label="{{ trans('main.specialization') }}" :options="[1 => trans('main.scientific'), 2 => trans('main.literary')]" required/>
     </div>
 </x-modal>
 <!-- Delete Modal -->

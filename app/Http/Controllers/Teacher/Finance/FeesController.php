@@ -7,7 +7,6 @@ use App\Models\Fee;
 use App\Models\Grade;
 use App\Models\Invoice;
 use App\Models\Student;
-use App\Models\StudentFee;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
@@ -31,7 +30,7 @@ class FeesController extends Controller
     public function index(Request $request)
     {
         $feesQuery = Fee::query()->with(['grade:id,name'])
-            ->select('id', 'uuid', 'name', 'amount', 'grade_id', 'frequency')
+            ->select('id', 'uuid', 'name', 'amount', 'grade_id', 'specialization', 'frequency')
             ->where('teacher_id', $this->teacherId);
 
         if ($request->ajax()) {
@@ -100,12 +99,15 @@ class FeesController extends Controller
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
             ->where('fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('student', fn($query) => $query
+                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization)))
             ->select('id', 'uuid', 'type', 'student_id', 'student_fee_id', 'fee_id', 'amount', 'date', 'due_date', 'status');
 
         // Total students eligible for the fee
         $totalStudents = Student::where('grade_id', $fee->grade_id)
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
             ->distinct('id')
             ->count('id');
 
@@ -139,7 +141,10 @@ class FeesController extends Controller
             ->whereNull('invoices.teacher_id')
             ->whereNull('invoices.subscription_id')
             ->where('invoices.fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('student', fn($query) => $query
+                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            )
             ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
             ->whereBetween('transactions.date', [$dateRange->first(), $dateRange->last() . ' 23:59:59'])
             ->selectRaw('DATE(transactions.date) as date, COUNT(DISTINCT invoices.student_id) as count')
@@ -161,7 +166,10 @@ class FeesController extends Controller
             ->whereNull('invoices.subscription_id')
             ->where('invoices.fee_id', $fee->id)
             ->where('status', 2)
-            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('student', fn($query) => $query
+                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            )
             ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
             ->join('transactions', 'invoices.id', '=', 'transactions.invoice_id')
             ->groupBy('transactions.payment_method')
@@ -201,7 +209,10 @@ class FeesController extends Controller
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
             ->where('fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('student', fn($query) => $query
+                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            )
             ->with(['student', 'transactions' => fn($query) => $query->where('type', 2)]);
 
         if ($request->ajax()) {
@@ -231,7 +242,10 @@ class FeesController extends Controller
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
             ->where('fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
+            ->whereHas('student', fn($query) => $query
+                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            )
             ->with(['student']);
 
         if ($request->ajax()) {
@@ -259,6 +273,7 @@ class FeesController extends Controller
         $studentsQuery = Student::query()
             ->where('grade_id', $fee->grade_id)
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
             ->whereDoesntHave('invoices', fn($query) => $query->where('fee_id', $fee->id))
             ->select('id', 'uuid', 'name', 'email', 'grade_id', 'profile_pic', 'created_at');
 

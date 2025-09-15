@@ -46,7 +46,7 @@ class StudentsProfileController extends Controller
                 'attendances' => fn($query) => $query->where('teacher_id', $this->teacherId)->select('student_id', 'status', 'teacher_id'),
                 'teachers:id'
             ])
-            ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.grade_id', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
+            ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.grade_id', 'students.specialization', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
             ->whereHas('teachers', fn($query) => $query->where('teachers.id', $this->teacherId))
             ->uuid($uuid)
             ->firstOrFail();

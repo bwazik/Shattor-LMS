@@ -63,6 +63,7 @@ class AccountService
                     'email' => $request['email'],
                     'birth_date' => $request['birth_date'],
                     'gender' => $request['gender'],
+                    'specialization' => $request['specialization'],
                 ]);
 
                 $this->WhatsappService->sendMessage('01098617164', 'updated_personal_info', [

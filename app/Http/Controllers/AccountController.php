@@ -120,7 +120,7 @@ class AccountController extends Controller
             } elseif ($this->guard === 'student') {
                 $user = $model::query()
                     ->with(['grade', 'parent', 'teachers', 'groups.teacher'])
-                    ->select('id', 'username', 'name', 'phone', 'email', 'gender', 'birth_date', 'grade_id', 'parent_id')
+                    ->select('id', 'username', 'name', 'phone', 'email', 'gender', 'birth_date', 'grade_id', 'specialization', 'parent_id')
                     ->findOrFail($this->userId);
 
                 $groupIds = $user->groups->pluck('uuid')->toArray();
@@ -246,9 +246,9 @@ class AccountController extends Controller
                 $query->whereBetween('month', ["$startYear-08", "$endYear-07"])
                     ->orWhereNull('month');
             })
-            ->select('grade_id', 'amount', 'month')
+            ->select('grade_id', 'specialization', 'applies_to_all_specializations', 'amount', 'month')
             ->get()
-            ->groupBy('month');
+            ->groupBy(['month', 'grade_id']);
 
         $months = collect();
         for ($i = 0; $i < 12; $i++) {
@@ -261,8 +261,12 @@ class AccountController extends Controller
         }
 
         $year = $startYear;
+        $specializations = [
+            1 => trans('main.scientific'),
+            2 => trans('main.literary'),
+        ];
 
-        return view("{$this->mapping['view_prefix']}.fees", compact('grades', 'gradeFees', 'months', 'year'));
+        return view("{$this->mapping['view_prefix']}.fees", compact('grades', 'gradeFees', 'months', 'year', 'specializations'));
     }
 
     public function updateFeesPricing(Request $request)
@@ -272,6 +276,8 @@ class AccountController extends Controller
             'fees' => ['required', 'array'],
             'fees.*.grade_id' => ['required', 'integer', 'exists:grades,id'],
             'fees.*.amount' => ['required', 'numeric', 'min:0'],
+            'fees.*.specialization' => ['nullable', 'integer', 'in:1,2'],
+            'fees.*.applies_to_all_specializations' => ['nullable', 'boolean'],
         ]);
 
         return $this->executeTransaction(function () use ($validated) {
@@ -282,21 +288,59 @@ class AccountController extends Controller
                 ->pluck('id')
                 ->toArray();
 
-            foreach ($validated['fees'] as $fee) {
-                if (!in_array($fee['grade_id'], $validGradeIds)) {
+            $feesByGrade = collect($validated['fees'])->groupBy('grade_id');
+
+            foreach ($feesByGrade as $gradeId => $gradeFees) {
+                if (!in_array($gradeId, $validGradeIds)) {
                     return $this->errorResponse(trans('toasts.ownershipError'));
                 }
 
-                GradeFee::updateOrCreate(
-                    [
-                        'teacher_id' => $teacherId,
-                        'grade_id' => $fee['grade_id'],
-                        'month' => $month,
-                    ],
-                    [
-                        'amount' => $fee['amount'],
-                    ]
-                );
+                GradeFee::where('teacher_id', $teacherId)
+                    ->where('grade_id', $gradeId)
+                    ->where('month', $month)
+                    ->delete();
+
+                $hasAppliedToAll = collect($gradeFees)->contains(function ($fee) {
+                    return isset($fee['applies_to_all_specializations']) && $fee['applies_to_all_specializations'];
+                });
+
+                if ($hasAppliedToAll) {
+                    $appliedToAllFee = collect($gradeFees)->first(function ($fee) {
+                        return isset($fee['applies_to_all_specializations']) && $fee['applies_to_all_specializations'];
+                    });
+
+                    if ($appliedToAllFee && $appliedToAllFee['amount'] > 0) {
+                        GradeFee::create([
+                            'teacher_id' => $teacherId,
+                            'grade_id' => $gradeId,
+                            'month' => $month,
+                            'specialization' => null,
+                            'applies_to_all_specializations' => true,
+                            'amount' => $appliedToAllFee['amount'],
+                        ]);
+                    }
+                } else {
+                    foreach ($gradeFees as $fee) {
+                        if (!$fee['amount'] || $fee['amount'] <= 0) {
+                            continue;
+                        }
+
+                        $specialization = isset($fee['specialization']) ? (int) $fee['specialization'] : null;
+
+                        if (!$specialization) {
+                            continue;
+                        }
+
+                        GradeFee::create([
+                            'teacher_id' => $teacherId,
+                            'grade_id' => $gradeId,
+                            'month' => $month,
+                            'specialization' => $specialization,
+                            'applies_to_all_specializations' => false,
+                            'amount' => $fee['amount'],
+                        ]);
+                    }
+                }
             }
 
             return $this->successResponse(trans('main.edited', ['item' => trans('admin/fees.fees')]));

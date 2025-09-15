@@ -33,7 +33,8 @@
             <x-basic-input context="modal" type="email" name="email" label="{{ trans('main.email') }}" placeholder="{{ trans('admin/students.placeholders.email') }}"/>
             <x-basic-input context="modal" type="text" name="birth_date" classes="flatpickr-date" label="{{ trans('main.birth_date') }}" placeholder="YYYY-MM-DD" value="{{ now()->format('Y-m-d') }}"/>
             <x-select-input context="modal" name="gender" label="{{ trans('main.gender') }}" :options="[1 => trans('main.male'), 2 => trans('main.female')]" required/>
-            <x-select-input divClasses="col-12" name="parent_id" label="{{ trans('main.parent') }}" :options="$parents"/>
+            <x-select-input context="modal" name="parent_id" label="{{ trans('main.parent') }}" :options="$parents"/>
+            <x-select-input context="modal" name="specialization" label="{{ trans('main.specialization') }}" :options="[1 => trans('main.scientific'), 2 => trans('main.literary')]" required/>
             <x-select-input divClasses="d-none" name="grade_id" label="{{ trans('main.grade') }}" :options="$grades" required/>
             <x-select-input divClasses="d-none" name="teachers" label="{{ trans('main.teachers') }}" :options="$teachers" multiple required/>
             <x-select-input divClasses="d-none" name="groups" label="{{ trans('main.groups') }}" :options="$groups" multiple required/>
@@ -53,6 +54,7 @@
             <x-select-input context="modal" name="gender" label="{{ trans('main.gender') }}" :options="[1 => trans('main.male'), 2 => trans('main.female')]" required/>
             <x-select-input context="modal" name="parent_id" label="{{ trans('main.parent') }}" :options="$parents"/>
             <x-select-input context="modal" name="is_active" label="{{ trans('main.status') }}" :options="[1 => trans('main.active'), 0 => trans('main.inactive')]" required/>
+            <x-select-input divClasses="col-12" name="specialization" label="{{ trans('main.specialization') }}" :options="[1 => trans('main.scientific'), 2 => trans('main.literary')]" required/>
             <x-select-input divClasses="d-none" name="grade_id" label="{{ trans('main.grade') }}" :options="$grades" required/>
             <x-select-input divClasses="d-none" name="teachers" label="{{ trans('main.teachers') }}" :options="$teachers" multiple required/>
             <x-select-input divClasses="d-none" name="groups" label="{{ trans('main.groups') }}" :options="$groups" multiple required/>
@@ -106,6 +108,7 @@
                 gender: () => '',
                 grade_id: () => '{{ $group->grade->id }}',
                 parent_id: () => '',
+                specialization: () => '',
                 teachers: () => '{{ $group->teacher->id }}',
                 groups: () => '{{ $group->id }}',
             },
@@ -126,6 +129,7 @@
                 gender: button => button.data('gender'),
                 grade_id: button => button.data('grade_id'),
                 parent_id: button => button.data('parent_id'),
+                specialization: button => button.data('specialization'),
                 teachers: button => button.data('teachers'),
                 groups: button => button.data('groups'),
                 is_active: button => button.data('is_active'),
@@ -150,7 +154,7 @@
             }
         });
 
-        let fields = ['name_ar', 'name_en', 'username', 'password', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'teachers', 'groups'];
+        let fields = ['name_ar', 'name_en', 'username', 'password', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'specialization', 'teachers', 'groups'];
         handleFormSubmit('#add-form', fields, '#add-modal', 'modal', '#datatable');
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'modal', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')

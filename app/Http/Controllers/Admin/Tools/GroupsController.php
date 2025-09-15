@@ -140,7 +140,7 @@ class GroupsController extends Controller
             ->findOrFail($groupId);
 
         $studentsQuery = Student::query()->with(['grade', 'parent'])
-            ->select('id', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'parent_id', 'is_active', 'profile_pic')
+            ->select('id', 'username', 'name', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'specialization', 'parent_id', 'is_active', 'profile_pic')
             ->whereHas('groups', function ($query) use ($groupId) {
                 $query->where('group_id', $groupId);
             });

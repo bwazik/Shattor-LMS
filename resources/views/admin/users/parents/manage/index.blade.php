@@ -45,8 +45,9 @@
             buttonId: '#add-button',
             modalId: '#add-modal',
             fields: {
+                name_en: () => 'default',
                 password: () => generateStrongPassword(12),
-                gender: () => '',
+                gender: () => 1,
                 students: () => '',
             }
         });

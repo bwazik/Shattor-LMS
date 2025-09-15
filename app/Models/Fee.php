@@ -33,6 +33,7 @@ class Fee extends Model
         'amount',
         'teacher_id',
         'grade_id',
+        'specialization', // 1- scientific , 2- literary
         'frequency',
     ];
 

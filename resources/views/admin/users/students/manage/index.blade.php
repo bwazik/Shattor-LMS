@@ -49,12 +49,14 @@
             buttonId: '#add-button',
             modalId: '#add-modal',
             fields: {
+                name_en: () => 'default',
                 password: () => generateStrongPassword(12),
-                gender: () => '',
+                gender: () => 1,
                 grade_id: () => '',
                 parent_id: () => '',
                 teachers: () => 1,
                 groups: () => '',
+                specialization: () => 1,
             },
         });
         // Setup edit modal
@@ -76,6 +78,7 @@
                 teachers: button => button.data('teachers'),
                 groups: button => button.data('groups'),
                 is_active: button => button.data('is_active'),
+                specialization: button => button.data('specialization'),
             }
         });
         // Setup delete modal
@@ -97,7 +100,7 @@
             }
         });
 
-        let fields = ['name_ar', 'name_en', 'username', 'password', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'teachers', 'groups'];
+        let fields = ['name_ar', 'name_en', 'username', 'password', 'phone', 'email', 'birth_date', 'gender', 'grade_id', 'teachers', 'groups', 'specialization'];
         handleFormSubmit('#add-form', fields, '#add-modal', 'modal', '#datatable');
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'modal', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')

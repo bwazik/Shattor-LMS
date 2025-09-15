@@ -36,6 +36,7 @@ class Student extends Authenticatable
         'gender',
         'birth_date',
         'grade_id',
+        'specialization', // 1- scientific , 2- literary
         'parent_id',
         'balance',
         'is_active',

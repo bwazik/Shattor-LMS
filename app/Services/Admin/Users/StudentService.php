@@ -96,7 +96,8 @@ class StudentService
                 'data-parent_id="' . $row->parent_id . '" ' .
                 'data-teachers="' . $teachers . '" ' .
                 'data-groups="' . $groups . '" ' .
-                'data-is_active="' . ($row->is_active ? '1' : '0') . '">' .
+                'data-is_active="' . ($row->is_active ? '1' : '0') . '" ' .
+                'data-specialization="' . $row->specialization . '">' .
                 '<i class="ri-edit-box-line ri-20px"></i>' .
             '</button>';
     }
@@ -163,6 +164,7 @@ class StudentService
                 'gender' => $request['gender'],
                 'grade_id' => $request['grade_id'],
                 'parent_id' => $request['parent_id'] ?? null,
+                'specialization' => $request['specialization']
             ]);
 
             $student->teachers()->attach($request['teachers']);
@@ -211,6 +213,7 @@ class StudentService
                 'grade_id' => $request['grade_id'],
                 'parent_id' => $request['parent_id'] ?? null,
                 'is_active' => $request['is_active'],
+                'specialization' => $request['specialization']
             ]);
 
             $student->teachers()->sync($request['teachers'] ?? []);

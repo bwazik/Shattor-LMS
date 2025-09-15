@@ -220,7 +220,7 @@ function generateRandomString(length = 8) {
 }
 
 function generateRandomUsername(suffix) {
-    $('#add-form #name_en').on('input', function() {
+    $('#add-form #name_ar').on('input', function() {
         const username = 'Shattor' + generateRandomString() + suffix;
         $('#add-form #username').val(username);
     });

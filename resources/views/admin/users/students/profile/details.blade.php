@@ -75,6 +75,11 @@
                     <span>{{ $student->grade->name }}</span>
                 </li>
                 <li class="d-flex align-items-center mb-4">
+                    <i class="ri-flask-line ri-24px"></i>
+                    <span class="fw-medium mx-2">{{ trans('main.specialization') }}:</span>
+                    <span>{{ trans('main.' . ($student->specialization == 1 ? 'scientific' : 'literary')) }}</span>
+                </li>
+                <li class="d-flex align-items-center mb-4">
                     <i class="ri-parent-line ri-24px"></i>
                     <span class="fw-medium mx-2">{{ trans('main.parent') }}:</span>
                     <span>

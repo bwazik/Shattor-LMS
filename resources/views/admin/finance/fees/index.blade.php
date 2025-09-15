@@ -47,6 +47,7 @@
             fields: {
                 teacher_id: () => '',
                 grade_id: () => '',
+                specialization: () => '',
                 frequency: () => '',
             }
         });
@@ -61,6 +62,7 @@
                 amount: button => button.data('amount'),
                 teacher_id: button => button.data('teacher_id'),
                 grade_id: button => button.data('grade_id'),
+                specialization: button => button.data('specialization'),
                 frequency: button => button.data('frequency'),
             }
         });
@@ -74,7 +76,7 @@
             }
         });
 
-        let fields = ['name_ar', 'name_en', 'amount', 'teacher_id', 'grade_id', 'frequency'];
+        let fields = ['name_ar', 'name_en', 'amount', 'teacher_id', 'grade_id', 'specialization', 'frequency'];
         handleFormSubmit('#add-form', fields, '#add-modal', 'offcanvas', '#datatable');
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'offcanvas', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')

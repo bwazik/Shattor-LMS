@@ -61,6 +61,8 @@
                             <x-basic-input context="modal" type="text" name="grade_id" label="{{ trans('main.grade') }}"
                                 placeholder="{{ $data['student']->grade->name }}"
                                 value="{{ $data['student']->grade->name }}" disabled />
+                            <x-select-input context="modal" name="specialization" label="{{ trans('main.specialization') }}"
+                                :options="[1 => trans('main.scientific'), 2 => trans('main.literary')]" value="{{ $data['student']->specialization }}" required />
                             <x-basic-input context="modal" type="number" name="phone" label="{{ trans('main.phone') }}"
                                 placeholder="{{ $data['student']->phone }}" value="{{ $data['student']->phone }}"
                                 disabled />
@@ -73,7 +75,7 @@
                                 :options="[1 => trans('main.male'), 2 => trans('main.female')]" value="{{ $data['student']->gender }}" required />
                             <x-select-input context="modal" name="teachers" label="{{ trans('main.teachers') }}"
                                 :options="$data['teachers']" multiple disabled />
-                            <x-select-input context="modal" name="groups" label="{{ trans('main.groups') }}"
+                            <x-select-input divClasses="col-12" name="groups" label="{{ trans('main.groups') }}"
                                 :options="$data['groups']" multiple disabled />
                         </div>
                         <div class="mt-6">
@@ -130,12 +132,14 @@
         const gender = '{{ $data['student']->gender }}';
         const teachers = '{{ $data['student']->teachers }}'.split(',');
         const groups = '{{ $data['student']->groups }}'.split(',');
-        let fields = ['name_en', 'username', 'email', 'birth_date', 'gender'];
+        const specialization = '{{ $data['student']->specialization }}';
+        let fields = ['name_en', 'username', 'email', 'birth_date', 'gender', 'specialization'];
 
         handleProfilePicSubmit('#update-profile-form', 2, allowedExtensions);
         initializeSelect2('edit-form', 'gender', gender);
         initializeSelect2('edit-form', 'teachers', teachers, true);
         initializeSelect2('edit-form', 'groups', groups, true);
+        initializeSelect2('edit-form', 'specialization', specialization);
         handleFormSubmit('#edit-form', fields);
     </script>
 @endsection

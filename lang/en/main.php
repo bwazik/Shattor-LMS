@@ -192,6 +192,10 @@ return [
     'accept' => 'Accept',
     'reject' => 'Reject',
     'joined' => 'Joined',
+    'specialization' => 'Specialization',
+    'scientific' => 'Scientific',
+    'literary' => 'Literary',
+    'applies_to_all_specializations' => 'Applies to all specializations',
 
     # Modals
     'items' => 'Items Count',

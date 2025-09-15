@@ -66,6 +66,7 @@ class FeeService
                 'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
                 'data-amount="' . $row->amount . '" ' .
                 'data-grade_id="' . $row->grade_id . '" ' .
+                'data-specialization="' . $row->specialization . '" ' .
                 'data-frequency="' . $row->frequency . '" ' . '">' .
                 '<i class="ri-edit-box-line ri-20px"></i>' .
             '</button>';
@@ -83,6 +84,7 @@ class FeeService
                 'amount' => $request['amount'],
                 'teacher_id' => $this->teacherId,
                 'grade_id' => $request['grade_id'],
+                'specialization' => $request['specialization'] ?? null,
                 'frequency' => $request['frequency'],
             ]);
 
@@ -103,6 +105,7 @@ class FeeService
                 'name' => ['en' => $request['name_en'], 'ar' => $request['name_ar']],
                 'amount' => $request['amount'],
                 'grade_id' => $request['grade_id'],
+                'specialization' => $request['specialization'] ?? null,
                 'frequency' => $request['frequency'],
             ]);
 

@@ -37,6 +37,7 @@ class PersonalDataRequest extends FormRequest
                 'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', Auth::user()->id)],
                 'birth_date' => 'nullable|date|date_format:Y-m-d',
                 'gender' => 'required|integer|in:1,2',
+                'specialization' => 'required|integer|in:1,2',
             ];
         }
         elseif(isParent())

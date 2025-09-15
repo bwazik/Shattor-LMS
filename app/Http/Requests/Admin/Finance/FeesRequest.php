@@ -18,6 +18,7 @@ class FeesRequest extends FormRequest
             'name_en' => 'required|min:3|max:100',
             'amount' => 'required|numeric|between:0,999999.99',
             'grade_id' => 'required|integer|exists:grades,id',
+            'specialization' => 'nullable|integer|in:1,2',
             'frequency' => 'required|integer|in:1,2,3', // 1: one-time, 2: monthly, 3: custom
         ];
 

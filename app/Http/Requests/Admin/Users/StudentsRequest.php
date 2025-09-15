@@ -29,6 +29,7 @@ class StudentsRequest extends FormRequest
             'gender' => 'required|integer|in:1,2',
             'grade_id' => 'required|integer|exists:grades,id',
             'is_active' => 'nullable|boolean',
+            'specialization' => 'required|integer|in:1,2',
         ];
 
         if (isAdmin()) {
