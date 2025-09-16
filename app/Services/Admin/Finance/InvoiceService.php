@@ -94,8 +94,8 @@ class InvoiceService
                         '<a href="javascript:;" class="dropdown-item" ' .
                             'id="archive-button" ' .
                             'data-id="' . $row->id . '" ' .
-                            'data-fee="' . $row->fee->name . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
+                            'data-fee="' . $row->fee->name ?? 'N/A' . '" ' .
+                            'data-student="' . $row->student->name ?? 'N/A' . '" ' .
                             'data-bs-target="#archive-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                             trans('main.archive') .
                         '</a>' .
@@ -105,8 +105,8 @@ class InvoiceService
                         '<a href="javascript:;" class="dropdown-item text-danger" ' .
                             'id="delete-button" ' .
                             'data-id="' . $row->id . '" ' .
-                            'data-fee="' . $row->fee->name . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
+                            'data-fee="' . $row->fee->name ?? 'N/A' . '" ' .
+                            'data-student="' . $row->student->name ?? 'N/A' . '" ' .
                             'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                             trans('main.delete').
                         '</a>' .
@@ -115,8 +115,8 @@ class InvoiceService
                         '<a href="javascript:;" class="dropdown-item text-danger" ' .
                             'id="cancel-button" ' .
                             'data-id="' . $row->id . '" ' .
-                            'data-fee="' . $row->fee->name . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
+                            'data-fee="' . $row->fee->name ?? 'N/A' . '" ' .
+                            'data-student="' . $row->student->name ?? 'N/A' . '" ' .
                             'data-bs-target="#cancel-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                             trans('main.cancel').
                         '</a>' .
@@ -160,8 +160,8 @@ class InvoiceService
                         '<a href="javascript:;" class="dropdown-item" ' .
                             'id="restore-button" ' .
                             'data-id="' . $row->id . '" ' .
-                            'data-fee="' . $row->fee->name . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
+                            'data-fee="' . $row->fee->name ?? 'N/A' . '" ' .
+                            'data-student="' . $row->student->name ?? 'N/A' . '" ' .
                             'data-bs-target="#restore-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                             trans('main.restore') .
                         '</a>' .
@@ -171,8 +171,8 @@ class InvoiceService
                         '<a href="javascript:;" class="dropdown-item text-danger" ' .
                             'id="delete-button" ' .
                             'data-id="' . $row->id . '" ' .
-                            'data-fee="' . $row->fee->name . '" ' .
-                            'data-student="' . $row->student->name . '" ' .
+                            'data-fee="' . $row->fee->name ?? 'N/A' . '" ' .
+                            'data-student="' . $row->student->name ?? 'N/A' . '" ' .
                             'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                             trans('main.delete') .
                         '</a>' .

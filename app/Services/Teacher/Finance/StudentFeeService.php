@@ -63,8 +63,8 @@ class StudentFeeService
                 '<button class="btn btn-sm btn-icon btn-text-danger rounded-pill text-body waves-effect waves-light me-1" ' .
                     'id="delete-button" ' .
                     'data-id="' . $row->uuid . '" ' .
-                    'data-fee="' . $row->fee->name . '" ' .
-                    'data-student="' . $row->student->name . '" ' .
+                    'data-fee="' . $row->fee->name ?? 'N/A' . '" ' .
+                    'data-student="' . $row->student->name ?? 'N/A' . '" ' .
                     'data-bs-target="#delete-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
                     '<i class="ri-delete-bin-7-line ri-20px text-danger"></i>' .
                 '</button>' .
