@@ -14,7 +14,7 @@ class StudentService
 {
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
 
-    protected $relationships = ['attendances', 'assignmentSubmissions'];
+    protected $relationships = [];
     protected $transModelKey = 'admin/students.students';
     protected $whatsappService;
 
