@@ -35,7 +35,7 @@ class InvoiceService
                 'status' => $row->status
             ]))
             ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'admin.students.profile.index', $row->student->id))
-            ->editColumn('fee_id', fn($row) => $row->fee_id ? $row->fee->name : '-')
+            ->editColumn('fee_id', fn($row) => formatRelation($row->fee_id, $row->fee, 'name'))
             ->editColumn('date', fn($row) => formatDate($row->date))
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
@@ -309,16 +309,18 @@ class InvoiceService
             if ($netPaid >= $invoice->amount) {
                 $invoice->update(['status' => 2]);
 
-                $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
-                    [
-                        'student_name' => $invoice->student->getTranslation('name', 'ar'),
-                        'fee_name' => $invoice->fee->name,
-                        'paid_amount' => formatCurrency($invoice->studentFee->amount) . ' ' . trans('main.currency'),
-                        'date' => now()->translatedFormat('l j F Y'),
-                        'time' => now()->translatedFormat('h:i A'),
-                        'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
-                    ], true
-                );
+                if ($invoice->student->parent) {
+                    $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
+                        [
+                            'student_name' => $invoice->student->getTranslation('name', 'ar'),
+                            'fee_name' => $invoice->fee->name,
+                            'paid_amount' => formatCurrency($invoice->studentFee->amount) . ' ' . trans('main.currency'),
+                            'date' => now()->translatedFormat('l j F Y'),
+                            'time' => now()->translatedFormat('h:i A'),
+                            'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
+                        ], false
+                    );
+                }
             }
 
             return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));
