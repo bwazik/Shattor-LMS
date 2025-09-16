@@ -93,7 +93,7 @@ class StudentsProfileController extends Controller
             ->whereIn('quiz_id', $quizzesQuery->pluck('id'))
             ->selectRaw('AVG(percentage) as avg_percentage, COUNT(*) as taken_count')
             ->first();
-        $avgQuizPercentage = $quizResults->taken_count > 0 ? number_format($quizResults->avg_percentage, 1) : '-';
+        $avgQuizPercentage = $quizResults->taken_count > 0 ? number_format($quizResults->avg_percentage, 1) : 'N/A';
 
         // Assignment Average Percentage
         $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
@@ -106,7 +106,7 @@ class StudentsProfileController extends Controller
             ->join('assignments', 'assignment_submissions.assignment_id', '=', 'assignments.id')
             ->selectRaw('AVG(assignment_submissions.score / assignments.score * 100) as avg_percentage, COUNT(*) as submitted_count')
             ->first();
-        $avgAssignmentPercentage = $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_percentage, 1) : '-';
+        $avgAssignmentPercentage = $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_percentage, 1) : 'N/A';
 
         // Total Paid Fees
         $feesQuery = Fee::where('grade_id', $student->grade_id);
@@ -167,8 +167,8 @@ class StudentsProfileController extends Controller
                     ->editColumn('title', fn($row) => $row->title)
                     ->addColumn('attendance_status', fn($row) => $this->formatAttendanceStatus($row->attendances->first()))
                     ->addColumn('makeup_status', fn($row) => $this->formatMakeupStatus($row, $student->id))
-                    ->addColumn('attendance_note', fn($row) => $row->attendances->first()->note ?? '-')
-                    ->addColumn('attendance_created_at', fn($row) => $row->attendances->first() ? isoFormat($row->attendances->first()->created_at) : '-')
+                    ->addColumn('attendance_note', fn($row) => $row->attendances->first()->note ?? 'N/A')
+                    ->addColumn('attendance_created_at', fn($row) => $row->attendances->first() ? isoFormat($row->attendances->first()->created_at) : 'N/A')
                     ->rawColumns(['attendance_status', 'makeup_status'])
                     ->make(true);
             }
@@ -281,11 +281,11 @@ class StudentsProfileController extends Controller
                 return datatables()->eloquent($quizzesQuery)
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
-                    ->addColumn('score', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->total_score, 2) : '-')
-                    ->addColumn('percentage', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->percentage, 2) : '-')
+                    ->addColumn('score', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->total_score, 2) : 'N/A')
+                    ->addColumn('percentage', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->percentage, 2) : 'N/A')
                     ->addColumn('status', fn($row) => $this->formatQuizStatus($row->studentResults->first() ? $row->studentResults->first()->status : null))
-                    ->addColumn('rank', fn($row) => $row->studentResults->first() ? $this->getRank('quiz', $row->id, $row->studentResults->first()->total_score) : '-')
-                    ->addColumn('link', fn($row) => $row->studentResults->first() ? $this->getReviewLink('quiz', $row->id, $student->id, $row->studentResults->first()) : '-')
+                    ->addColumn('rank', fn($row) => $row->studentResults->first() ? $this->getRank('quiz', $row->id, $row->studentResults->first()->total_score) : 'N/A')
+                    ->addColumn('link', fn($row) => $row->studentResults->first() ? $this->getReviewLink('quiz', $row->id, $student->id, $row->studentResults->first()) : 'N/A')
                     ->rawColumns(['status', 'link'])
                     ->make(true);
             }
@@ -308,12 +308,12 @@ class StudentsProfileController extends Controller
             ->first();
 
         return [
-            'avgScore' => $quizResults->taken_count > 0 ? number_format($quizResults->avg_score, 2) : '-',
-            'avgPercentage' => $quizResults->taken_count > 0 ? number_format($quizResults->avg_percentage, 1) : '-',
+            'avgScore' => $quizResults->taken_count > 0 ? number_format($quizResults->avg_score, 2) : 'N/A',
+            'avgPercentage' => $quizResults->taken_count > 0 ? number_format($quizResults->avg_percentage, 1) : 'N/A',
             'completionRate' => $totalQuizzes > 0 ? round(($quizResults->taken_count / $totalQuizzes) * 100, 1) : 0,
             'totalQuizzes' => $totalQuizzes,
             'passedQuizzes' => $quizResults->passed_count,
-            'topScore' => $quizResults->taken_count > 0 ? number_format($quizResults->top_score, 2) : '-',
+            'topScore' => $quizResults->taken_count > 0 ? number_format($quizResults->top_score, 2) : 'N/A',
         ];
     }
 
@@ -323,7 +323,7 @@ class StudentsProfileController extends Controller
             1 => '<span class="badge rounded-pill bg-label-warning text-capitalize">' . trans('admin/quizzes.inProgress') . '</span>',
             2 => '<span class="badge rounded-pill bg-label-success text-capitalize">' . trans('admin/quizzes.completed') . '</span>',
             3 => '<span class="badge rounded-pill bg-label-danger text-capitalize">' . trans('admin/quizzes.failed') . '</span>',
-            default => '<span class="badge rounded-pill bg-label-warning text-capitalized">-</span>',
+            default => '<span class="badge rounded-pill bg-label-warning text-capitalized">N/A</span>',
         };
     }
 
@@ -350,8 +350,8 @@ class StudentsProfileController extends Controller
                 return datatables()->eloquent($assignmentsQuery)
                     ->addIndexColumn()
                     ->editColumn('title', fn($row) => $row->title)
-                    ->addColumn('rank', fn($row) => $row->assignmentSubmissions->first() ? $this->getRank('assignment', $row->id, $row->assignmentSubmissions->first()->score) : '-')
-                    ->addColumn('score', fn($row) => $row->assignmentSubmissions->first() && !is_null($row->assignmentSubmissions->first()->score) ? number_format($row->assignmentSubmissions->first()->score, 2) : '-')
+                    ->addColumn('rank', fn($row) => $row->assignmentSubmissions->first() ? $this->getRank('assignment', $row->id, $row->assignmentSubmissions->first()->score) : 'N/A')
+                    ->addColumn('score', fn($row) => $row->assignmentSubmissions->first() && !is_null($row->assignmentSubmissions->first()->score) ? number_format($row->assignmentSubmissions->first()->score, 2) : 'N/A')
                     ->addColumn('status', fn($row) => $this->formatSubmissionStatus($row->assignmentSubmissions->first()))
                     ->addColumn('link', fn($row) => $this->getReviewLink('assignment', $row->id, $student->id, $row->assignmentSubmissions->first()))
                     ->rawColumns(['status', 'link'])
@@ -378,12 +378,12 @@ class StudentsProfileController extends Controller
             ->first();
 
         return [
-            'avgScore' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_score, 2) : '-',
-            'avgPercentage' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_percentage, 1) : '-',
+            'avgScore' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_score, 2) : 'N/A',
+            'avgPercentage' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_percentage, 1) : 'N/A',
             'submissionRate' => $totalAssignments > 0 ? round(($submissionResults->submitted_count / $totalAssignments) * 100, 1) : 0,
             'totalAssignments' => $totalAssignments,
             'submittedCount' => $submissionResults->submitted_count,
-            'topScore' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->top_score, 2) : '-',
+            'topScore' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->top_score, 2) : 'N/A',
         ];
     }
 
@@ -397,7 +397,7 @@ class StudentsProfileController extends Controller
     private function getReviewLink($model, $id, $studentId, $submission = null)
     {
         if (!$submission) {
-            return '<span class="badge rounded-pill bg-label-secondary text-capitalize">-</span>';
+            return '<span class="badge rounded-pill bg-label-secondary text-capitalize">N/A</span>';
         }
 
         $route = ($model === 'quiz') ? 'admin.quizzes.review' : 'admin.assignments.review';
@@ -458,10 +458,10 @@ class StudentsProfileController extends Controller
                 return datatables()->eloquent($feesQuery)
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
-                    ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : '-')
-                    ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? '-') : '-')
-                    ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : '-')
-                    ->addColumn('transactions', fn($row) => $row->invoices->isNotEmpty() ? formatSpanUrl(route('admin.invoices.transactions', $row->invoices->first()->id), trans('admin/transactions.transactions')) : '-')
+                    ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : 'N/A')
+                    ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? 'N/A') : 'N/A')
+                    ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : 'N/A')
+                    ->addColumn('transactions', fn($row) => $row->invoices->isNotEmpty() ? formatSpanUrl(route('admin.invoices.transactions', $row->invoices->first()->id), trans('admin/transactions.transactions')) : 'N/A')
                     ->rawColumns(['payment_method', 'transactions'])
                     ->make(true);
             }
@@ -494,7 +494,7 @@ class StudentsProfileController extends Controller
             ->sortDesc()
             ->keys()
             ->first();
-        $favoritePaymentMethod = $favoriteMethod ? $this->formatPaymentMethod($favoriteMethod) : '-';
+        $favoritePaymentMethod = $favoriteMethod ? $this->formatPaymentMethod($favoriteMethod) : 'N/A';
 
         return [
             'totalFees' => $totalFees,
