@@ -17,7 +17,7 @@ class UpdateLessonStatus extends Command
         $timezone = config('app.timezone', 'Africa/Cairo');
         $now = Carbon::now($timezone);
 
-        $lessons = Lesson::where('status', 1)
+        $lessons = Lesson::scheduled()
             ->select('id', 'date', 'time')
             ->get();
 

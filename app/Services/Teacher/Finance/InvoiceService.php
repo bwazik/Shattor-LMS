@@ -253,7 +253,7 @@ class InvoiceService
                         [
                             'student_name' => $invoice->student->getTranslation('name', 'ar'),
                             'fee_name' => $invoice->fee->name,
-                            'paid_amount' => formatCurrency($invoice->studentFee->amount) . ' ' . trans('main.currency'),
+                            'paid_amount' => formatCurrency((int) $invoice->studentFee->amount) . ' ' . trans('main.currency'),
                             'date' => now()->translatedFormat('l j F Y'),
                             'time' => now()->translatedFormat('h:i A'),
                             'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,

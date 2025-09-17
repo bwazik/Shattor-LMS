@@ -28,4 +28,8 @@ return [
     'invalidStudents' => 'الطلاب المختارين مش متسجلين في نفس الصف الدراسي أو المجموعة. اتأكد من اختيار الطلاب الصح.',
     'alreadyAttendedOriginalLesson' => 'الطالب :name مسجل بالفعل في مجموعته الأصلية.',
     'noStudentsSelected' => 'لم يتم اختيار أي طالب. الرجاء اختيار طالب واحد على الأقل.',
+    'noFeesDefined' => 'مفيش مصاريف متسجلة لشهر :month لـ :name.',
+    'noFeeInvoice' => 'لسه مفيش فاتورة طلعت لـ :fees لـ :name.',
+    'feesPaid' => ':name دفع :fees.',
+    'feesUnpaid' => ':name لسه مدفعش :fees.',
 ];

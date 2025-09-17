@@ -3,8 +3,10 @@
 namespace App\Services\Admin\Activities;
 
 use Carbon\Carbon;
+use App\Models\Fee;
 use App\Models\Group;
 use App\Models\Lesson;
+use App\Models\Invoice;
 use App\Models\Student;
 use App\Models\Attendance;
 use App\Models\Compensatory;
@@ -268,6 +270,51 @@ class AttendanceService
                 $status = 3; // Late
             }
 
+                        // Check fee payment status for the current month
+            $month = now()->format('m');
+            $year = now()->format('Y');
+            $monthNameAr = $this->getArabicMonthName($month);
+
+            $feesQuery = Fee::where('grade_id', $student->grade_id)
+                ->where('teacher_id', $teacherId)
+                ->where('frequency', 2) // Monthly
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->where(function ($query) use ($student) {
+                    $query->whereNull('specialization')
+                        ->orWhere('specialization', $student->specialization);
+                })
+                ->select('id', 'name');
+
+            $fees = $feesQuery->get();
+            $feeIds = $fees->pluck('id');
+            $feeNames = $fees->pluck('name')->implode(', ');
+
+            $invoices = Invoice::where('student_id', $student->id)
+                ->where('type', 2)
+                ->whereNull('teacher_id')
+                ->whereNull('subscription_id')
+                ->whereIn('fee_id', $feeIds)
+                ->get();
+
+            $feeStatusMessage = '';
+            if ($fees->isEmpty()) {
+                $feeStatusMessage = trans('admin/attendance.noFeesDefined', [
+                    'name' => $student->name,
+                    'month' => $monthNameAr,
+                ]);
+            } elseif ($invoices->isEmpty()) {
+                $feeStatusMessage = trans('admin/attendance.noFeeInvoice', [
+                    'name' => $student->name,
+                    'fees' => $feeNames ?: $monthNameAr,
+                ]);
+            } else {
+                $allPaid = $invoices->every(fn($invoice) => $invoice->status == 2);
+                $feeStatusMessage = $allPaid
+                    ? trans('admin/attendance.feesPaid', ['name' => $student->name, 'fees' => $feeNames])
+                    : trans('admin/attendance.feesUnpaid', ['name' => $student->name, 'fees' => $feeNames]);
+            }
+
             if ($compensatoryRequest) {
                 $originalGroupName = Group::findOrFail($compensatoryRequest->originalLesson->group_id)->name;
                 $originalLessonTitle = $compensatoryRequest->originalLesson->title;
@@ -306,7 +353,21 @@ class AttendanceService
                 ]
             );
 
-            return $this->successResponse(trans('admin/attendance.added', ['name' => $student->name]));
+            // Combine attendance and fee status messages
+            $attendanceMessage = trans('admin/attendance.added', ['name' => $student->name]);
+            $fullMessage = $attendanceMessage . '<br><br>' . $feeStatusMessage;
+
+            return $this->successResponse($fullMessage);
         }, trans('toasts.ownershipError'));
+    }
+
+    private function getArabicMonthName($month)
+    {
+        $months = [
+            '01' => 'يناير', '02' => 'فبراير', '03' => 'مارس', '04' => 'أبريل',
+            '05' => 'مايو', '06' => 'يونيو', '07' => 'يوليو', '08' => 'أغسطس',
+            '09' => 'سبتمبر', '10' => 'أكتوبر', '11' => 'نوفمبر', '12' => 'ديسمبر',
+        ];
+        return $months[$month] ?? 'غير معروف';
     }
 }

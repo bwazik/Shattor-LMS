@@ -28,4 +28,8 @@ return [
     'invalidStudents' => 'The selected students are not registered in the same grade or group. Please ensure you select the correct students.',
     'alreadyAttendedOriginalLesson' => 'Student :name is already registered in their original group.',
     'noStudentsSelected' => 'No students have been selected. Please select at least one student to proceed.',
+    'noFeesDefined' => 'No fees have been set for :month for :name.',
+    'noFeeInvoice' => 'No invoice has been issued yet for :fees for :name.',
+    'feesPaid' => ':name has already paid the :fees.',
+    'feesUnpaid' => ':name still has pending :fees.',
 ];
