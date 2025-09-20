@@ -24,9 +24,11 @@ class ZoomsRequest extends FormRequest
 
         if (isAdmin()) {
             $rules['teacher_id'] = 'required|integer|exists:teachers,id';
-            $rules['group_id'] = 'required|integer|exists:groups,id';
+            $rules['groups'] = 'required|array|min:1';
+            $rules['groups.*'] = 'required|integer|exists:groups,id';
         } else {
-            $rules['group_id'] = 'required|string|uuid|exists:groups,uuid';
+            $rules['groups'] = 'required|array|min:1';
+            $rules['groups.*'] = 'required|string|uuid|exists:groups,uuid';
         }
 
         return $rules;

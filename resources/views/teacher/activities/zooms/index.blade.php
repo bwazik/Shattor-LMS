@@ -15,7 +15,6 @@
         <th>#</th>
         <th>{{ trans('main.topic') }}</th>
         <th>{{ trans('main.grade') }}</th>
-        <th>{{ trans('main.group') }}</th>
         <th>{{ trans('main.duration') }}</th>
         <th>{{ trans('main.start_time') }}</th>
         <th>{{ trans('main.join_url') }}</th>
@@ -29,14 +28,13 @@
 
 @section('page-js')
     <script>
-        initializeDataTable('#datatable', "{{ route('teacher.zooms.index') }}", [2, 3, 4, 5, 6, 7, 8, 9, 10],
+        initializeDataTable('#datatable', "{{ route('teacher.zooms.index') }}", [2, 3, 4, 5, 6, 7, 8, 9],
             [
                 { data: "", orderable: false, searchable: false },
                 { data: 'selectbox', name: 'selectbox', orderable: false, searchable: false },
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'topic', name: 'topic' },
                 { data: 'grade_id', name: 'grade_id' },
-                { data: 'group_id', name: 'group_id' },
                 { data: 'duration', name: 'duration', orderable: false, searchable: false },
                 { data: 'start_time', name: 'start_time', orderable: false, searchable: false },
                 { data: 'join_url', name: 'join_url', orderable: false, searchable: false},
@@ -52,7 +50,7 @@
             modalId: '#add-modal',
             fields: {
                 grade_id: () => '',
-                group_id: () => '',
+                groups: () => '',
             }
         });
         // Setup edit modal
@@ -63,7 +61,7 @@
                 id: button => button.data('id'),
                 meeting_id: button => button.data('meeting_id'),
                 grade_id: button => button.data('grade_id'),
-                group_id: button => button.data('group_id'),
+                groups: button => button.data('groups'),
                 topic_ar: button => button.data('topic_ar'),
                 topic_en: button => button.data('topic_en'),
                 duration: button => button.data('duration'),
@@ -81,11 +79,11 @@
             }
         });
 
-        let fields = ['grade_id', 'group_id', 'topic_ar', 'topic_en', 'duration', 'start_time', 'password'];
+        let fields = ['grade_id', 'topic_ar', 'topic_en', 'duration', 'start_time', 'password'];
         handleFormSubmit('#add-form', fields, '#add-modal', 'offcanvas', '#datatable');
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'offcanvas', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
-        fetchMultipleDataByAjax('#add-form #grade_id', "{{ route('teacher.fetch.grade.groups', '__ID__') }}", '#add-form #group_id', 'grade_id', 'GET')
+        fetchMultipleDataByAjax('#add-form #grade_id', "{{ route('teacher.fetch.grade.groups', '__ID__') }}", '#add-form #groups', 'grade_id', 'GET')
     </script>
 @endsection

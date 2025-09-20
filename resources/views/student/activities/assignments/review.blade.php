@@ -10,7 +10,7 @@
         <div class="col-lg-12">
             <div class="card mb-6">
                 <h5 class="card-header">{{ $submission->assignment->title }} -
-                    {{ trans('main.mr') }}/{{ trans('main.mrs') }}:
+                    {{ trans('main.mr') }}:
                     {{ $assignment->teacher->name }}</h5>
                 <div class="card-body pt-1">
                     <div class="nav-align-top nav-tabs-shadow">

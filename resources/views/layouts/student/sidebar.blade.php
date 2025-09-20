@@ -31,6 +31,17 @@
             </a>
         </li>
 
+        <!-- Tools -->
+        <li class="menu-header mt-5">
+            <span class="menu-header-text">{{ trans('layouts/sidebar.tools') }}</span>
+        </li>
+        <li class="menu-item {{ isActiveRoute('student.resources.index') ? 'active' : '' }}">
+            <a href="{{ route('student.resources.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons ri-folders-line"></i>
+                <div>{{ trans('layouts/sidebar.resources') }}</div>
+            </a>
+        </li>
+
         <!-- Activities -->
         <li class="menu-header mt-5">
             <span class="menu-header-text">{{ trans('layouts/sidebar.activities') }}</span>
@@ -41,23 +52,30 @@
                 <div>{{ trans('layouts/sidebar.compensatories') }}</div>
             </a>
         </li>
-        {{-- <li class="menu-item {{ isActiveRoute('student.attendance.index') ? 'active' : '' }}">
-            <a href="{{ route('student.attendance.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons ri-file-list-3-line"></i>
-                <div>{{ trans('layouts/sidebar.attendance') }}</div>
-            </a>
-        </li>
         <li class="menu-item {{ isActiveRoute('student.zooms.index') ? 'active' : '' }}">
             <a href="{{ route('student.zooms.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-video-on-line"></i>
                 <div>{{ trans('layouts/sidebar.zooms') }}</div>
             </a>
-        </li> --}}
-        <li class="menu-item {{ isActiveRoute('student.quizzes.index') ? 'active' : '' }}">
-            <a href="{{ route('student.quizzes.index') }}" class="menu-link">
+        </li>
+        <li
+            class="menu-item {{ isActiveRoute(['student.quizzes.index', 'student.offline-quizzes.index']) ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-brain-line"></i>
                 <div>{{ trans('layouts/sidebar.quizzes') }}</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ isActiveRoute('student.quizzes.index') ? 'active' : '' }}">
+                    <a href="{{ route('student.quizzes.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.online') }}</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ isActiveRoute('student.offline-quizzes.index') ? 'active' : '' }}">
+                    <a href="{{ route('student.offline-quizzes.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.offline') }}</div>
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="menu-item {{ isActiveRoute('student.assignments.index') ? 'active' : '' }}">
             <a href="{{ route('student.assignments.index') }}" class="menu-link">

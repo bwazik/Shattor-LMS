@@ -125,7 +125,7 @@ Route::group(
                     Route::get('students/{student}/groups', 'getStudentGroups')->name('students.groups');
                 });
 
-                # Start Tools
+            # Start Tools
                 # Grades
                 Route::prefix('grades')->controller(GradesController::class)->name('grades.')->group(function () {
                     Route::get('/', 'index')->name('index');
@@ -180,9 +180,9 @@ Route::group(
                         Route::post('delete', 'delete')->name('delete');
                     });
                 });
-                # End Tools
+            # End Tools
 
-                # Start Users Managment
+            # Start Users Managment
                 # Assistants
                 Route::prefix('assistants')->controller(AssistantsController::class)->name('assistants.')->group(function () {
                     Route::get('/', 'index')->name('index');

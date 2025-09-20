@@ -301,6 +301,15 @@ class FileUploadService
                     if (!$hasAccess) {
                         return $this->errorResponse(trans('toasts.ownershipError'));
                     }
+                } elseif ($entityType === 'resource') {
+                    $resource = Resource::where('id', $fileId)
+                        ->where('grade_id', $user->grade_id)
+                        ->whereIn('teacher_id', $user->teachers()->pluck('teachers.id')->toArray())
+                        ->first();
+
+                    if (!$resource) {
+                        return $this->errorResponse(trans('toasts.ownershipError'));
+                    }
                 }
 
             }

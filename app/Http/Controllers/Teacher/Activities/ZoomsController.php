@@ -30,8 +30,8 @@ class ZoomsController extends Controller
 
     public function index(Request $request)
     {
-        $zoomsQuery = Zoom::query()->with(['grade:id,name', 'group:id,uuid,name'])
-            ->select('id', 'uuid', 'grade_id', 'group_id', 'meeting_id', 'topic', 'duration', 'start_time', 'start_url', 'join_url', 'created_at', 'updated_at')
+        $zoomsQuery = Zoom::query()->with(['grade:id,name'])
+            ->select('id', 'uuid', 'grade_id', 'meeting_id', 'topic', 'duration', 'start_time', 'start_url', 'join_url', 'created_at', 'updated_at')
             ->where('teacher_id', $this->teacherId);
 
         if ($request->ajax()) {

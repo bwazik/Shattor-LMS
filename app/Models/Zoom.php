@@ -28,7 +28,6 @@ class Zoom extends Model
     protected $fillable = [
         'teacher_id',
         'grade_id',
-        'group_id',
         'meeting_id',
         'topic',
         'duration',
@@ -55,9 +54,9 @@ class Zoom extends Model
         return $this->belongsTo(Grade::class, 'grade_id');
     }
 
-    public function group()
+    public function groups()
     {
-        return $this->belongsTo(Group::class, 'group_id');
+        return $this->belongsToMany(Group::class, 'zoom_group');
     }
 
     # Scopes

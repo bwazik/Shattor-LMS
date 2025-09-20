@@ -11,7 +11,6 @@ use App\Models\Teacher;
 use Illuminate\Http\Request;
 use App\Models\StudentAnswer;
 use App\Models\StudentResult;
-use App\Services\GeminiService;
 use App\Models\StudentQuizOrder;
 use App\Models\StudentViolation;
 use App\Traits\ValidatesExistence;
@@ -19,7 +18,6 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Traits\ServiceResponseTrait;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Validator;
 use App\Services\Admin\Activities\QuizService;
 use App\Http\Requests\Admin\Activities\QuizzesRequest;
 

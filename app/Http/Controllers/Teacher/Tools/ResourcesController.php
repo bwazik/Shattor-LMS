@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Teacher\Tools;
 
 use App\Models\Grade;
-use App\Models\Teacher;
 use App\Models\Resource;
 use Illuminate\Http\Request;
 use App\Services\PlanLimitService;

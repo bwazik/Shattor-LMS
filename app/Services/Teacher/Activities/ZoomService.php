@@ -31,7 +31,6 @@ class ZoomService
             ->addColumn('selectbox', fn($row) => generateSelectbox($row->uuid))
             ->editColumn('topic', fn($row) => $row->topic)
             ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
-            ->editColumn('group_id', fn($row) => formatRelation($row->group_id, $row->group, 'name'))
             ->addColumn('duration', fn($row) => formatDuration($row->duration))
             ->editColumn('start_time', fn($row) => isoFormat($row->start_time))
             ->editColumn('join_url', fn($row) => formatSpanUrl($row->join_url, trans('main.join_url')))
@@ -39,13 +38,15 @@ class ZoomService
             ->editColumn('updated_at', fn($row) => isoFormat($row->updated_at))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
-            ->filterColumn('group_id', fn($query, $keyword) => filterByRelation($query, 'group', 'name', $keyword))
             ->rawColumns(['selectbox', 'join_url', 'actions'])
             ->make(true);
     }
 
     private function generateActionButtons($row): string
     {
+        $groupIds = $row->groups->pluck('uuid')->toArray();
+        $groups = implode(',', $groupIds);
+
         return
             '<div class="align-items-center">' .
                 '<span class="text-nowrap">' .
@@ -58,7 +59,7 @@ class ZoomService
                         'data-topic_ar="' . $row->getTranslation('topic', 'ar') . '" ' .
                         'data-topic_en="' . $row->getTranslation('topic', 'en') . '" ' .
                         'data-grade_id="' . $row->grade_id . '" ' .
-                        'data-group_id="' . $row->group->uuid . '" ' .
+                        'data-groups="' . $groups . '" ' .
                         'data-duration="' . $row->duration . '" ' .
                         'data-start_time="' . humanFormat($row->start_time) . '">' .
                         '<i class="ri-edit-box-line ri-20px"></i>' .
@@ -80,21 +81,20 @@ class ZoomService
     {
         return $this->executeTransaction(function () use ($request)
         {
-            $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
+            $groupIds = Group::whereIn('uuid', $request['groups'])->pluck('id')->toArray();
 
-            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true))
+            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupIds, $request['grade_id'], true))
                 return $validationResult;
 
             if (!$this->hasZoomAccount($this->teacherId)) {
                 return $this->errorResponse(trans('teacher/errors.validateTeacherZoomAccount'));
             }
 
-            $meetingData = $this->prepareMeetingData($request, true, groupId: $groupId);
+            $meetingData = $this->prepareMeetingData($request, true);
 
             $zoom = Zoom::create([
                 'teacher_id' => $this->teacherId,
                 'grade_id' => $request['grade_id'],
-                'group_id' => $groupId,
                 'meeting_id' => null,
                 'topic' => ['en' => $request['topic_en'], 'ar' => $request['topic_ar']],
                 'duration' => $request['duration'],
@@ -103,6 +103,8 @@ class ZoomService
                 'start_url' => 'https://اصبر_علي_الصفحة_هتظهر_بعد_لما_تعمل_الميتنج.com',
                 'join_url' => 'https://اصبر_علي_الصفحة_هتظهر_بعد_لما_تعمل_الميتنج.com',
             ]);
+
+            $zoom->groups()->attach($groupIds);
 
             dispatch(new HandleZoomMeetingJob(HandleZoomMeetingJob::TYPE_CREATE, ['meeting_data' => $meetingData, 'zoom_id' => $zoom->id, 'teacher_id' => $this->teacherId]));
 
@@ -114,16 +116,16 @@ class ZoomService
     {
         return $this->executeTransaction(function () use ($id, $meeting_id, $request)
         {
-            $groupId = Group::uuid($request['group_id'])->firstOrFail('id')->id;
+            $groupIds = Group::whereIn('uuid', $request['groups'])->pluck('id')->toArray();
 
-            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupId, $request['grade_id'], true))
+            if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $groupIds, $request['grade_id'], true))
                 return $validationResult;
 
             if (!$this->hasZoomAccount($this->teacherId)) {
                 return $this->errorResponse(trans('teacher/errors.validateTeacherZoomAccount'));
             }
 
-            $meetingData = $this->prepareMeetingData($request, false, $groupId);
+            $meetingData = $this->prepareMeetingData($request, false);
 
             dispatch(new HandleZoomMeetingJob(HandleZoomMeetingJob::TYPE_UPDATE,
             ['meeting_id' => $meeting_id, 'meeting_data' => $meetingData, 'teacher_id' => $this->teacherId]));
@@ -131,11 +133,12 @@ class ZoomService
             $zoom = Zoom::where('teacher_id', $this->teacherId)->findOrFail($id);
             $zoom->update([
                 'grade_id' => $request['grade_id'],
-                'group_id' => $groupId,
                 'topic' => ['en' => $request['topic_en'], 'ar' => $request['topic_ar']],
                 'duration' => $request['duration'],
                 'start_time' =>  $request['start_time'],
             ]);
+
+            $zoom->groups()->sync($groupIds ?? []);
 
             return $this->successResponse(trans('main.edited', ['item' => trans('admin/zooms.zoom')]));
         }, trans('toasts.ownershipError'));
@@ -180,15 +183,14 @@ class ZoomService
         }, trans('toasts.ownershipError'));
     }
 
-    private function prepareMeetingData(array $request, bool $includeSettings = true, $groupId): array
+    private function prepareMeetingData(array $request, bool $includeSettings = true): array
     {
         $grade = Grade::where('id', $request['grade_id'])->pluck('name')->first();
-        $group = Group::where('id', $groupId)->pluck('name')->first();
         $teacher = Teacher::where('id', $this->teacherId)->pluck('name')->first();
         $start_time = Carbon::parse($request['start_time'])->setTimezone('UTC')->format('Y-m-d\TH:i:s\Z');
 
         $meetingData = [
-            "agenda" => $grade . ' - ' . $group,
+            "agenda" => $grade,
             "topic" => $request['topic_ar'] . ' - ' . $request['topic_en'] . ' - ' . $teacher,
             "duration" => $request['duration'],
             "timezone" => config('app.timezone'),

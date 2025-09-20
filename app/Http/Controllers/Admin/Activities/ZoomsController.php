@@ -25,7 +25,7 @@ class ZoomsController extends Controller
 
     public function index(Request $request)
     {
-        $zoomsQuery = Zoom::query()->select('id', 'teacher_id', 'grade_id', 'group_id', 'meeting_id', 'topic', 'duration', 'start_time', 'start_url', 'join_url', 'created_at', 'updated_at');
+        $zoomsQuery = Zoom::query()->select('id', 'teacher_id', 'grade_id', 'meeting_id', 'topic', 'duration', 'start_time', 'start_url', 'join_url', 'created_at', 'updated_at');
 
         if ($request->ajax()) {
             return $this->zoomService->getZoomsForDatatable($zoomsQuery);
@@ -43,7 +43,7 @@ class ZoomsController extends Controller
                 $teacherName = $group->teacher->name ?? 'N/A';
                 return [$group->id => $group->name . ' - ' . $gradeName . ' - ' . $teacherName];
             });
-            
+
         return view('admin.activities.zooms.index', compact('teachers', 'grades', 'groups'));
     }
 

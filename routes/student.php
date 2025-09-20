@@ -5,12 +5,19 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 use App\Http\Controllers\Api\DataFetchController;
 
+
+use App\Http\Controllers\Student\DashboardController;
+
 use App\Http\Controllers\AccountController;
 
 use App\Http\Controllers\Student\Misc\FaqsController;
 use App\Http\Controllers\Student\Misc\HelpCenterController;
 
+use App\Http\Controllers\Student\Tools\ResourcesController;
+
+use App\Http\Controllers\Student\Activities\ZoomsController;
 use App\Http\Controllers\Student\Activities\QuizzesController;
+use App\Http\Controllers\Student\Activities\OfflineQuizzesController;
 use App\Http\Controllers\Student\Activities\AssignmentsController;
 use App\Http\Controllers\Student\Activities\CompensatoriesController;
 
@@ -23,9 +30,7 @@ Route::group(
 
         Route::name('student.')->group(function () {
 
-            Route::get('/dashboard', function () {
-                return view('student.dashboard');
-            })->name('dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
             # Api Responses
             Route::prefix('fetch')->controller(DataFetchController::class)->name('fetch.')->group(function () {
@@ -45,6 +50,15 @@ Route::group(
                 Route::post('coupons/redeem', 'redeemCoupon')->name('coupons.redeem')->middleware('throttle:5,1');
             });
 
+            # Start Tools
+                # Resources
+                Route::prefix('resources')->controller(ResourcesController::class)->name('resources.')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('{uuid}', 'details')->name('details');
+                    Route::get('{uuid}/download', 'downloadFile')->name('download');
+                });
+            # End Tools
+
             # Start Activities
                 # Compensatories
                 Route::prefix('compensatories')->controller(CompensatoriesController::class)->name('compensatories.')->group(function () {
@@ -54,6 +68,11 @@ Route::group(
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
                     });
+                });
+
+                # Zooms
+                Route::prefix('zooms')->controller(ZoomsController::class)->name('zooms.')->group(function () {
+                    Route::get('/', 'index')->name('index');
                 });
 
                 # Quizzes
@@ -67,6 +86,12 @@ Route::group(
                         Route::post('/{uuid}/cheat-detector', 'cheatDetector')->name('cheatDetector');
                         Route::post('/{uuid}/violation', 'violation')->name('violation');
                     });
+                });
+
+                # Offline Quizzes
+                Route::prefix('offline-quizzes')->controller(OfflineQuizzesController::class)->name('offline-quizzes.')->group(function () {
+                    Route::get('/', 'index')->name('index');
+                    Route::get('/{uuid}/review', 'review')->name('review');
                 });
 
                 # Assignments

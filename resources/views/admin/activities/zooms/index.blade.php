@@ -16,7 +16,6 @@
         <th>{{ trans('main.topic') }}</th>
         <th>{{ trans('main.teacher') }}</th>
         <th>{{ trans('main.grade') }}</th>
-        <th>{{ trans('main.group') }}</th>
         <th>{{ trans('main.duration') }}</th>
         <th>{{ trans('main.start_time') }}</th>
         <th>{{ trans('main.join_url') }}</th>
@@ -30,7 +29,7 @@
 
 @section('page-js')
     <script>
-        initializeDataTable('#datatable', "{{ route('admin.zooms.index') }}", [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        initializeDataTable('#datatable', "{{ route('admin.zooms.index') }}", [2, 3, 4, 5, 6, 7, 8, 9, 10],
             [
                 { data: "", orderable: false, searchable: false },
                 { data: 'selectbox', name: 'selectbox', orderable: false, searchable: false },
@@ -38,7 +37,6 @@
                 { data: 'topic', name: 'topic' },
                 { data: 'teacher_id', name: 'teacher_id' },
                 { data: 'grade_id', name: 'grade_id' },
-                { data: 'group_id', name: 'group_id' },
                 { data: 'duration', name: 'duration' },
                 { data: 'start_time', name: 'start_time' },
                 { data: 'join_url', name: 'join_url'},
@@ -55,7 +53,7 @@
             fields: {
                 teacher_id: () => '',
                 grade_id: () => '',
-                group_id: () => '',
+                groups: () => '',
             }
         });
         // Setup edit modal
@@ -67,7 +65,7 @@
                 meeting_id: button => button.data('meeting_id'),
                 teacher_id: button => button.data('teacher_id'),
                 grade_id: button => button.data('grade_id'),
-                group_id: button => button.data('group_id'),
+                groups: button => button.data('groups'),
                 topic_ar: button => button.data('topic_ar'),
                 topic_en: button => button.data('topic_en'),
                 duration: button => button.data('duration'),
@@ -85,12 +83,12 @@
             }
         });
 
-        let fields = ['teacher_id', 'grade_id', 'group_id', 'topic_ar', 'topic_en', 'duration', 'start_time', 'password'];
+        let fields = ['teacher_id', 'grade_id', 'topic_ar', 'topic_en', 'duration', 'start_time', 'password'];
         handleFormSubmit('#add-form', fields, '#add-modal', 'offcanvas', '#datatable');
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'offcanvas', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
         fetchMultipleDataByAjax('#add-form #teacher_id', "{{ route('admin.teachers.getGrades', '__ID__') }}", '#add-form #grade_id', 'teacher_id', 'GET')
-        fetchMultipleDataByAjax('#add-form #grade_id', "{{ route('admin.fetch.teachers.grade.groups', ['__SECOND_ID__', '__ID__']) }}", '#add-form #group_id', 'grade_id', 'GET');
+        fetchMultipleDataByAjax('#add-form #grade_id', "{{ route('admin.fetch.teachers.grade.groups', ['__SECOND_ID__', '__ID__']) }}", '#add-form #groups', 'grade_id', 'GET');
     </script>
 @endsection

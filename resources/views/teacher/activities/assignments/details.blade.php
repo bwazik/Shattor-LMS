@@ -14,7 +14,7 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap mb-6 gap-1">
                         <div class="me-1">
                             <h5 class="mb-0">{{ $assignment->title }}</h5>
-                            <p class="mb-0">{{ trans('main.mr') }}/{{ trans('main.mrs') }}: <span class="fw-medium text-heading"> {{ Auth::user()->name ?? 'N/A' }} </span></p>
+                            <p class="mb-0">{{ trans('main.mr') }}: <span class="fw-medium text-heading"> {{ Auth::user()->name ?? 'N/A' }} </span></p>
                         </div>
                         <div class="d-flex align-items-center">
                             <span class="badge bg-label-success rounded-pill">{{ $assignment->grade->name ?? 'N/A' }}</span>

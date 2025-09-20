@@ -7,7 +7,7 @@ return [
     'resources_header2' => 'بالمدرسين',
     'resources_highlight' => 'علي منصة شَطُّور',
     'resources_description' => 'اتفرج على الدروس، والملخصات، والفيديوهات اللي المستر أو المس شاركوهم معاك، وتقدر كمان تحمّلهم.',
-    'resources_description2' => 'خش ذاكر وافتح المُخ، النجاح مستنيك !  💪 (بيكذب)',
+    'resources_description2' => 'خش ذاكر يلا ، النجاح مستنيك ! 💪 (بيكذب)',
     'teacher' => [
         'resources_header' => 'تابع ونزّل كل شغلك التعليمي من مكان واحد',
         'resources_header2' => 'وسهّل على طلابك المذاكرة',

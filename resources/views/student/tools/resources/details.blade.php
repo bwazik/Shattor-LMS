@@ -1,4 +1,4 @@
-@extends('layouts.admin.master')
+@extends('layouts.student.master')
 
 @section('page-css')
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/plyr/plyr.css') }}" />
@@ -74,8 +74,6 @@
                                 </div>
                                 <div class="d-flex flex-column">
                                     <h6 class="mb-1">{{ $resource->teacher->name ?? 'N/A' }}</h6>
-                                    <small>{{ trans('admin/teachers.teacher') }}
-                                        {{ $resource->teacher->subject->name ?? 'N/A' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -84,14 +82,6 @@
             </div>
         </div>
         <div class="col-lg-4">
-            <form id="add-form" action="{{ route('admin.resources.upload', $resource->id) }}" method="POST"
-                enctype="multipart/form-data">
-                @csrf
-                <x-basic-input divClasses="mb-3" type="file" name="file" label="{{ trans('admin/resources.file') }}"
-                    required />
-                <button type="submit" class="btn btn-primary w-100 d-block">{{ trans('main.submit') }}</button>
-            </form>
-            <hr class="my-4" />
             <div class="accordion stick-top accordion-custom-button" id="resourceDetails">
                 <div class="accordion-item active mb-0">
                     <div class="accordion-header border-bottom-0" id="headingOne">
@@ -126,7 +116,7 @@
                                     </div>
                                     <span class="text-nowrap overflow-hidden text-truncate" style="max-width: 200px;"
                                         data-bs-toggle="tooltip" data-bs-original-title="{{ $resource->file_name }}">
-                                        <a href="{{ route('admin.resources.download', $resource->id) }}"
+                                        <a href="{{ route('student.resources.download', $resource->uuid) }}"
                                             class="text-decoration-none">
                                             {{ $resource->file_name }}
                                         </a>
@@ -137,7 +127,7 @@
                                     <div class="ms-auto">
                                         <button
                                             class="btn btn-sm btn-icon btn-text-danger rounded-pill text-body waves-effect waves-light"
-                                            id="delete-button" data-id="{{ $resource->id }}"
+                                            id="delete-button" data-id="{{ $resource->uuid }}"
                                             data-file_name="{{ $resource->file_name }}" data-bs-target="#delete-modal"
                                             data-bs-toggle="modal" data-bs-dismiss="modal">
                                             <i class="ri-delete-bin-7-line ri-20px text-danger"></i>
@@ -153,13 +143,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Delete Modal -->
-    <x-modal modalType="delete" modalTitle="{{ trans('main.deleteItem', ['item' => trans('admin/resources.resource')]) }}"
-        action="{{ route('admin.resources.files.delete') }}" id submitColor="danger"
-        submitButton="{{ trans('main.yes_delete') }}">
-        @include('partials.delete-modal-body')
-    </x-modal>
 @endsection
 
 @section('page-js')
@@ -171,21 +154,6 @@
             document.getElementsByClassName('plyr')[0].style.borderRadius = '10px';
             document.getElementsByClassName('plyr__poster')[0].style.display = 'none';
         }
-
-        const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'jpg', 'jpeg', 'png'];
-        handleProfilePicSubmit('#add-form', 10, allowedExtensions);
-
-        // Setup delete modal
-        setupModal({
-            buttonId: '#delete-button',
-            modalId: '#delete-modal',
-            fields: {
-                id: button => button.data('id'),
-                itemToDelete: button => `${button.data('file_name')}`
-            }
-        });
-
-        handleDeletionFormSubmit('#delete-form', '#delete-modal');
 
         toggleShareButton();
     </script>

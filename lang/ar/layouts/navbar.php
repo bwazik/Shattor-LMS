@@ -1,7 +1,7 @@
 <?php
 return [
     'language' => 'اللغة',
-    'myProfile' => 'ملفي الشخصي',
+    'myProfile' => 'البروفايل',
     'settings' => 'الإعدادات',
     'billing' => 'الفواتير والإشتراك',
     'plans' => 'الخطط',

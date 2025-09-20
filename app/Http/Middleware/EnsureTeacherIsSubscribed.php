@@ -73,6 +73,8 @@ class EnsureTeacherIsSubscribed
             if ($paidInvoice) {
                 return $next($request);
             }
+        } else {
+            return Redirect::route('teacher.plans.index');
         }
 
         return $next($request);

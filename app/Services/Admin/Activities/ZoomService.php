@@ -29,7 +29,6 @@ class ZoomService
             ->editColumn('topic', fn($row) => $row->topic)
             ->editColumn('teacher_id', fn($row) => formatRelation($row->teacher_id, $row->teacher, 'name', 'admin.teachers.details'))
             ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
-            ->editColumn('group_id', fn($row) => formatRelation($row->group_id, $row->group, 'name'))
             ->addColumn('duration', fn($row) => formatDuration($row->duration))
             ->editColumn('start_time', fn($row) => isoFormat($row->start_time))
             ->editColumn('join_url', fn($row) => formatSpanUrl($row->join_url, trans('main.join_url')))
@@ -38,13 +37,15 @@ class ZoomService
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
             ->filterColumn('teacher_id', fn($query, $keyword) => filterByRelation($query, 'teacher', 'name', $keyword))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
-            ->filterColumn('group_id', fn($query, $keyword) => filterByRelation($query, 'group', 'name', $keyword))
             ->rawColumns(['selectbox', 'teacher_id', 'join_url', 'actions'])
             ->make(true);
     }
 
     private function generateActionButtons($row): string
     {
+        $groupIds = $row->groups->pluck('id')->toArray();
+        $groups = implode(',', $groupIds);
+
         return
             '<div class="align-items-center">' .
                 '<span class="text-nowrap">' .
@@ -58,7 +59,7 @@ class ZoomService
                         'data-topic_en="' . $row->getTranslation('topic', 'en') . '" ' .
                         'data-teacher_id="' . $row->teacher_id . '" ' .
                         'data-grade_id="' . $row->grade_id . '" ' .
-                        'data-group_id="' . $row->group_id . '" ' .
+                        'data-groups="' . $groups . '" ' .
                         'data-duration="' . $row->duration . '" ' .
                         'data-start_time="' . humanFormat($row->start_time) . '">' .
                         '<i class="ri-edit-box-line ri-20px"></i>' .
@@ -80,7 +81,7 @@ class ZoomService
     {
         return $this->executeTransaction(function () use ($request)
         {
-            if ($validationResult = $this->validateTeacherGradeAndGroups($request['teacher_id'], $request['group_id'], $request['grade_id'], true))
+            if ($validationResult = $this->validateTeacherGradeAndGroups($request['teacher_id'], $request['groups'], $request['grade_id'], true))
                 return $validationResult;
 
             if (!$this->hasZoomAccount($request['teacher_id'])) {
@@ -94,7 +95,6 @@ class ZoomService
             $zoom = Zoom::create([
                 'teacher_id' => $request['teacher_id'],
                 'grade_id' => $request['grade_id'],
-                'group_id' => $request['group_id'],
                 'meeting_id' => null,
                 'topic' => ['en' => $request['topic_en'], 'ar' => $request['topic_ar']],
                 'duration' => $request['duration'],
@@ -103,6 +103,8 @@ class ZoomService
                 'start_url' => 'https://اصبر_علي_الصفحة_هتظهر_بعد_لما_تعمل_الميتنج.com',
                 'join_url' => 'https://اصبر_علي_الصفحة_هتظهر_بعد_لما_تعمل_الميتنج.com',
             ]);
+
+            $zoom->groups()->attach($request['groups']);
 
             dispatch(new HandleZoomMeetingJob(HandleZoomMeetingJob::TYPE_CREATE, ['meeting_data' => $meetingData, 'zoom_id' => $zoom->id]));
 
@@ -114,7 +116,7 @@ class ZoomService
     {
         return $this->executeTransaction(function () use ($id, $meeting_id, $request)
         {
-            if ($validationResult = $this->validateTeacherGradeAndGroups($request['teacher_id'], $request['group_id'], $request['grade_id'], true))
+            if ($validationResult = $this->validateTeacherGradeAndGroups($request['teacher_id'], $request['groups'], $request['grade_id'], true))
                 return $validationResult;
 
             if (!$this->hasZoomAccount($request['teacher_id'])) {
@@ -131,11 +133,12 @@ class ZoomService
             $zoom = Zoom::findOrFail($id);
             $zoom->update([
                 'grade_id' => $request['grade_id'],
-                'group_id' => $request['group_id'],
                 'topic' => ['en' => $request['topic_en'], 'ar' => $request['topic_ar']],
                 'duration' => $request['duration'],
                 'start_time' =>  $request['start_time'],
             ]);
+
+            $zoom->groups()->sync($request['groups'] ?? []);
 
             return $this->successResponse(trans('main.edited', ['item' => trans('admin/zooms.zoom')]));
         });
@@ -208,12 +211,11 @@ class ZoomService
     private function prepareMeetingData(array $request, bool $includeSettings = true): array
     {
         $grade = Grade::where('id', $request['grade_id'])->pluck('name')->first();
-        $group = Group::where('id', $request['group_id'])->pluck('name')->first();
         $teacher = Teacher::where('id', $request['teacher_id'])->pluck('name')->first();
         $start_time = Carbon::parse($request['start_time'])->setTimezone('UTC')->format('Y-m-d\TH:i:s\Z');
 
         $meetingData = [
-            "agenda" => $grade . ' - ' . $group,
+            "agenda" => $grade,
             "topic" => $request['topic_ar'] . ' - ' . $request['topic_en'] . ' - ' . $teacher,
             "duration" => $request['duration'],
             "timezone" => config('app.timezone'),
