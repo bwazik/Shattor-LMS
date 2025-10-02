@@ -56,18 +56,35 @@ class WhatsappService
                 'attempts' => 0,
             ]);
 
-            // Global delay counter with lock for consistent gaps
-            $globalLockKey = 'whatsapp_send_message_delay';
-            $globalDelayLock = Cache::lock('whatsapp_send_message_delay_lock', 10);
-            if ($globalDelayLock->get()) {
-                $baseDelay = Cache::get($globalLockKey, 0);
-                // Use 30–50s for urgent, 180–220s for non-urgent
-                $delaySeconds = $baseDelay + ($isUrgent ? random_int(30, 50) : random_int(180, 220));
-                Cache::put($globalLockKey, $delaySeconds, 3600);
-                $globalDelayLock->release();
+            // Calculate delay with proper sequencing
+            $delayGap = $isUrgent ? random_int(30, 50) : random_int(180, 220);
+
+            // SEPARATE queues for urgent vs non-urgent
+            $lastScheduledKey = $isUrgent
+                ? 'whatsapp_last_urgent_time'
+                : 'whatsapp_last_normal_time';
+
+            $lockSchedule = Cache::lock("whatsapp_schedule_lock_{$isUrgent}", 10);
+
+            if ($lockSchedule->get()) {
+                $lastScheduledTime = Cache::get($lastScheduledKey, now()->timestamp);
+                $now = now()->timestamp;
+
+                // If last scheduled time is in the past, start from now
+                $baseTime = max($lastScheduledTime, $now);
+
+                // Add the delay gap
+                $scheduledTime = $baseTime + $delayGap;
+
+                // Store the new scheduled time
+                Cache::put($lastScheduledKey, $scheduledTime, 3600);
+                $lockSchedule->release();
+
+                // Calculate actual delay from now
+                $delaySeconds = $scheduledTime - $now;
             } else {
-                // Fallback: random delay based on urgency
-                $delaySeconds = $isUrgent ? random_int(30, 50) : random_int(180, 220);
+                // Fallback: simple random delay
+                $delaySeconds = $delayGap;
             }
 
             // Dispatch job to appropriate queue with delay
