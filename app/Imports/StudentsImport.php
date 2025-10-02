@@ -22,6 +22,16 @@ class StudentsImport implements ToCollection, WithHeadingRow
     protected $studentsData = [];
     protected $parentCache = [];
     protected $studentPhones = [];
+    protected $importReport = [
+        'total_rows' => 0,
+        'skipped_invalid' => [],
+        'skipped_duplicate_in_file' => [],
+        'existing_students_added_to_group' => [],
+        'existing_students_wrong_grade' => [],
+        'new_parents_created' => 0,
+        'new_students_created' => 0,
+        'critical_errors' => [],
+    ];
 
     public function __construct($groupId, $gradeId, $teacherId)
     {
@@ -32,8 +42,11 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows)
     {
+        $this->importReport['total_rows'] = $rows->count();
+
         $studentTeacherData = [];
         $studentGroupData = [];
+        $existingStudentsToAdd = [];
 
         foreach ($rows as $index => $row) {
             // Validate required fields
@@ -47,6 +60,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 empty($parentPhone) || !preg_match('/^0[0-9]{10}$/', $parentPhone) ||
                 empty($studentName)
             ) {
+                $this->importReport['skipped_invalid'][] = ['student_phone' => $studentPhone ?: 'مفقود'];
                 Log::channel('excel-import')->warning('Skipping row due to invalid data', [
                     'index' => $index,
                     'student_phone' => $studentPhone,
@@ -56,17 +70,37 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            // Skip if student_phone already exists in the database
-            if (Student::where('phone', $studentPhone)->exists()) {
-                Log::channel('excel-import')->warning('Skipping row due to existing student phone', [
-                    'index' => $index,
-                    'student_phone' => $studentPhone,
-                ]);
+            // Check if student already exists
+            $existingStudent = Student::where('phone', $studentPhone)->first();
+
+            if ($existingStudent) {
+                // Check if student is in the same grade
+                if ($existingStudent->grade_id == $this->gradeId) {
+                    // Add existing student to the new group
+                    $existingStudentsToAdd[] = $existingStudent;
+                    $this->importReport['existing_students_added_to_group'][] = ['student_phone' => $studentPhone];
+
+                    Log::channel('excel-import')->info('Adding existing student to new group', [
+                        'student_phone' => $studentPhone,
+                        'student_name' => $existingStudent->name,
+                        'grade_id' => $this->gradeId,
+                    ]);
+                } else {
+                    // Student exists but in different grade - skip
+                    $this->importReport['existing_students_wrong_grade'][] = ['student_phone' => $studentPhone];
+
+                    Log::channel('excel-import')->warning('Skipping student - exists in different grade', [
+                        'student_phone' => $studentPhone,
+                        'current_grade' => $existingStudent->grade_id,
+                        'target_grade' => $this->gradeId,
+                    ]);
+                }
                 continue;
             }
 
             // Skip duplicate student phones
             if (in_array($studentPhone, $this->studentPhones)) {
+                $this->importReport['skipped_duplicate_in_file'][] = ['student_phone' => $studentPhone];
                 Log::channel('excel-import')->warning('Skipping row due to duplicate student phone in import', [
                     'index' => $index,
                     'student_phone' => $studentPhone,
@@ -132,6 +166,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
         // Batch insert parents (deduplicated by phone)
         if (!empty($this->parentsData)) {
+            $this->importReport['new_parents_created'] = count($this->parentsData);
             Log::channel('excel-import')->info('Inserting parents', ['count' => count($this->parentsData)]);
             DB::table('parents')->insert(array_values($this->parentsData));
         }
@@ -142,6 +177,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 $parentPhone = $student['temp_parent_phone'];
                 $parent = $this->parentCache[$parentPhone] ?? MyParent::where('phone', $parentPhone)->first();
                 if (!$parent) {
+                    $this->importReport['critical_errors'][] = ['student_phone' => $student['phone']];
                     Log::channel('excel-import')->error('Parent not found for student', [
                         'index' => $index,
                         'student_phone' => $student['phone'],
@@ -169,6 +205,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
 
         // Batch insert students
         if (!empty($this->studentsData)) {
+            $this->importReport['new_students_created'] = count($this->studentsData);
             Log::channel('excel-import')->info('Inserting students', ['count' => count($this->studentsData)]);
             DB::table('students')->insert($this->studentsData);
         }
@@ -181,10 +218,11 @@ class StudentsImport implements ToCollection, WithHeadingRow
         foreach ($this->studentsData as $index => $studentData) {
             $student = $students[$studentData['phone']] ?? null;
             if (!$student) {
+                $this->importReport['critical_errors'][] = ['student_phone' => $studentData['phone']];
                 Log::channel('excel-import')->error('Student not found after insert', [
-                'index' => $index,
-                'student_phone' => $studentData['phone'],
-            ]);
+                    'index' => $index,
+                    'student_phone' => $studentData['phone'],
+                ]);
                 unset($this->credentials[$index]);
                 continue;
             }
@@ -200,6 +238,39 @@ class StudentsImport implements ToCollection, WithHeadingRow
                 'updated_at' => now(),
                 'ended_at' => null,
             ];
+        }
+
+        // Add pivot data for EXISTING students
+        foreach ($existingStudentsToAdd as $existingStudent) {
+            // Check if student-teacher relationship already exists
+            $teacherExists = DB::table('student_teacher')
+                ->where('student_id', $existingStudent->id)
+                ->where('teacher_id', $this->teacherId)
+                ->exists();
+
+            if (!$teacherExists) {
+                $studentTeacherData[] = [
+                    'student_id' => $existingStudent->id,
+                    'teacher_id' => $this->teacherId,
+                ];
+            }
+
+            // Check if student is already in this group
+            $groupExists = DB::table('student_group')
+                ->where('student_id', $existingStudent->id)
+                ->where('group_id', $this->groupId)
+                ->whereNull('ended_at')
+                ->exists();
+
+            if (!$groupExists) {
+                $studentGroupData[] = [
+                    'student_id' => $existingStudent->id,
+                    'group_id' => $this->groupId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'ended_at' => null,
+                ];
+            }
         }
 
         // Reindex credentials
@@ -221,9 +292,14 @@ class StudentsImport implements ToCollection, WithHeadingRow
         return $this->credentials;
     }
 
+    public function getImportReport()
+    {
+        return $this->importReport;
+    }
+
     private function generateRandomString($length = 8)
     {
-        $chars = '123456789abcdefghijklmnopqrstuvwxyz';
+        $chars = '123456789abcdefghjkmnopqrstuvwxyz';
         $string = '';
         for ($i = 0; $i < $length; $i++) {
             $string .= $chars[random_int(0, strlen($chars) - 1)];

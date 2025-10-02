@@ -468,23 +468,15 @@ class LessonsController extends Controller
             abort(404);
         }
 
-$groupUnrecorded = Student::query()
-    ->whereHas('groups', fn($query) => $query->where('groups.id', $lesson->group_id)
-        ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
-        ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]))
-    ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-    ->whereDoesntHave('attendances', fn($query) =>
-        $query->where('lesson_id', $lesson->id)->where('teacher_id', $this->teacherId))
-    ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.profile_pic', 'students.created_at');
+        $unrecordedStudents = Student::query()
+            ->whereHas('groups', fn($query) => $query->where('groups.id', $lesson->group_id)
+                ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
+                ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]))
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->whereDoesntHave('attendances', fn($query) =>
+                $query->where('lesson_id', $lesson->id)->where('teacher_id', $this->teacherId))
+            ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.profile_pic', 'students.created_at');
 
-$compensatoryUnrecorded = Student::query()
-    ->whereHas('compensatories', fn($query) => $query->where('makeup_lesson_id', $lesson->id)->where('status', 2))
-    ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-    ->whereDoesntHave('attendances', fn($query) =>
-        $query->where('lesson_id', $lesson->id)->where('teacher_id', $this->teacherId))
-    ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.profile_pic', 'students.created_at');
-
-$unrecordedStudents = $groupUnrecorded->union($compensatoryUnrecorded);
         if ($request->ajax()) {
             return datatables()->eloquent($unrecordedStudents)
                 ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))

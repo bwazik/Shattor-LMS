@@ -153,6 +153,8 @@ class SendWhatsappMessage implements ShouldQueue
                 return "تم تحديث صورة الملف الشخصي للمستخدم {$data['name']}.\nنوع المستخدم: {$data['model']}";
             case 'security_code_updated':
                 return "تم تغيير الكود السري الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
+            case 'import_main_report':
+                return $data['message'];
             default:
                 return "إشعار: رسالة افتراضية";
         }

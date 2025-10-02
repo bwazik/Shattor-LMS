@@ -206,9 +206,13 @@ class GroupService
             Excel::import($import, $file);
 
             $credentials = $import->getCredentials();
+            $report = $import->getImportReport();
 
             $teacherName = 'مستر ' . auth()->guard('teacher')->user()->getTranslation('name', 'ar');
-            
+
+            // Send import report to teacher
+            $this->sendImportReport($report, $teacherName);
+
             if (!empty($credentials)) {
                 $this->whatsappService->sendBulkMessages(
                     $credentials,
@@ -228,5 +232,85 @@ class GroupService
 
             return $this->successResponse(trans('main.imported'));
         }, trans('toasts.ownershipError'));
+    }
+
+    private function sendImportReport($report, $teacherName)
+    {
+        // Build main statistics message
+        $mainMessage = "📊 *تقرير استيراد الطلاب*\n\n";
+        $mainMessage .= "👨‍🏫 المدرس: {$teacherName}\n";
+        $mainMessage .= "📅 التاريخ: " . now()->format('Y-m-d H:i') . "\n\n";
+
+        $mainMessage .= "📈 *الإحصائيات:*\n";
+        $mainMessage .= "• إجمالي الصفوف: {$report['total_rows']}\n";
+        $mainMessage .= "• طلاب جدد تمت إضافتهم: {$report['new_students_created']}\n";
+        $mainMessage .= "• أولياء أمور جدد: {$report['new_parents_created']}\n";
+        $mainMessage .= "• طلاب موجودين قبل كدا تمت إضافتهم للمجموعة: " . count($report['existing_students_added_to_group']) . "\n\n";
+
+        // Add warnings section WITH phone numbers
+        $hasWarnings = !empty($report['skipped_invalid']) ||
+            !empty($report['skipped_duplicate_in_file']) ||
+            !empty($report['existing_students_wrong_grade']);
+
+        if ($hasWarnings) {
+            $mainMessage .= "⚠️ *التحذيرات:*\n\n";
+
+            // Show invalid data with phone numbers
+            if (!empty($report['skipped_invalid'])) {
+                $mainMessage .= "🔴 *بيانات غير صحيحة (" . count($report['skipped_invalid']) . " طلاب):*\n";
+                foreach ($report['skipped_invalid'] as $item) {
+                    $mainMessage .= "• {$item['student_phone']}\n";
+                }
+                $mainMessage .= "\n";
+            }
+
+            // Show duplicate phones
+            if (!empty($report['skipped_duplicate_in_file'])) {
+                $mainMessage .= "🟡 *أرقام مكررة في الملف (" . count($report['skipped_duplicate_in_file']) . " طلاب):*\n";
+                foreach ($report['skipped_duplicate_in_file'] as $item) {
+                    $mainMessage .= "• {$item['student_phone']}\n";
+                }
+                $mainMessage .= "\n";
+            }
+
+            // Show wrong grade students
+            if (!empty($report['existing_students_wrong_grade'])) {
+                $mainMessage .= "🟠 *طلاب موجودين في صف آخر (" . count($report['existing_students_wrong_grade']) . " طلاب):*\n";
+                foreach ($report['existing_students_wrong_grade'] as $item) {
+                    $mainMessage .= "• {$item['student_phone']}\n";
+                }
+                $mainMessage .= "\n";
+            }
+        }
+
+        // Include existing students added successfully
+        $existingStudents = $report['existing_students_added_to_group'] ?? [];
+        if (!empty($existingStudents)) {
+            $count = count($existingStudents);
+            $mainMessage .= "✅ *طلاب موجودين تمت إضافتهم ({$count}):*\n";
+            foreach ($existingStudents as $item) {
+                $mainMessage .= "• {$item['student_phone']}\n";
+            }
+            $mainMessage .= "\n";
+        }
+
+        // Include critical errors
+        if (!empty($report['critical_errors'])) {
+            $mainMessage .= "❌ *أخطاء حرجة (" . count($report['critical_errors']) . "):*\n";
+            foreach ($report['critical_errors'] as $error) {
+                $mainMessage .= "• {$error['student_phone']}\n";
+            }
+            $mainMessage .= "\n";
+        }
+
+        // Final status
+        if (empty($report['critical_errors']) && !$hasWarnings) {
+            $mainMessage .= "✅ *تمت العملية بنجاح بدون أخطاء أو تحذيرات*";
+        }
+
+        // Send ONE message with everything
+        $this->whatsappService->sendMessage('01098617164', 'import_main_report', [
+            'message' => $mainMessage,
+        ], true);
     }
 }

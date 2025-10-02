@@ -211,6 +211,7 @@ Route::group(
                             Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                             Route::get('attendance', 'attendance')->name('attendance');
                             Route::get('quizzes', 'quizzes')->name('quizzes');
+                            Route::get('offline-quizzes', 'offlineQuizzes')->name('offline-quizzes');
                             Route::get('assignments', 'assignments')->name('assignments');
                             Route::get('fees', 'fees')->name('fees');
                             Route::get('security', 'security')->name('security');
