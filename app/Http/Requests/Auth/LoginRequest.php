@@ -163,17 +163,17 @@ class LoginRequest extends FormRequest
             );
         }
 
-        // if (!empty($user->phone)) {
-        //     $name = $guard === 'teacher' ? "مستر {$user->name}" : $user->name;
+        if (!empty($user->phone)) {
+            $name = $guard === 'teacher' ? "مستر {$user->name}" : $user->name;
 
-        //     Carbon::setLocale('ar');
+            Carbon::setLocale('ar');
 
-        //     $this->whatsappService->sendMessage('01098617164', 'login_notification', [
-        //         'name' => $name,
-        //         'date' => now()->translatedFormat('l j F Y'),
-        //         'time' => now()->translatedFormat('h:i A'),
-        //     ], true);
-        // }
+            $this->whatsappService->sendMessage('01098617164', 'login_notification', [
+                'name' => $name,
+                'date' => now()->translatedFormat('l j F Y'),
+                'time' => now()->translatedFormat('h:i A'),
+            ], true);
+        }
 
         // Update or add device
         DB::table('user_devices')->updateOrInsert(
