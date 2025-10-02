@@ -65,22 +65,36 @@
                                     @break
                                 @endif
                             @endforeach
-                            {{-- <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle waves-effect waves-light" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="ri-global-line me-1"></i>
-                                    <span>{{ LaravelLocalization::getCurrentLocaleNative() }}</span>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                                    @foreach (LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-                                        <li>
-                                            <a class="dropdown-item @if (App::getLocale() == $localeCode) active @endif" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}">
-                                                <span class="align-middle">{{ $properties['native'] }}</span>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div> --}}
-                            {{-- /Language Switcher --}}
+
+                            {{-- Social Media Buttons --}}
+                            <a href="https://www.instagram.com/bwazik/"
+                                class="btn btn-sm btn-outline-secondary waves-effect waves-light"
+                                target="_blank"
+                                data-bs-toggle="tooltip"
+                                data-bs-original-title="Instagram">
+                                <i class="ri-instagram-line"></i>
+                            </a>
+                            <a href="https://wa.me/+201098617164"
+                                class="btn btn-sm btn-outline-secondary waves-effect waves-light"
+                                target="_blank"
+                                data-bs-toggle="tooltip"
+                                data-bs-original-title="WhatsApp">
+                                <i class="ri-whatsapp-line"></i>
+                            </a>
+                            <a href="https://github.com/bwazik"
+                                class="btn btn-sm btn-outline-secondary waves-effect waves-light"
+                                target="_blank"
+                                data-bs-toggle="tooltip"
+                                data-bs-original-title="GitHub">
+                                <i class="ri-github-fill"></i>
+                            </a>
+                            <a href="https://www.linkedin.com/in/bazoka/"
+                                class="btn btn-sm btn-outline-secondary waves-effect waves-light"
+                                target="_blank"
+                                data-bs-toggle="tooltip"
+                                data-bs-original-title="LinkedIn">
+                                <i class="ri-linkedin-box-fill"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
