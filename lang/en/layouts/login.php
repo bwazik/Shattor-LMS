@@ -11,6 +11,7 @@ return [
         'username'=> 'example@gmail.com',
     ],
     'or_divider_text' => 'or',
+    'socialMedia' => 'Contact The Platform Developer',
     'back_to_selection' => 'Back to choose login way',
     'back_to_landing' => 'Back to Home',
     'login_as_role' => ':Role Login',

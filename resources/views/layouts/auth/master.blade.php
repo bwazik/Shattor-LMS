@@ -67,8 +67,16 @@
                             @endforeach
                         </div>
 
+                        <div class="divider my-4">
+                            <div class="divider-text">{{ trans('layouts/login.socialMedia') }}</div>
+                        </div>
+
+                        <div class="text-center text-muted mb-3">
+                            <small>{{ trans('layouts/footer.founderName') }} - {{ trans('layouts/footer.allRightsReserved') }}</small>
+                        </div>
+
                         {{-- Social Media Buttons --}}
-                        <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+                        <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
                             <a href="https://www.instagram.com/bwazik/"
                                 class="btn btn-sm btn-outline-danger waves-effect waves-light"
                                 target="_blank"

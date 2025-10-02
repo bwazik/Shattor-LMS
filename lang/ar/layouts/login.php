@@ -11,6 +11,7 @@ return [
         'username'=> 'Shattorxxxxxxxxxxx',
     ],
     'or_divider_text' => 'أو',
+    'socialMedia' => 'تواصل مع مطور المنصة',
     'back_to_selection' => 'الرجوع لإختيار طريقة التسجيل',
     'back_to_landing' => 'الرجوع للرئيسية',
     'login_as_role' => 'تسجيل دخول ك:Role',
