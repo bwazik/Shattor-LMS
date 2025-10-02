@@ -68,30 +68,30 @@
                         </div>
 
                         {{-- Social Media Buttons --}}
-                        <div class="d-flex justify-content-center align-items-center gap-2 mb-4">
+                        <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
                             <a href="https://www.instagram.com/bwazik/"
-                                class="btn btn-sm btn-danger waves-effect waves-light"
+                                class="btn btn-sm btn-outline-danger waves-effect waves-light"
                                 target="_blank"
                                 data-bs-toggle="tooltip"
                                 data-bs-original-title="Instagram">
                                 <i class="ri-instagram-line"></i>
                             </a>
                             <a href="https://wa.me/+201098617164"
-                                class="btn btn-sm btn-success waves-effect waves-light"
+                                class="btn btn-sm btn-outline-success waves-effect waves-light"
                                 target="_blank"
                                 data-bs-toggle="tooltip"
                                 data-bs-original-title="WhatsApp">
                                 <i class="ri-whatsapp-line"></i>
                             </a>
                             <a href="https://github.com/bwazik"
-                                class="btn btn-sm btn-dark waves-effect waves-light"
+                                class="btn btn-sm btn-outline-dark waves-effect waves-light"
                                 target="_blank"
                                 data-bs-toggle="tooltip"
                                 data-bs-original-title="GitHub">
                                 <i class="ri-github-fill"></i>
                             </a>
                             <a href="https://www.linkedin.com/in/bazoka/"
-                                class="btn btn-sm btn-primary waves-effect waves-light"
+                                class="btn btn-sm btn-outline-primary waves-effect waves-light"
                                 target="_blank"
                                 data-bs-toggle="tooltip"
                                 data-bs-original-title="LinkedIn">
