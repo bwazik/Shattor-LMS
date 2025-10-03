@@ -2,27 +2,36 @@
 
 namespace App\Console\Commands;
 
-use Carbon\Carbon;
-use App\Models\Student;
 use Illuminate\Console\Command;
+use App\Models\Student;
+use App\Services\WhatsappService;
+use Carbon\Carbon;
 
 class SendBirthdayMessages extends Command
 {
-    protected $signature = 'birthday:send';
-    protected $description = 'Send birthday messages to students at midnight';
+    protected $signature = 'students:send-birthday-messages';
+    protected $description = 'Send birthday messages to students daily at midnight';
 
-    public function handle()
+    public function handle(WhatsappService $whatsappService)
     {
-        $today = Carbon::today();
+        $today = Carbon::today()->format('m-d');
 
-        $nearestBirthdays = Student::query()
+        $students = Student::query()
             ->whereNotNull('birth_date')
-            ->whereYear('birth_date', '<', now()->year - 1) // exclude defaults
-            ->whereRaw("DATE_FORMAT(birth_date, '%m-%d') >= ?", [$today->format('m-d')])
-            ->orderByRaw("DATE_FORMAT(birth_date, '%m-%d')")
-            ->take(20) // اقرب 10 أعياد ميلاد
+            ->whereYear('birth_date', '<=', now()->year - 1)
+            ->whereRaw("DATE_FORMAT(birth_date, '%m-%d') = ?", [$today])
             ->get();
 
-        dd($nearestBirthdays);
+        foreach ($students as $student) {
+            $whatsappService->sendMessage(
+                $student->phone,
+                'birthday_message',
+                [
+                    'name' => $student->name,
+                ], true
+            );
+        }
+
+        $this->info("Birthday messages sent to " . $students->count() . " students.");
     }
 }

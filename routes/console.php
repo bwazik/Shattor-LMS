@@ -21,3 +21,9 @@ Schedule::command('generate:monthly-fees')
 Schedule::command('assign:new-student-fees')
     ->dailyAt('00:00')
     ->timezone('Africa/Cairo');
+
+if (config('app.env') === 'production') {
+    Schedule::command('students:send-birthday-messages')
+        ->dailyAt('00:00')
+        ->timezone('Africa/Cairo');
+}

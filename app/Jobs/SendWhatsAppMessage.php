@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\WhatsappMessage;
+use App\Services\GeminiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,13 +17,15 @@ class SendWhatsappMessage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $message;
+    protected $geminiService;
 
     public $tries = 3; // Retry up to 3 times
     public $backoff = [30, 60, 120]; // Delay retries by 30s, 60s, 120s
 
-    public function __construct(WhatsappMessage $message)
+    public function __construct(WhatsappMessage $message, GeminiService $geminiService)
     {
         $this->message = $message;
+        $this->geminiService = $geminiService;
     }
 
     public function handle()
@@ -155,6 +158,21 @@ class SendWhatsappMessage implements ShouldQueue
                 return "تم تغيير الكود السري الخاص بحسابك على منصة شطّور \nلو ما كنتش إنت اللي عملت التغيير ده، ابعتلنا دلوقتي!";
             case 'import_main_report':
                 return $data['message'];
+            case 'birthday_message':
+                    $prompt = str_replace(
+                        ['{name}'],
+                        [$data['name']],
+                        config('prompts.birthday_message')
+                    );
+
+                    $aiMessage = $this->geminiService->generateContent($prompt);
+
+                    if (!empty($aiMessage)) {
+                        return $aiMessage;
+                    }
+
+                    return "🎉 كل سنة وانت طيب يا {$data['name']} 🎂\n"
+                        . "عقبال مليون سنة سعادة ونجاح 🙌✨";
             default:
                 return "إشعار: رسالة افتراضية";
         }
