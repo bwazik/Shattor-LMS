@@ -14,10 +14,10 @@ class SendBirthdayMessages extends Command
     public function handle()
     {
         $today = Carbon::today();
-        $students = Student::whereMonth('birthday', $today->month)
-            ->whereDay('birthday', $today->day)
-            ->whereYear('birthday', '<', $today->year)
-            ->get();
+        $students = Student::whereMonth('birth_date', $today->month)
+            ->whereDay('birth_date', $today->day)
+            ->whereYear('birth_date', '<', $today->year)
+            ->get()->take(10);
 
         dd($students);
     }
