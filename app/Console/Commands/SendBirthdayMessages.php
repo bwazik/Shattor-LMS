@@ -18,5 +18,7 @@ class SendBirthdayMessages extends Command
             ->whereDay('birthday', $today->day)
             ->whereYear('birthday', '<', $today->year)
             ->get();
+
+        dd($students);
     }
 }
