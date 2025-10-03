@@ -16,8 +16,8 @@ class SendBirthdayMessages extends Command
         $studentsWithValidBirthday = Student::query()
             ->whereNotNull('birth_date')
             ->whereYear('birth_date', '<', now()->year - 1) // exclude 2025, 2026
-            ->get();
-
-        dd($studentsWithValidBirthday);
+            ->count();
+        $studentsWithValidBirthday2 = Student::count();
+        dd($studentsWithValidBirthday, $studentsWithValidBirthday2);
     }
 }
