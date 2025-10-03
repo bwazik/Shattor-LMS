@@ -13,11 +13,16 @@ class SendBirthdayMessages extends Command
 
     public function handle()
     {
-        $studentsWithValidBirthday = Student::query()
+        $today = Carbon::today();
+
+        $nearestBirthdays = Student::query()
             ->whereNotNull('birth_date')
-            ->whereYear('birth_date', '<', now()->year - 1) // exclude 2025, 2026
-            ->count();
-        $studentsWithValidBirthday2 = Student::count();
-        dd($studentsWithValidBirthday, $studentsWithValidBirthday2);
+            ->whereYear('birth_date', '<', now()->year - 1) // exclude defaults
+            ->whereRaw("DATE_FORMAT(birth_date, '%m-%d') >= ?", [$today->format('m-d')])
+            ->orderByRaw("DATE_FORMAT(birth_date, '%m-%d')")
+            ->take(20) // اقرب 10 أعياد ميلاد
+            ->get();
+
+        dd($nearestBirthdays);
     }
 }
