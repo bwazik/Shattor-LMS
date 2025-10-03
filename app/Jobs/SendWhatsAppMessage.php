@@ -17,15 +17,13 @@ class SendWhatsappMessage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $message;
-    protected $geminiService;
 
     public $tries = 3; // Retry up to 3 times
     public $backoff = [30, 60, 120]; // Delay retries by 30s, 60s, 120s
 
-    public function __construct(WhatsappMessage $message, GeminiService $geminiService)
+    public function __construct(WhatsappMessage $message)
     {
         $this->message = $message;
-        $this->geminiService = $geminiService;
     }
 
     public function handle()
@@ -159,13 +157,15 @@ class SendWhatsappMessage implements ShouldQueue
             case 'import_main_report':
                 return $data['message'];
             case 'birthday_message':
+                    $geminiService = app(GeminiService::class);
+
                     $prompt = str_replace(
                         ['{name}'],
                         [$data['name']],
                         config('prompts.birthday_message')
                     );
 
-                    $aiMessage = $this->geminiService->generateContent($prompt);
+                    $aiMessage = $geminiService->generateContent($prompt);
 
                     if (!empty($aiMessage)) {
                         return $aiMessage;
