@@ -14,10 +14,10 @@ class SendBirthdayMessages extends Command
     public function handle()
     {
         $today = Carbon::today();
-        $eligibleStudents = Student::whereYear('birthday', '<', $today->year)->get();
+        $eligibleStudents = Student::whereYear('birth_date', '<', $today->year)->get();
 
         $nearest = $eligibleStudents->map(function ($student) use ($today) {
-            $nextBirthday = Carbon::createFromDate($today->year, $student->birthday->month, $student->birthday->day);
+            $nextBirthday = Carbon::createFromDate($today->year, $student->birth_date->month, $student->birth_date->day);
             if ($nextBirthday->isPast()) {
                 $nextBirthday->addYear();
             }
