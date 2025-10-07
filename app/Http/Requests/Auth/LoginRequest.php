@@ -142,26 +142,26 @@ class LoginRequest extends FormRequest
         }
 
         // Send WhatsApp message for new device (exclude parent guard)
-        if (!$isAuthorized && $guard !== 'parent' && !empty($user->phone)) {
-            $name = $guard === 'web'
-                ? explode(' ', trim($user->name))[0]
-                : explode(' ', trim($user->getTranslation('name', 'ar')))[0];
+        // if (!$isAuthorized && $guard !== 'parent' && !empty($user->phone)) {
+        //     $name = $guard === 'web'
+        //         ? explode(' ', trim($user->name))[0]
+        //         : explode(' ', trim($user->getTranslation('name', 'ar')))[0];
 
-            $name = $guard === 'teacher' ? "مستر {$name}" : $name;
+        //     $name = $guard === 'teacher' ? "مستر {$name}" : $name;
 
-            Carbon::setLocale('ar');
+        //     Carbon::setLocale('ar');
 
-            $this->whatsappService->sendMessage(
-                $user->phone,
-                'new_device_login',
-                [
-                    'name' => $name,
-                    'date' => now()->translatedFormat('l j F Y'),
-                    'time' => now()->translatedFormat('h:i A'),
-                ],
-                true
-            );
-        }
+        //     $this->whatsappService->sendMessage(
+        //         $user->phone,
+        //         'ؤ',
+        //         [
+        //             'name' => $name,
+        //             'date' => now()->translatedFormat('l j F Y'),
+        //             'time' => now()->translatedFormat('h:i A'),
+        //         ],
+        //         true
+        //     );
+        // }
 
         if (!empty($user->phone)) {
             $name = $guard === 'teacher' ? "مستر {$user->name}" : $user->name;

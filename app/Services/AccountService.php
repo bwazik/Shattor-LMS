@@ -104,7 +104,7 @@ class AccountService
                 'password' => Hash::make($request['newPassword'])
             ]);
 
-            $this->WhatsappService->sendMessage($user->phone, 'password_updated', [], true);
+            // $this->WhatsappService->sendMessage($user->phone, 'password_updated', [], true);
 
             return $this->successResponse(trans('toasts.passwordUpdated'));
         });
