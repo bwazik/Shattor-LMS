@@ -158,19 +158,19 @@ class SendWhatsappMessage implements ShouldQueue
             case 'import_main_report':
                 return $data['message'];
             case 'birthday_message':
-                    $geminiService = app(GeminiService::class);
+                    // $geminiService = app(GeminiService::class);
 
-                    $prompt = str_replace(
-                        ['{name}'],
-                        [$data['name']],
-                        config('prompts.birthday_message')
-                    );
+                    // $prompt = str_replace(
+                    //     ['{name}'],
+                    //     [$data['name']],
+                    //     config('prompts.birthday_message')
+                    // );
 
-                    $aiMessage = $geminiService->generateContent($prompt);
+                    // $aiMessage = $geminiService->generateContent($prompt);
 
-                    if (!empty($aiMessage)) {
-                        return $aiMessage;
-                    }
+                    // if (!empty($aiMessage)) {
+                    //     return $aiMessage;
+                    // }
 
                     return "🎉 كل سنة وانت طيب يا {$data['name']} 🎂\n"
                         . "عقبال مليون سنة سعادة ونجاح 🙌✨";
