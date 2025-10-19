@@ -170,7 +170,10 @@ class LessonsController extends Controller
             ->where('students.grade_id', $lesson->group->grade_id)
             ->where('student_group.group_id', $lesson->group_id)
             ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
-            ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
+            ->where(function ($query) use ($lesson) {
+                $query->whereNull('student_group.ended_at')
+                    ->orWhereRaw('DATE(student_group.ended_at) >= ?', [$lesson->date]);
+            });
 
         $compensatoryAttendancesQuery = Student::query()
             ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
@@ -191,15 +194,31 @@ class LessonsController extends Controller
         $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
 
         if ($request->ajax()) {
+            // Get the union query as raw SQL
+            $unionQuery = $originalAttendancesQuery->toSql();
+            $unionBindings = $originalAttendancesQuery->getBindings();
+
+            $compensatoryQuery = $compensatoryAttendancesQuery->toSql();
+            $compensatoryBindings = $compensatoryAttendancesQuery->getBindings();
+
+            // Create a query from the UNION subquery
+            $attendancesQuery = DB::table(DB::raw("(({$unionQuery}) UNION ({$compensatoryQuery})) as combined_students"))
+                ->mergeBindings($originalAttendancesQuery->toBase())
+                ->select('*');
+
+            // Manually add compensatory bindings
+            foreach ($compensatoryBindings as $binding) {
+                $attendancesQuery->addBinding($binding);
+            }
+
+
             return datatables()->eloquent($attendancesQuery)
                 ->editColumn('name', fn($row) => $row->name)
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->filter(function ($query) use ($request) {
-                    if ($search = $request->get('search')['value'] ?? null) {
-                        $query->whereRaw("(CONCAT(students.name, ' ', COALESCE(students.phone, '')) LIKE ?)", ["%{$search}%"]);
-                    }
+                ->filterColumn('name', function ($query, $keyword) {
+                    $query->whereRaw("CONCAT(combined_students.name, ' ', COALESCE(combined_students.phone, '')) LIKE ?", ["%{$keyword}%"]);
                 })
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
