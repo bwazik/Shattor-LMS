@@ -197,9 +197,10 @@ class LessonsController extends Controller
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
                 ->filterColumn('name', function ($query, $keyword) {
-                    filterByRelation($query, 'students', 'name', $keyword);
-                    $query->orWhereHas('students.phone', function ($q) use ($keyword) {
-                        $q->where('phone', 'LIKE', "%$keyword%"); });
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('students.name', 'LIKE', "%{$keyword}%")
+                            ->orWhere('students.phone', 'LIKE', "%{$keyword}%");
+                    });
                 })
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
