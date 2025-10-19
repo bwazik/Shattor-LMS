@@ -212,9 +212,14 @@ class LessonsController extends Controller
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->filterColumn('name', function ($query, $keyword) {
-                    // Override column-specific search to use only global search
-                })
+                ->filter(function ($query) use ($searchTerm) {
+                    if (!empty($searchTerm)) {
+                        $query->where(function ($q) use ($searchTerm) {
+                            $q->where('students.name', 'like', '%' . $searchTerm . '%')
+                                ->orWhere('students.phone', 'like', '%' . $searchTerm . '%');
+                        });
+                    }
+                }, true)
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
         }
