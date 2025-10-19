@@ -193,6 +193,7 @@ class LessonsController extends Controller
 
         if ($request->ajax()) {
             if ($search = $request->get('search')['value'] ?? null) {
+                  \Log::info('Search term: ' . $search);  // Add this to debug
                 $originalAttendancesQuery->where(function ($q) use ($search) {
                     $q->where('students.name', 'LIKE', "%{$search}%")
                         ->orWhere('students.phone', 'LIKE', "%{$search}%");
