@@ -334,7 +334,13 @@ class LessonsController extends Controller
                 ->addColumn('details', fn($row) => generateDetailsColumn($row->student->name, $row->student->profile_pic, 'storage/profiles/students', $row->student->phone, 'teacher.students.profile.index', $row->student->uuid))
                 ->editColumn('note', fn($row) => $row->note ? $row->note : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
-                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
+                ->filterColumn('student_id', function ($query, $keyword) {
+                    filterByRelation($query, 'student', 'phone', $keyword);
+
+                    $query->orWhereHas('student', function ($q) use ($keyword) {
+                        $q->where('phone', 'LIKE', "%$keyword%");
+                    });
+                })
                 ->rawColumns(['details'])
                 ->make(true);
         }
@@ -381,7 +387,13 @@ class LessonsController extends Controller
                 ->addColumn('makeup_status', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->makeupLesson ?
                     $this->formatStatus(($compensatories[$row->student_id]->makeupLesson->attendances->where('student_id', $row->student_id)->first()->status) ?? 'N/A') : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
-                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
+                ->filterColumn('student_id', function ($query, $keyword) {
+                    filterByRelation($query, 'student', 'phone', $keyword);
+
+                    $query->orWhereHas('student', function ($q) use ($keyword) {
+                        $q->where('phone', 'LIKE', "%$keyword%");
+                    });
+                })
                 ->rawColumns(['details', 'makeup_status'])
                 ->make(true);
         }
@@ -411,7 +423,13 @@ class LessonsController extends Controller
                 ->editColumn('status', fn($row) => $this->formatStatus($row->status))
                 ->editColumn('note', fn($row) => $row->note ? $row->note : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
-                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
+                ->filterColumn('student_id', function ($query, $keyword) {
+                    filterByRelation($query, 'student', 'phone', $keyword);
+
+                    $query->orWhereHas('student', function ($q) use ($keyword) {
+                        $q->where('phone', 'LIKE', "%$keyword%");
+                    });
+                })
                 ->rawColumns(['details', 'status'])
                 ->make(true);
         }
@@ -452,7 +470,13 @@ class LessonsController extends Controller
                 ->addColumn('reason', fn($row) => isset($compensatories[$row->student_id]) && $compensatories[$row->student_id]->reason ? $compensatories[$row->student_id]->reason : 'N/A')
                 ->editColumn('status', fn($row) => $this->formatStatus($row->status))
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
-                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
+                ->filterColumn('student_id', function ($query, $keyword) {
+                    filterByRelation($query, 'student', 'phone', $keyword);
+
+                    $query->orWhereHas('student', function ($q) use ($keyword) {
+                        $q->where('phone', 'LIKE', "%$keyword%");
+                    });
+                })
                 ->rawColumns(['details', 'status'])
                 ->make(true);
         }
@@ -481,7 +505,13 @@ class LessonsController extends Controller
             return datatables()->eloquent($unrecordedStudents)
                 ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
-                ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'phone', $keyword))
+                ->filterColumn('student_id', function ($query, $keyword) {
+                    filterByRelation($query, 'student', 'phone', $keyword);
+
+                    $query->orWhereHas('student', function ($q) use ($keyword) {
+                        $q->where('phone', 'LIKE', "%$keyword%");
+                    });
+                })
                 ->rawColumns(['details'])
                 ->make(true);
         }
