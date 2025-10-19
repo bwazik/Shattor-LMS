@@ -196,6 +196,11 @@ class LessonsController extends Controller
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
+                ->filterColumn('name', function ($query, $keyword) {
+                    filterByRelation($query, 'students', 'name', $keyword);
+                    $query->orWhereHas('students.phone', function ($q) use ($keyword) {
+                        $q->where('phone', 'LIKE', "%$keyword%"); });
+                })
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
         }
