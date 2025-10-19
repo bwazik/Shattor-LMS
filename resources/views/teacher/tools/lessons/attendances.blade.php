@@ -202,7 +202,7 @@
                     data: 'name',
                     name: 'name',
                     orderable: false,
-                    searchable: false
+                    searchable: true
                 },
                 {
                     data: 'type',

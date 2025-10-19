@@ -156,10 +156,8 @@ class LessonsController extends Controller
             abort(404);
         }
 
-        $searchTerm = $request->input('search.value');
-
         $originalAttendancesQuery = Student::query()
-            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
+            ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('student_group', 'students.id', '=', 'student_group.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -174,15 +172,8 @@ class LessonsController extends Controller
             ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
             ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
 
-        if (!empty($searchTerm)) {
-            $originalAttendancesQuery->where(function ($query) use ($searchTerm) {
-                $query->where('students.name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('students.phone', 'like', '%' . $searchTerm . '%');
-            });
-        }
-
         $compensatoryAttendancesQuery = Student::query()
-            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
+            ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('compensatories', 'students.id', '=', 'compensatories.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -197,13 +188,6 @@ class LessonsController extends Controller
             ->where('compensatories.makeup_lesson_id', $lesson->id)
             ->where('compensatories.status', 2);
 
-        if (!empty($searchTerm)) {
-            $compensatoryAttendancesQuery->where(function ($query) use ($searchTerm) {
-                $query->where('students.name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('students.phone', 'like', '%' . $searchTerm . '%');
-            });
-        }
-
         $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
 
         if ($request->ajax()) {
@@ -212,14 +196,9 @@ class LessonsController extends Controller
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->filter(function ($query) use ($searchTerm) {
-                    if (!empty($searchTerm)) {
-                        $query->where(function ($q) use ($searchTerm) {
-                            $q->where('students.name', 'like', '%' . $searchTerm . '%')
-                                ->orWhere('students.phone', 'like', '%' . $searchTerm . '%');
-                        });
-                    }
-                }, true)
+                ->filterColumn('name', function ($query, $keyword) {
+                    $query->whereRaw("CONCAT(students.name, ' ', COALESCE(students.phone, '')) LIKE ?", ["%{$keyword}%"]);
+                })
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
         }
