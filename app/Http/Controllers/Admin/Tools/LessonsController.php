@@ -323,7 +323,7 @@ class LessonsController extends Controller
                 ->editColumn('note', fn($row) => $row->note ? $row->note : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', function ($query, $keyword) {
-                    filterByRelation($query, 'student', 'phone', $keyword);
+                    filterByRelation($query, 'student', 'name', $keyword);
 
                     $query->orWhereHas('student', function ($q) use ($keyword) {
                         $q->where('phone', 'LIKE', "%$keyword%");
@@ -371,7 +371,7 @@ class LessonsController extends Controller
                     $this->formatStatus(($compensatories[$row->student_id]->makeupLesson->attendances->where('student_id', $row->student_id)->first()->status) ?? 'N/A') : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', function ($query, $keyword) {
-                    filterByRelation($query, 'student', 'phone', $keyword);
+                    filterByRelation($query, 'student', 'name', $keyword);
 
                     $query->orWhereHas('student', function ($q) use ($keyword) {
                         $q->where('phone', 'LIKE', "%$keyword%");
@@ -402,7 +402,7 @@ class LessonsController extends Controller
                 ->editColumn('note', fn($row) => $row->note ? $row->note : 'N/A')
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', function ($query, $keyword) {
-                    filterByRelation($query, 'student', 'phone', $keyword);
+                    filterByRelation($query, 'student', 'name', $keyword);
 
                     $query->orWhereHas('student', function ($q) use ($keyword) {
                         $q->where('phone', 'LIKE', "%$keyword%");
@@ -444,7 +444,7 @@ class LessonsController extends Controller
                 ->editColumn('status', fn($row) => $this->formatStatus($row->status))
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', function ($query, $keyword) {
-                    filterByRelation($query, 'student', 'phone', $keyword);
+                    filterByRelation($query, 'student', 'name', $keyword);
 
                     $query->orWhereHas('student', function ($q) use ($keyword) {
                         $q->where('phone', 'LIKE', "%$keyword%");
@@ -474,7 +474,7 @@ class LessonsController extends Controller
                 ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
                 ->editColumn('created_at', fn($row) => isoFormat($row->created_at))
                 ->filterColumn('student_id', function ($query, $keyword) {
-                    filterByRelation($query, 'student', 'phone', $keyword);
+                    filterByRelation($query, 'student', 'name', $keyword);
 
                     $query->orWhereHas('student', function ($q) use ($keyword) {
                         $q->where('phone', 'LIKE', "%$keyword%");
