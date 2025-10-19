@@ -191,17 +191,25 @@ class LessonsController extends Controller
         $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
 
         if ($request->ajax()) {
+            if ($search = $request->get('search')['value'] ?? null) {
+                $originalAttendancesQuery->where(function ($q) use ($search) {
+                    $q->where('students.name', 'LIKE', "%{$search}%")
+                        ->orWhere('students.phone', 'LIKE', "%{$search}%");
+                });
+
+                $compensatoryAttendancesQuery->where(function ($q) use ($search) {
+                    $q->where('students.name', 'LIKE', "%{$search}%")
+                        ->orWhere('students.phone', 'LIKE', "%{$search}%");
+                });
+
+                $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
+            }
+
             return datatables()->eloquent($attendancesQuery)
                 ->editColumn('name', fn($row) => $row->name)
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->filterColumn('name', function ($query, $keyword) {
-                    $query->where(function ($q) use ($keyword) {
-                        $q->where('students.name', 'LIKE', "%{$keyword}%")
-                            ->orWhere('students.phone', 'LIKE', "%{$keyword}%");
-                    });
-                })
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
         }
