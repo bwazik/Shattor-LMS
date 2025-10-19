@@ -118,9 +118,6 @@ return new class extends Migration
             $table->foreign('grade_id')->references('id')->on('grades')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-            $table->foreign('group_id')->references('id')->on('groups')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
         });
         Schema::table('quizzes', function (Blueprint $table) {
             $table->foreign('teacher_id')->references('id')->on('teachers')
@@ -362,7 +359,6 @@ return new class extends Migration
         Schema::table('zooms', function (Blueprint $table) {
             $table->dropForeign('zooms_teacher_id_foreign');
             $table->dropForeign('zooms_grade_id_foreign');
-            $table->dropForeign('zooms_group_id_foreign');
         });
         Schema::table('quizzes', function (Blueprint $table) {
             $table->dropForeign('quizzes_teacher_id_foreign');

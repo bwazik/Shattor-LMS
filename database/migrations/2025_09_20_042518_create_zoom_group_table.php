@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('zooms', function (Blueprint $table) {
-            $table->dropForeign(['group_id']);
             $table->dropColumn('group_id');
         });
 
