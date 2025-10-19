@@ -42,7 +42,13 @@ class InvoiceService
             ->editColumn('amount', fn($row) => formatCurrency($row->amount) . ' ' . trans('main.currency'))
             ->editColumn('status', fn($row) => formatInvoiceStatus($row->status))
             ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
-            ->filterColumn('student_id', fn($query, $keyword) => filterByRelation($query, 'student', 'name', $keyword))
+            ->filterColumn('student_id', function ($query, $keyword) {
+                filterByRelation($query, 'student', 'name', $keyword);
+
+                $query->orWhereHas('student', function ($q) use ($keyword) {
+                    $q->where('phone', 'LIKE', "%$keyword%");
+                });
+            })
             ->filterColumn('fee_id', fn($query, $keyword) => filterByRelation($query, 'fee', 'name', $keyword))
             ->filterColumn('status', fn($query, $keyword) => filterByInvoiceStatus($query, $keyword))
             ->rawColumns(['uuid', 'balance', 'details', 'status', 'actions'])

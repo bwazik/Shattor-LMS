@@ -42,7 +42,7 @@ class StudentsProfileController extends Controller
         return Student::query()
             ->with([
                 'grade:id,name',
-                'parent:id,uuid,name',
+                'parent:id,uuid,name,phone',
                 'allGroups' => fn($query) => $query->where('teacher_id', $this->teacherId)
                     ->select('groups.id', 'groups.name', 'student_group.created_at', 'student_group.ended_at'),
                 'attendances' => fn($query) => $query->where('teacher_id', $this->teacherId)->select('student_id', 'status', 'teacher_id'),
