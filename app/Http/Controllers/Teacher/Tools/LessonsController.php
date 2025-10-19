@@ -201,9 +201,13 @@ class LessonsController extends Controller
                     $q->where('students.name', 'LIKE', "%{$search}%")
                         ->orWhere('students.phone', 'LIKE', "%{$search}%");
                 });
-
-                $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
             }
+
+            // الحل هنا 👇
+            $unionQuery = $originalAttendancesQuery
+                ->unionAll($compensatoryAttendancesQuery);
+
+            $attendancesQuery = \DB::query()->fromSub($unionQuery, 'attendances_union');
 
             return datatables()->eloquent($attendancesQuery)
                 ->editColumn('name', fn($row) => $row->name)
