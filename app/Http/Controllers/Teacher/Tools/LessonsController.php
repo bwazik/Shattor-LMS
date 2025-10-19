@@ -156,6 +156,8 @@ class LessonsController extends Controller
             abort(404);
         }
 
+        $searchTerm = $request->input('search.value');
+
         $originalAttendancesQuery = Student::query()
             ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
@@ -171,6 +173,13 @@ class LessonsController extends Controller
             ->where('student_group.group_id', $lesson->group_id)
             ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
             ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
+
+        if (!empty($searchTerm)) {
+            $originalAttendancesQuery->where(function ($query) use ($searchTerm) {
+                $query->where('students.name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('students.phone', 'like', '%' . $searchTerm . '%');
+            });
+        }
 
         $compensatoryAttendancesQuery = Student::query()
             ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
@@ -188,28 +197,17 @@ class LessonsController extends Controller
             ->where('compensatories.makeup_lesson_id', $lesson->id)
             ->where('compensatories.status', 2);
 
+        if (!empty($searchTerm)) {
+            $compensatoryAttendancesQuery->where(function ($query) use ($searchTerm) {
+                $query->where('students.name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('students.phone', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
         $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
 
         if ($request->ajax()) {
-            if ($search = $request->get('search')['value'] ?? null) {
-                $originalAttendancesQuery->where(function ($q) use ($search) {
-                    $q->where('students.name', 'LIKE', "%{$search}%")
-                        ->orWhere('students.phone', 'LIKE', "%{$search}%");
-                });
-
-                $compensatoryAttendancesQuery->where(function ($q) use ($search) {
-                    $q->where('students.name', 'LIKE', "%{$search}%")
-                        ->orWhere('students.phone', 'LIKE', "%{$search}%");
-                });
-            }
-
-            // الحل هنا 👇
-            $unionQuery = $originalAttendancesQuery
-                ->unionAll($compensatoryAttendancesQuery);
-
-            $attendancesQuery = \DB::query()->fromSub($unionQuery, 'attendances_union');
-
-            return datatables()->query($attendancesQuery)
+            return datatables()->eloquent($attendancesQuery)
                 ->editColumn('name', fn($row) => $row->name)
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
