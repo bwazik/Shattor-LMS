@@ -86,6 +86,7 @@
                         @if ($student->parent)
                             <a
                                 href="{{ route('teacher.parents.profile.index', $student->parent->uuid) }}">{{ $student->parent->name }}</a>
+                      		- {{ $student->parent->phone }}
                         @else
                             N/A
                         @endif

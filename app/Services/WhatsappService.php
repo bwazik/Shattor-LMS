@@ -196,10 +196,20 @@ class WhatsappService
 
     protected function formatPhoneNumber(string $phone): string
     {
-        $phone = '0' . ltrim($phone, '0');
-        if (!str_starts_with($phone, '+20')) {
-            $phone = '+20' . ltrim($phone, '0');
+        $phone = str_replace([' ', '-', '(', ')'], '', $phone);
+
+        if (preg_match('/^\+20[0-9]{10}$/', $phone)) {
+            return $phone;
         }
-        return substr($phone, 0, 20);
+
+        $phone = preg_replace('/^\+?20/', '', $phone);
+
+        $phone = ltrim($phone, '0');
+
+        if (strlen($phone) !== 10) {
+            return $phone;
+        }
+
+        return '+20' . $phone;
     }
 }
