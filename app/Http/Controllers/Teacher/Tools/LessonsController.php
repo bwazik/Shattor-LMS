@@ -170,7 +170,10 @@ class LessonsController extends Controller
             ->where('students.grade_id', $lesson->group->grade_id)
             ->where('student_group.group_id', $lesson->group_id)
             ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
-            ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
+            ->where(function ($query) use ($lesson) {
+                $query->whereNull('student_group.ended_at')
+                    ->orWhereRaw('DATE(student_group.ended_at) >= ?', [$lesson->date]);
+            });
 
         $compensatoryAttendancesQuery = Student::query()
             ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
@@ -188,10 +191,22 @@ class LessonsController extends Controller
             ->where('compensatories.makeup_lesson_id', $lesson->id)
             ->where('compensatories.status', 2);
 
-        $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
-
         if ($request->ajax()) {
-            return datatables()->eloquent($attendancesQuery)
+            if ($search = $request->get('search')['value'] ?? null) {
+                $originalAttendancesQuery->where(function ($q) use ($search) {
+                    $q->where('students.name', 'LIKE', "%{$search}%")
+                        ->orWhere('students.phone', 'LIKE', "%{$search}%");
+                });
+
+                $compensatoryAttendancesQuery->where(function ($q) use ($search) {
+                    $q->where('students.name', 'LIKE', "%{$search}%")
+                        ->orWhere('students.phone', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
+
+            return datatables()->of($attendancesQuery->get())
                 ->editColumn('name', fn($row) => $row->name)
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
