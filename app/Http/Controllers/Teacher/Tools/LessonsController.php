@@ -209,7 +209,7 @@ class LessonsController extends Controller
 
             $attendancesQuery = \DB::query()->fromSub($unionQuery, 'attendances_union');
 
-            return datatables()->eloquent($attendancesQuery)
+            return datatables()->query($attendancesQuery)
                 ->editColumn('name', fn($row) => $row->name)
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
