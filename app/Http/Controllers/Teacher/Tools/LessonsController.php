@@ -145,72 +145,64 @@ class LessonsController extends Controller
         return view('teacher.tools.lessons.compensatories', compact('lesson', 'students'));
     }
 
-public function attendances(Request $request, $uuid)
-{
-    $lesson = Lesson::with(['group:id,uuid,name,teacher_id,grade_id', 'group.teacher:id,uuid,name', 'group.grade:id,name'])
-        ->select('id', 'uuid', 'title', 'group_id', 'date')
-        ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-        ->uuid($uuid)->firstOrFail();
+    public function attendances(Request $request, $uuid)
+    {
+        $lesson = Lesson::with(['group:id,uuid,name,teacher_id,grade_id', 'group.teacher:id,uuid,name', 'group.grade:id,name'])
+            ->select('id', 'uuid', 'title', 'group_id', 'date')
+            ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->uuid($uuid)->firstOrFail();
 
-    if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $lesson->group_id, $lesson->group->grade_id, true)) {
-        abort(404);
-    }
-
-    $originalAttendancesQuery = Student::query()
-        ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
-        ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
-        ->join('student_group', 'students.id', '=', 'student_group.student_id')
-        ->leftJoin('attendances', function ($join) use ($lesson) {
-            $join->on('students.id', '=', 'attendances.student_id')
-                ->where('attendances.teacher_id', '=', $this->teacherId)
-                ->where('attendances.lesson_id', '=', $lesson->id)
-                ->where('attendances.date', '=', $lesson->date);
-        })
-        ->where('student_teacher.teacher_id', $this->teacherId)
-        ->where('students.grade_id', $lesson->group->grade_id)
-        ->where('student_group.group_id', $lesson->group_id)
-        ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
-        ->where(function ($query) use ($lesson) {
-            $query->whereNull('student_group.ended_at')
-                ->orWhereRaw('DATE(student_group.ended_at) >= ?', [$lesson->date]);
-        });
-
-    $compensatoryAttendancesQuery = Student::query()
-        ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
-        ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
-        ->join('compensatories', 'students.id', '=', 'compensatories.student_id')
-        ->leftJoin('attendances', function ($join) use ($lesson) {
-            $join->on('students.id', '=', 'attendances.student_id')
-                ->where('attendances.teacher_id', '=', $this->teacherId)
-                ->where('attendances.lesson_id', '=', $lesson->id)
-                ->where('attendances.date', '=', $lesson->date)
-                ->where('attendances.is_compensatory', 1);
-        })
-        ->where('student_teacher.teacher_id', $this->teacherId)
-        ->where('students.grade_id', $lesson->group->grade_id)
-        ->where('compensatories.makeup_lesson_id', $lesson->id)
-        ->where('compensatories.status', 2);
-
-    if ($request->ajax()) {
-        // Apply search filter to both queries before union
-        if ($search = $request->get('search')['value'] ?? null) {
-            $originalAttendancesQuery->whereRaw("CONCAT(students.name, ' ', COALESCE(students.phone, '')) LIKE ?", ["%{$search}%"]);
-            $compensatoryAttendancesQuery->whereRaw("CONCAT(students.name, ' ', COALESCE(students.phone, '')) LIKE ?", ["%{$search}%"]);
+        if ($validationResult = $this->validateTeacherGradeAndGroups($this->teacherId, $lesson->group_id, $lesson->group->grade_id, true)) {
+            abort(404);
         }
+
+        $originalAttendancesQuery = Student::query()
+            ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
+            ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
+            ->join('student_group', 'students.id', '=', 'student_group.student_id')
+            ->leftJoin('attendances', function ($join) use ($lesson) {
+                $join->on('students.id', '=', 'attendances.student_id')
+                    ->where('attendances.teacher_id', '=', $this->teacherId)
+                    ->where('attendances.lesson_id', '=', $lesson->id)
+                    ->where('attendances.date', '=', $lesson->date);
+            })
+            ->where('student_teacher.teacher_id', $this->teacherId)
+            ->where('students.grade_id', $lesson->group->grade_id)
+            ->where('student_group.group_id', $lesson->group_id)
+            ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
+            ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
+
+        $compensatoryAttendancesQuery = Student::query()
+            ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
+            ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
+            ->join('compensatories', 'students.id', '=', 'compensatories.student_id')
+            ->leftJoin('attendances', function ($join) use ($lesson) {
+                $join->on('students.id', '=', 'attendances.student_id')
+                    ->where('attendances.teacher_id', '=', $this->teacherId)
+                    ->where('attendances.lesson_id', '=', $lesson->id)
+                    ->where('attendances.date', '=', $lesson->date)
+                    ->where('attendances.is_compensatory', 1);
+            })
+            ->where('student_teacher.teacher_id', $this->teacherId)
+            ->where('students.grade_id', $lesson->group->grade_id)
+            ->where('compensatories.makeup_lesson_id', $lesson->id)
+            ->where('compensatories.status', 2);
 
         $attendancesQuery = $originalAttendancesQuery->union($compensatoryAttendancesQuery);
 
-        return datatables()->of($attendancesQuery->get())
-            ->editColumn('name', fn($row) => $row->name)
-            ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
-            ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
-            ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-            ->rawColumns(['selectbox', 'type', 'note', 'actions'])
-            ->make(true);
+        if ($request->ajax()) {
+            return datatables()->eloquent($attendancesQuery)
+                ->editColumn('name', fn($row) => $row->name)
+                ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
+                ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
+                ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
+                ->rawColumns(['selectbox', 'type', 'note', 'actions'])
+                ->make(true);
+        }
+
+        return view('teacher.tools.lessons.attendances', compact('lesson'));
     }
 
-    return view('teacher.tools.lessons.attendances', compact('lesson'));
-}
     public function reports(Request $request, $uuid)
     {
         $lesson = Lesson::with(['group:id,uuid,name,grade_id', 'group.grade:id,name'])
