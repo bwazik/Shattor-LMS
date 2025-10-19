@@ -196,8 +196,10 @@ class LessonsController extends Controller
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->filterColumn('name', function ($query, $keyword) {
-                    $query->whereRaw("CONCAT(students.name, ' ', COALESCE(students.phone, '')) LIKE ?", ["%{$keyword}%"]);
+                ->filter(function ($query) use ($request) {
+                    if ($search = $request->get('search')['value'] ?? null) {
+                        $query->whereRaw("(CONCAT(students.name, ' ', COALESCE(students.phone, '')) LIKE ?)", ["%{$search}%"]);
+                    }
                 })
                 ->rawColumns(['selectbox', 'type', 'note', 'actions'])
                 ->make(true);
