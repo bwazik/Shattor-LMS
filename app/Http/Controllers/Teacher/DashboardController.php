@@ -21,7 +21,7 @@ class DashboardController extends Controller
             ->select('id', 'uuid', 'title', 'group_id', 'date', 'time', 'status')
             ->whereDate('date', today())
             ->whereHas('group', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->orderBy('date');
+            ->orderBy('time');
 
         if ($request->ajax()) {
             return datatables()->eloquent($lessonsQuery)

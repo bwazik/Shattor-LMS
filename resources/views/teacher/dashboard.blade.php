@@ -13,7 +13,6 @@
         <th>{{ trans('main.title') }}</th>
         <th>{{ trans('main.attendance') }}</th>
         <th>{{ trans('main.group') }}</th>
-        <th>{{ trans('main.time') }}</th>
         <th>{{ trans('main.status') }}</th>
         <th>{{ trans('main.actions') }}</th>
     </x-datatable>
@@ -44,12 +43,6 @@
                 {
                     data: 'group_id',
                     name: 'group_id'
-                },
-                {
-                    data: 'time',
-                    name: 'time',
-                    orderable: false,
-                    searchable: false
                 },
                 {
                     data: 'status',

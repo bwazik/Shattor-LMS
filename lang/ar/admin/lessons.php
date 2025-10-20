@@ -31,5 +31,5 @@ return [
     'compensatoryStudents' => 'طلاب التعويضات (من مجاميع تانيه)',
     'unrecordedStudents' => 'الطلاب الغير مسجلين',
     'lessonsChart' => 'إحصائيات آخر 5 حصص لنفس المجموعة',
-    'todaysLessons' => 'حصص اليوم',
+    'todayLessons' => 'حصص اليوم',
 ];
