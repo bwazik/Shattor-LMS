@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\Cache;
 
 class HelpCenterController extends Controller
 {
+    protected $studentId;
+
+    public function __construct()
+    {
+        $this->studentId = auth()->guard('student')->user()->id;
+    }
+
     public function index()
     {
         $categories = Cache::remember('student_help_center_categories', 1440, function () {
@@ -47,6 +54,18 @@ class HelpCenterController extends Controller
             ->orderBy('published_at', 'desc')
             ->get();
 
+        $this->incrementViews($article->id);
+
         return view('student.misc.help-center.show', compact('article', 'relatedArticles'));
+    }
+
+    protected function incrementViews($articleId)
+    {
+        $cacheKey = "article_view_{$articleId}_student_{$this->studentId}";
+
+        if (!Cache::has($cacheKey)) {
+            Article::where('id', $articleId)->increment('views');
+            Cache::put($cacheKey, true, now()->addMinutes(1440));
+        }
     }
 }
