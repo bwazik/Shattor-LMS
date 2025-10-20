@@ -22,7 +22,7 @@ class TeachersRequest extends FormRequest
             'password' => $isUpdate ? 'nullable|min:8|max:50' : 'required|min:8|max:50',
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
-            'phone' => ['required','numeric','regex:/^(01)[0-9]{9}$/',new UniqueFieldAcrossModels('phone', $this->id)],
+            'phone' => 'required|numeric|regex:/^(01)[0-9]{9}$/|unique:teachers,phone,' . $this->id,
             'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', $this->id)],
             'subject_id' => 'required|integer|exists:subjects,id',
             'plan_id' => 'nullable|integer|exists:plans,id',
