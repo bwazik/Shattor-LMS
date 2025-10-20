@@ -5,6 +5,8 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 use App\Http\Controllers\Api\DataFetchController;
 
+use App\Http\Controllers\Teacher\DashboardController;
+
 use App\Http\Controllers\Teacher\Platform\PlansController;
 
 use App\Http\Controllers\Teacher\Tools\GradesController;
@@ -109,8 +111,7 @@ Route::group(
             # End Unsubscriped Routes
 
             Route::middleware('subscribed')->group(function () {
-                Route::get('/dashboard', function () {
-                    return view('teacher.dashboard'); })->name('dashboard');
+                Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
                 # Api Responses
                 Route::prefix('fetch')->controller(DataFetchController::class)->name('fetch.')->group(function () {
