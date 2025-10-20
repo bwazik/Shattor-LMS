@@ -17,7 +17,7 @@ class StudentsRequest extends FormRequest
     public function rules()
     {
         $isUpdate = $this->id ? true : false;
-        dd($isUpdate);
+        dd($this->id);
         $rules = [
             'username' => ['required', 'min:5', 'max:20', new UniqueFieldAcrossModels('username', $this->id)],
             'password' => $isUpdate ? 'nullable|min:8|max:50' : 'required|min:8|max:50',
