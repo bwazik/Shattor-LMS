@@ -31,4 +31,5 @@ return [
     'compensatoryStudents' => 'Compensated Students (from other groups)',
     'unrecordedStudents' => 'Unrecorded Students',
     'lessonsChart' => 'Last 5 lesson stats for the same group',
+    'todaysLessons' => 'Today\'s Lessons',
 ];

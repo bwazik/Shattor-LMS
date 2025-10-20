@@ -7,7 +7,7 @@
 @section('title', pageTitle('layouts/sidebar.dashboard'))
 
 @section('content')
-    <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/lessons.lessons')]) }}">
+    <x-datatable datatableTitle="{{ trans('admin/lessons.todayLessons') }}">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.title') }}</th>
@@ -21,7 +21,7 @@
 
 @section('page-js')
     <script>
-        initializeDataTable('#datatable', "{{ route('teacher.lessons.index') }}", [2, 3, 4, 5, 6, 7],
+        initializeDataTable('#datatable', "{{ route('teacher.dashboard') }}", [2, 3, 4, 5, 6, 7],
             [{
                     data: "",
                     orderable: false,
