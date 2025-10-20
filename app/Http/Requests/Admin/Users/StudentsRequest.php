@@ -6,7 +6,6 @@ use App\Models\Group;
 use App\Models\Teacher;
 use App\Rules\UniqueFieldAcrossModels;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StudentsRequest extends FormRequest
 {
@@ -20,12 +19,12 @@ class StudentsRequest extends FormRequest
         $isUpdate = $this->id ? true : false;
 
         $rules = [
-            'username' => ['required', 'min:5', 'max:20', new UniqueFieldAcrossModels('username', $this->id)],
+            'username' => ['required','min:5','max:20',new UniqueFieldAcrossModels('username', $this->id)],
             'password' => $isUpdate ? 'nullable|min:8|max:50' : 'required|min:8|max:50',
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
-            'phone' => ['required', 'numeric', 'regex:/^(01)[0-9]{9}$/', Rule::unique('students')->ignore($this->id)],
-            'email' => ['nullable', 'email', 'max:100', new UniqueFieldAcrossModels('email', $this->id)],
+            'phone' => ['required', 'numeric', 'regex:/^(01)[0-9]{9}$/',new UniqueFieldAcrossModels('phone', $this->id)],
+            'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', $this->id)],
             'birth_date' => 'nullable|date|date_format:Y-m-d',
             'gender' => 'required|integer|in:1,2',
             'grade_id' => 'required|integer|exists:grades,id',

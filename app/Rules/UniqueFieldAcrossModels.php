@@ -57,10 +57,10 @@ class UniqueFieldAcrossModels implements ValidationRule
                 }
 
                 // If the field value exists, fail validation
-                if ($query->exists()) {
-                    $fail($this->errorMessage);
-                    return; // Stop further checks once a match is found
-                }
+                // if ($query->exists()) {
+                //     $fail($this->errorMessage);
+                //     return; // Stop further checks once a match is found
+                // }
             }
         }
     }
