@@ -36,7 +36,7 @@
                         </ol>
                     </nav>
                     <h4 class="mb-2">{{ $article->title }}</h4>
-                    <p>{{ trans('main.updated_at') }}: {{ $article->updated_at->diffForHumans() }} - {{ trans('main.views') }}: {{ $article->views }}</p>
+                    <p>{{ trans('main.updated_at') }}: {{ $article->updated_at->diffForHumans() }} - {{ trans('main.views') }}: {{ $article->views ? '0' }}</p>
                     <hr class="my-6" />
                     @forelse ($article->articleContents ?? [] as $content)
                         @if ($content->type === 1)
