@@ -23,7 +23,7 @@ class StudentsRequest extends FormRequest
             'password' => $isUpdate ? 'nullable|min:8|max:50' : 'required|min:8|max:50',
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
-            'phone' => ['required', 'numeric', 'regex:/^(01)[0-9]{9}$/',new UniqueFieldAcrossModels('phone', $this->id)],
+            'phone' => $isUpdate ? 'required|numeric|regex:/^(01)[0-9]{9}$/' : 'required|numeric|regex:/^(01)[0-9]{9}$/|unique:students,phone',
             'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', $this->id)],
             'birth_date' => 'nullable|date|date_format:Y-m-d',
             'gender' => 'required|integer|in:1,2',
