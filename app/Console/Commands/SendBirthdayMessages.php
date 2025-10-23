@@ -27,7 +27,7 @@ class SendBirthdayMessages extends Command
                 $student->phone,
                 'birthday_message',
                 [
-                    'name' => $student->name,
+                    'name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
                 ], true
             );
         }

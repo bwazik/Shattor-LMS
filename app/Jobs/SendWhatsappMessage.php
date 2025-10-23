@@ -104,7 +104,7 @@ class SendWhatsappMessage implements ShouldQueue
     {
         switch ($template) {
             case 'new_device_login':
-                return "{$data['name']}, عامل/ه ايه! 👋\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
+                return "{$data['name']}, عامل/ه ايه! 👋🏻\n\nفي جهاز جديد دخل على حسابك في منصة شطُّور يوم "
                     . "{$data['date']} الساعة {$data['time']}.";
             case 'student_credentials':
                 $studentName = $data['student_name'];
@@ -172,7 +172,7 @@ class SendWhatsappMessage implements ShouldQueue
                     //     return $aiMessage;
                     // }
 
-                    return "🎉 كل سنة وانت طيب يا {$data['name']} 🎂\n"
+                    return "🎉 كل سنة وانت/ي طيب/ه يا {$data['name']} 🎂\n"
                         . "عقبال مليون سنة سعادة ونجاح 🙌✨";
             default:
                 return "إشعار: رسالة افتراضية";
