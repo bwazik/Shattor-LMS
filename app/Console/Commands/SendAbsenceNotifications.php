@@ -33,6 +33,9 @@ class SendAbsenceNotifications extends Command
             ->where('date', $date)
             ->where('status', 2) // Absent
             ->whereHas('student.parent') // Only students with parents
+            ->whereHas('group.students', function ($query) {
+                $query->whereColumn('students.id', 'attendances.student_id');
+            })
             ->get()
             ->groupBy('student_id');
 
