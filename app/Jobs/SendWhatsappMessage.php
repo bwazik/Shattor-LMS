@@ -178,7 +178,7 @@ class SendWhatsappMessage implements ShouldQueue
                 $lessonWord = $data['lesson_count'] == 1 ? 'حصة' : ($data['lesson_count'] == 2 ? 'حصتين' : "{$data['lesson_count']} حصص");
 
                 return "السلام عليكم 👋🏻\n\n"
-                    . "نحب نبلغ حضرتك إن الطالب/ة {$data['student_name']} كان/ت غائب/ة اليوم {$data['date']} عن {$lessonWord} عند مستر {$data['teacher_name']}:\n\n"
+                    . "نحب نبلغ حضرتك إن الطالب/ة {$data['student_name']} كان/ت غائب/ة اليوم عن {$lessonWord} عند {$data['teacher_name']}:\n\n"
                     . "{$data['lessons_list']}\n\n"
                     . "برجاء المتابعة مع الطالب/ة.\n"
                     . "شكراً لتعاونكم 🙏";
