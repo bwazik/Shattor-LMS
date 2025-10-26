@@ -158,22 +158,30 @@ class SendWhatsappMessage implements ShouldQueue
             case 'import_main_report':
                 return $data['message'];
             case 'birthday_message':
-                    // $geminiService = app(GeminiService::class);
+                // $geminiService = app(GeminiService::class);
 
-                    // $prompt = str_replace(
-                    //     ['{name}'],
-                    //     [$data['name']],
-                    //     config('prompts.birthday_message')
-                    // );
+                // $prompt = str_replace(
+                //     ['{name}'],
+                //     [$data['name']],
+                //     config('prompts.birthday_message')
+                // );
 
-                    // $aiMessage = $geminiService->generateContent($prompt);
+                // $aiMessage = $geminiService->generateContent($prompt);
 
-                    // if (!empty($aiMessage)) {
-                    //     return $aiMessage;
-                    // }
+                // if (!empty($aiMessage)) {
+                //     return $aiMessage;
+                // }
 
-                    return "🎉 كل سنة وانت/ي طيب/ه يا {$data['name']} 🎂\n"
-                        . "عقبال مليون سنة سعادة ونجاح 🙌✨";
+                return "🎉 كل سنة وانت/ي طيب/ه يا {$data['name']} 🎂\n"
+                    . "عقبال مليون سنة سعادة ونجاح 🙌✨";
+            case 'student_absence_notification':
+                $lessonWord = $data['lesson_count'] == 1 ? 'حصة' : ($data['lesson_count'] == 2 ? 'حصتين' : "{$data['lesson_count']} حصص");
+
+                return "السلام عليكم 👋🏻\n\n"
+                    . "نحب نبلغ حضرتك إن الطالب/ة {$data['student_name']} كان/ت غائب/ة اليوم {$data['date']} عن {$lessonWord} عند مستر {$data['teacher_name']}:\n\n"
+                    . "{$data['lessons_list']}\n\n"
+                    . "برجاء المتابعة مع الطالب/ة.\n"
+                    . "شكراً لتعاونكم 🙏";
             default:
                 return "إشعار: رسالة افتراضية";
         }
