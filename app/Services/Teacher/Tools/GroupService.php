@@ -213,7 +213,11 @@ class GroupService
             // Send import report to teacher
             $this->sendImportReport($report, $teacherName);
 
-            if (!empty($credentials)) {
+            // Send credentials only if NOT using phone mode AND credentials exist
+            $usePhoneMode = config('import.use_phone_as_credentials', true);
+            $sendWhatsApp = config('import.send_credentials_via_whatsapp', false);
+
+            if (!$usePhoneMode && $sendWhatsApp && !empty($credentials)) {
                 $this->whatsappService->sendBulkMessages(
                     $credentials,
                     'student_credentials',

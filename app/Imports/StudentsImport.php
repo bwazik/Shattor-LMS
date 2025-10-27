@@ -22,6 +22,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
     protected $studentsData = [];
     protected $parentCache = [];
     protected $studentPhones = [];
+    protected $usePhoneAsCredentials;
     protected $importReport = [
         'total_rows' => 0,
         'skipped_invalid' => [],
@@ -31,6 +32,7 @@ class StudentsImport implements ToCollection, WithHeadingRow
         'new_parents_created' => 0,
         'new_students_created' => 0,
         'critical_errors' => [],
+        'credentials_mode' => '',
     ];
 
     public function __construct($groupId, $gradeId, $teacherId)
@@ -38,6 +40,8 @@ class StudentsImport implements ToCollection, WithHeadingRow
         $this->groupId = $groupId;
         $this->gradeId = $gradeId;
         $this->teacherId = $teacherId;
+        $this->usePhoneAsCredentials = config('import.use_phone_as_credentials', true);
+        $this->importReport['credentials_mode'] = $this->usePhoneAsCredentials ? 'phone' : 'random';
     }
 
     public function collection(Collection $rows)
@@ -109,20 +113,31 @@ class StudentsImport implements ToCollection, WithHeadingRow
             }
             $this->studentPhones[] = $studentPhone;
 
-            // Generate usernames and passwords
-            $studentUsername = 'Shattor' . $this->generateRandomString(8) . 's';
-            $parentUsername = 'Shattor' . $this->generateRandomString(8) . 'p';
-            $studentPassword = $this->generateNumericPassword(12);
-            $parentPassword = $this->generateNumericPassword(12);
+            // Generate credentials based on config
+            if ($this->usePhoneAsCredentials) {
+                // Simple mode: use phone as both username and password
+                $studentUsername = $studentPhone;
+                $studentPassword = $studentPhone;
+                $parentUsername = $parentPhone;
+                $parentPassword = $parentPhone;
+            } else {
+                // Secure mode: generate random credentials
+                $studentUsername = 'Shattor' . $this->generateRandomString(8) . 's';
+                $parentUsername = 'Shattor' . $this->generateRandomString(8) . 'p';
+                $studentPassword = $this->generateNumericPassword(12);
+                $parentPassword = $this->generateNumericPassword(12);
+            }
 
-            // Store credentials
-            $this->credentials[] = [
-                'student_id' => null, // Updated after student creation
-                'student_phone' => $studentPhone,
-                'student_name' => $studentName,
-                'student_username' => $studentUsername,
-                'student_password' => $studentPassword,
-            ];
+            // Store credentials (only needed if NOT using phone mode OR for records)
+            if (!$this->usePhoneAsCredentials) {
+                $this->credentials[] = [
+                    'student_id' => null, // Updated after student creation
+                    'student_phone' => $studentPhone,
+                    'student_name' => $studentName,
+                    'student_username' => $studentUsername,
+                    'student_password' => $studentPassword,
+                ];
+            }
 
             // Cache and collect parent data
             if (!isset($this->parentCache[$parentPhone])) {
@@ -223,10 +238,16 @@ class StudentsImport implements ToCollection, WithHeadingRow
                     'index' => $index,
                     'student_phone' => $studentData['phone'],
                 ]);
-                unset($this->credentials[$index]);
+                if (!$this->usePhoneAsCredentials) {
+                    unset($this->credentials[$index]);
+                }
                 continue;
             }
-            $this->credentials[$index]['student_id'] = $student->id;
+
+            if (!$this->usePhoneAsCredentials) {
+                $this->credentials[$index]['student_id'] = $student->id;
+            }
+
             $studentTeacherData[] = [
                 'student_id' => $student->id,
                 'teacher_id' => $this->teacherId,
@@ -274,8 +295,10 @@ class StudentsImport implements ToCollection, WithHeadingRow
         }
 
         // Reindex credentials
-        $this->credentials = array_values($this->credentials);
-
+        if (!$this->usePhoneAsCredentials) {
+            $this->credentials = array_values($this->credentials);
+        }
+        
         // Batch insert pivot tables
         if (!empty($studentTeacherData)) {
             Log::channel('excel-import')->info('Inserting student_teacher records', ['count' => count($studentTeacherData)]);
