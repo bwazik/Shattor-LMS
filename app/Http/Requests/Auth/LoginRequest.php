@@ -86,6 +86,46 @@ class LoginRequest extends FormRequest
         // Create device fingerprint using device_id + user_agent
         $deviceFingerprint = hash('sha256', $deviceId . '|' . request()->userAgent());
 
+        if ($guard === 'student') {
+            // Enforce one-account-per-device for students in simple mode
+            $existingDevice = DB::table('user_devices')
+                ->where('device_id', $deviceId)
+                ->where('guard', 'student')
+                ->where('user_id', '!=', $user->id)  // Check for different user
+                ->first();
+
+            if ($existingDevice) {
+                Auth::guard($guard)->logout();
+                Log::warning('Device attempted login to multiple student accounts', [
+                    'username' => $this->input('username'),
+                    'user_id' => $user->id,
+                    'user_phone' => $user->phone,
+                    'device_id' => $deviceId,
+                    'existing_user_id' => $existingDevice->user_id,
+                    'ip' => request()->ip(),
+                ]);
+
+                // Notify admin
+                Carbon::setLocale('ar');
+                $this->whatsappService->sendMessage(
+                    '01098617164',
+                    'deviceAlreadyUsed',
+                    [
+                        'username' => $this->input('username'),
+                        'device_id' => $deviceId,
+                        'ip' => request()->ip(),
+                        'date' => now()->translatedFormat('l j F Y'),
+                        'time' => now()->translatedFormat('h:i A'),
+                    ],
+                    true
+                );
+
+                throw ValidationException::withMessages([
+                    'username' => trans('auth.deviceAlreadyUsed'),  // "This device is already tied to another account."
+                ]);
+            }
+        }
+
         $deviceCount = DB::table('user_devices')
             ->where('user_id', $user->id)
             ->where('guard', $guard)
@@ -163,17 +203,17 @@ class LoginRequest extends FormRequest
         //     );
         // }
 
-        // if (!empty($user->phone)) {
-        //     $name = $guard === 'teacher' ? "مستر {$user->name}" : $user->name;
+        if (!empty($user->phone)) {
+            $name = $guard === 'teacher' ? "مستر {$user->name}" : $user->name;
 
-        //     Carbon::setLocale('ar');
+            Carbon::setLocale('ar');
 
-        //     $this->whatsappService->sendMessage('01098617164', 'login_notification', [
-        //         'name' => $name,
-        //         'date' => now()->translatedFormat('l j F Y'),
-        //         'time' => now()->translatedFormat('h:i A'),
-        //     ], true);
-        // }
+            $this->whatsappService->sendMessage('01098617164', 'login_notification', [
+                'name' => $name,
+                'date' => now()->translatedFormat('l j F Y'),
+                'time' => now()->translatedFormat('h:i A'),
+            ], true);
+        }
 
         // Update or add device
         DB::table('user_devices')->updateOrInsert(

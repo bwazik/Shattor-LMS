@@ -13,6 +13,7 @@ class WhatsappService
         'new_device_login',
         'login_notification',
         'security_code_updated',
+        'multiple_account_attempt',
     ];
 
     public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)

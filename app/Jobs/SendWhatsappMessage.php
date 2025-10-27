@@ -182,6 +182,12 @@ class SendWhatsappMessage implements ShouldQueue
                     . "{$data['lessons_list']}\n\n"
                     . "برجاء المتابعة مع الطالب/ة.\n"
                     . "شكراً لتعاونكم 🙏";
+            case 'multiple_account_attempt':
+                return "محاولة تسجيل دخول لحسابات متعددة:
+                    - اسم المستخدم: {$data['username']}
+                    - ايدي الجهاز: {$data['device_id']}
+                    - عنوان الـ IP: {$data['ip']}
+                    - التاريخ: يوم {$data['date']} الساعة {$data['time']}";
             default:
                 return "إشعار: رسالة افتراضية";
         }
