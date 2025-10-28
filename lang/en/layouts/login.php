@@ -1,6 +1,7 @@
 <?php
 return [
     'title' => 'Login',
+    'register_title' => 'Create an Account',
     'welcome' => 'Welcome to Shattor Platform! ☝️',
     'sign_in_prompt' => 'Sign in to access the platform (try not to forget your password).',
     'username' => 'Username',
