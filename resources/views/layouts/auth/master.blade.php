@@ -33,7 +33,7 @@
                         <p class="text-center mb-5">
                             @if (isActiveRoute('register'))
                                 <span>{{ trans('layouts/login.have_an_account') }}</span>
-                                <a href="{{ route('login') }}">
+                                <a href="{{ route('login.choose') }}">
                                     <span>{{ trans('layouts/login.login') }}</span>
                                 </a>
                             @else
