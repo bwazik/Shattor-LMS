@@ -19,5 +19,5 @@ return [
     'have_an_account' => 'عندك حساب قبل كدا',
     'login' => 'تسجيل الدخول',
     'dont_have_an_account' => 'لسا جديد عالمنصة؟',
-    'register' => 'التسجيل',
+    'register' => 'اعمل حساب جديد',
 ];

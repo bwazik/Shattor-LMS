@@ -27,12 +27,11 @@ Route::group(
             return view('auth.choose');
         })->name('login.choose');
 
-        Route::post('register', [RegisteredUserController::class, 'store']);
 
-        Route::get('/register', function () {
-            return view('auth.register');
-        })->name('register');
-
+        Route::controller(RegisteredUserController::class)->group(function () {
+            Route::get('register', 'create')->name('register');
+            Route::post('register', 'store');
+        })->middleware('throttle:5');
     }
 );
 

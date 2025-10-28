@@ -19,5 +19,5 @@ return [
     'have_an_account' => 'Already have an account?',
     'login' => 'Login',
     'dont_have_an_account' => 'New to the platform?',
-    'register' => 'Register',
+    'register' => 'Create an Account',
 ];
