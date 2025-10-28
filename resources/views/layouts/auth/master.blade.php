@@ -30,7 +30,7 @@
                     <div class="card-body mt-1">
                         @yield('content')
 
-                        <p class="text-center mb-5">
+                        {{-- <p class="text-center mb-5">
                             @if (isActiveRoute('register'))
                                 <span>{{ trans('layouts/login.have_an_account') }}</span>
                                 <a href="{{ route('login.choose') }}">
@@ -42,7 +42,7 @@
                                     <span>{{ trans('layouts/login.register') }}</span>
                                 </a>
                             @endif
-                        </p>
+                        </p> --}}
 
                         <div class="divider my-5">
                             <div class="divider-text">{{ trans('layouts/login.or_divider_text') }}</div>
