@@ -11,9 +11,9 @@
     <p class="mb-5">{{ trans('layouts/login.sign_up_prompt') }}</p>
     <form id="register-form" class="mb-5" method="POST" action="{{ route('register') }}">
         @csrf
-        <x-basic-input context="modal" type="text" name="name_ar" label="{{ trans('main.realName_ar') }}"
+        <x-basic-input context="offcanvas" type="text" name="name_ar" label="{{ trans('main.realName_ar') }}"
             placeholder="{{ trans('admin/students.placeholders.name_ar') }}" required />
-        <x-basic-input context="modal" type="number" name="phone" label="{{ trans('main.phone') }}"
+        <x-basic-input context="offcanvas" type="number" name="phone" label="{{ trans('main.phone') }}"
             placeholder="{{ trans('admin/students.placeholders.phone') }}" required />
         <x-basic-input context="offcanvas" type="text" name="username" label="{{ trans('main.username') }}"
             placeholder="{{ trans('admin/students.placeholders.username') }}" required />
