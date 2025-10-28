@@ -28,10 +28,10 @@ Route::group(
         })->name('login.choose');
 
 
-        // Route::controller(RegisteredUserController::class)->group(function () {
-        //     Route::get('register', 'create')->name('register');
-        //     Route::post('register', 'store');
-        // })->middleware('throttle:5');
+        Route::controller(RegisteredUserController::class)->group(function () {
+            Route::get('register', 'create')->name('register');
+            Route::post('register', 'store');
+        })->middleware('throttle:5');
     }
 );
 

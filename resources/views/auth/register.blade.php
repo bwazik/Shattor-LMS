@@ -1,52 +1,32 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+@extends('layouts.auth.master')
+
+@section('page-css')
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/pages/page-auth.css') }}" />
+@endsection
+
+@section('title', pageTitle(trans('layouts/register.register_title')))
+
+@section('content')
+    <h4 class="mb-2">{{ trans('layouts/login.welcome') }}</h4>
+    <p class="mb-5">{{ trans('layouts/login.sign_up_prompt') }}</p>
+    <form id="registerForm" class="mb-5" method="POST" action="{{ route('register') }}">
         @csrf
-
-        <!-- Name -->
-        <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        <div class="form-floating form-floating-outline mb-5">
+            <input type="text" class="form-control @error('username') is-invalid @enderror" id="username"
+                name="username" placeholder="{{ trans('layouts/login.placeholders.username') }}" autofocus
+                required />
+            <label for="username">{{ trans('layouts/login.username') }}</label>
+            @error('username')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
-
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('login') }}">
-                {{ __('Already registered?') }}
-            </a>
-
-            <x-primary-button class="ms-4">
-                {{ __('Register') }}
-            </x-primary-button>
+        <x-basic-input context="offcanvas" type="password" name="password" label="{{ trans('main.password') }}" required/>
+        <div class="mb-5">
+            <button class="btn btn-primary d-grid w-100" type="submit">{{ trans('layouts/login.sign_in') }}</button>
         </div>
     </form>
-</x-guest-layout>
+@endsection
+
+@section('page-js')
+    <script src="{{ asset('assets/js/pages-auth.js') }}"></script>
+@endsection
