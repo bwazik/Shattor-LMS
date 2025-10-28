@@ -25,7 +25,7 @@ Route::group(
 
         Route::get('/login', function () {
             return view('auth.choose');
-        });
+        })->name('login.choose');
 
         Route::post('register', [RegisteredUserController::class, 'store']);
 
