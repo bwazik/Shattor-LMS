@@ -33,12 +33,12 @@
                         <p class="text-center mb-5">
                             @if (isActiveRoute('register'))
                                 <span>{{ trans('layouts/login.have_an_account') }}</span>
-                                <a href="auth-register-basic.html">
+                                <a href="{{ route('login') }}">
                                     <span>{{ trans('layouts/login.login') }}</span>
                                 </a>
                             @else
                                 <span>{{ trans('layouts/login.dont_have_an_account') }}</span>
-                                <a href="auth-register-basic.html">
+                                <a href="{{ route('register') }}">
                                     <span>{{ trans('layouts/login.register') }}</span>
                                 </a>
                             @endif
