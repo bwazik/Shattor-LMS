@@ -16,4 +16,8 @@ return [
     'back_to_landing' => 'Back to Home',
     'login_as_role' => ':Role Login',
     'whatsapp' => 'Contact us on whatsapp!',
+    'have_an_account' => 'Already have an account?',
+    'login' => 'Login',
+    'dont_have_an_account' => 'New to the platform?',
+    'register' => 'Register',
 ];

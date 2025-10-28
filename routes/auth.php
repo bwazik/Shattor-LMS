@@ -15,19 +15,28 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 Route::group(
     [
         'prefix' => LaravelLocalization::setLocale(),
-        'middleware' => [ 'localeSessionRedirect', 'localizationRedirect', 'localeViewPath', 'guest:web,teacher,assistant,student,parent']
-    ], function(){
-        Route::controller(AuthenticatedSessionController::class)->group(function() {
+        'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath', 'guest:web,teacher,assistant,student,parent']
+    ],
+    function () {
+        Route::controller(AuthenticatedSessionController::class)->group(function () {
             Route::get('{guard}/login', 'create')->name('login');
             Route::post('{guard}/login', 'store');
         })->middleware('throttle:login');
 
         Route::get('/login', function () {
             return view('auth.choose');
-        })->name('login.choose');
-});
+        });
 
-Route::controller(AuthenticatedSessionController::class)->group(function() {
+        Route::post('register', [RegisteredUserController::class, 'store']);
+
+        Route::get('/register', function () {
+            return view('auth.register');
+        })->name('register');
+
+    }
+);
+
+Route::controller(AuthenticatedSessionController::class)->group(function () {
     Route::post('{guard}/logout', 'destroy')
         ->middleware(['auth:web,teacher,assistant,student,parent'])
         ->where('guard', 'web|teacher|assistant|student|parent')
@@ -51,7 +60,7 @@ Route::controller(AuthenticatedSessionController::class)->group(function() {
 
 //     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
-    // Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+// Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
 
 // });

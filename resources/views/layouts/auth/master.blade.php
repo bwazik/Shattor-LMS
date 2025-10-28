@@ -30,6 +30,20 @@
                     <div class="card-body mt-1">
                         @yield('content')
 
+                        <p class="text-center mb-5">
+                            @if (isActiveRoute('register'))
+                                <span>{{ trans('layouts/login.have_an_account') }}</span>
+                                <a href="auth-register-basic.html">
+                                    <span>{{ trans('layouts/login.login') }}</span>
+                                </a>
+                            @else
+                                <span>{{ trans('layouts/login.dont_have_an_account') }}</span>
+                                <a href="auth-register-basic.html">
+                                    <span>{{ trans('layouts/login.register') }}</span>
+                                </a>
+                            @endif
+                        </p>
+
                         <div class="divider my-5">
                             <div class="divider-text">{{ trans('layouts/login.or_divider_text') }}</div>
                         </div>
@@ -58,7 +72,8 @@
                                 @if (App::getLocale() != $localeCode)
                                     <a href="{{ LaravelLocalization::getLocalizedURL($localeCode) }}"
                                         class="btn btn-sm btn-outline-secondary waves-effect waves-light"
-                                        data-bs-toggle="tooltip" data-bs-original-title="{{ trans('layouts/navbar.language') }}">
+                                        data-bs-toggle="tooltip"
+                                        data-bs-original-title="{{ trans('layouts/navbar.language') }}">
                                         <i class="ri-global-line me-1"></i>
                                         <span>{{ $properties['native'] }}</span>
                                     </a>
@@ -72,37 +87,29 @@
                         </div>
 
                         <div class="text-center text-muted mb-3">
-                            <small>{{ trans('layouts/footer.founderName') }} - {{ trans('layouts/footer.allRightsReserved') }}</small>
+                            <small>{{ trans('layouts/footer.founderName') }} -
+                                {{ trans('layouts/footer.allRightsReserved') }}</small>
                         </div>
 
                         {{-- Social Media Buttons --}}
                         <div class="d-flex justify-content-center align-items-center gap-2 mt-2">
                             <a href="https://www.instagram.com/bwazik/"
-                                class="btn btn-sm btn-outline-danger waves-effect waves-light"
-                                target="_blank"
-                                data-bs-toggle="tooltip"
-                                data-bs-original-title="Instagram">
+                                class="btn btn-sm btn-outline-danger waves-effect waves-light" target="_blank"
+                                data-bs-toggle="tooltip" data-bs-original-title="Instagram">
                                 <i class="ri-instagram-line"></i>
                             </a>
                             <a href="https://wa.me/+201098617164"
-                                class="btn btn-sm btn-outline-success waves-effect waves-light"
-                                target="_blank"
-                                data-bs-toggle="tooltip"
-                                data-bs-original-title="WhatsApp">
+                                class="btn btn-sm btn-outline-success waves-effect waves-light" target="_blank"
+                                data-bs-toggle="tooltip" data-bs-original-title="WhatsApp">
                                 <i class="ri-whatsapp-line"></i>
                             </a>
-                            <a href="https://github.com/bwazik"
-                                class="btn btn-sm btn-outline-dark waves-effect waves-light"
-                                target="_blank"
-                                data-bs-toggle="tooltip"
-                                data-bs-original-title="GitHub">
+                            <a href="https://github.com/bwazik" class="btn btn-sm btn-outline-dark waves-effect waves-light"
+                                target="_blank" data-bs-toggle="tooltip" data-bs-original-title="GitHub">
                                 <i class="ri-github-fill"></i>
                             </a>
                             <a href="https://www.linkedin.com/in/bazoka/"
-                                class="btn btn-sm btn-outline-primary waves-effect waves-light"
-                                target="_blank"
-                                data-bs-toggle="tooltip"
-                                data-bs-original-title="LinkedIn">
+                                class="btn btn-sm btn-outline-primary waves-effect waves-light" target="_blank"
+                                data-bs-toggle="tooltip" data-bs-original-title="LinkedIn">
                                 <i class="ri-linkedin-box-fill"></i>
                             </a>
                         </div>
