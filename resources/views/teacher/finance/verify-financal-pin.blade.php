@@ -43,16 +43,17 @@
 
     <script>
         const formId = $("#verify-pin-form");
-        const originalButtonContent = submitButton.html();
+        const submitButton2 = formId.find('button[type="submit"]');
+        const originalButtonContent = submitButton2.html();
 
         $(formId).on('submit', function(e) {
             e.preventDefault();
 
-            console.log(submitButton)
+            console.log(submitButton2)
 
-            submitButton.find('.waves-ripple').remove();
-            submitButton.prop('disabled', true);
-            submitButton.html(
+            submitButton2.find('.waves-ripple').remove();
+            submitButton2.prop('disabled', true);
+            submitButton2.html(
                 `<i class="ri-loader-4-line ri-spin ri-20px me-1"></i> {{ trans('main.processing') }}...`
             );
 
@@ -74,10 +75,10 @@
                     if (response.success) {
                         toastr.success(response.message)
                         window.location.href = response.redirect;
-                        resetButtonState(submitButton, originalButtonContent);
+                        resetButtonState(submitButton2, originalButtonContent);
                     } else {
                         toastr.error(response.error || '{{ trans('main.errorMessage') }}');
-                        resetButtonState(submitButton, originalButtonContent);
+                        resetButtonState(submitButton2, originalButtonContent);
                     }
                 },
                 error: function(xhr, status, error) {
@@ -97,23 +98,23 @@
                         toastr.error('{{ trans('main.errorMessage') }}');
                     }
 
-                    resetButtonState(submitButton, originalButtonContent);
+                    resetButtonState(submitButton2, originalButtonContent);
                 },
                 complete: function() {
-                    resetButtonState(submitButton, originalButtonContent);
+                    resetButtonState(submitButton2, originalButtonContent);
                 }
             });
         });
 
-        function resetButtonState(submitButton, originalButtonContent) {
+        function resetButtonState(submitButton2, originalButtonContent) {
             setTimeout(function() {
-                submitButton.prop('disabled', false);
-                submitButton.html(originalButtonContent);
-                submitButton.blur();
-                submitButton.find('.waves-ripple').remove();
+                submitButton2.prop('disabled', false);
+                submitButton2.html(originalButtonContent);
+                submitButton2.blur();
+                submitButton2.find('.waves-ripple').remove();
                 if (typeof Waves !== 'undefined') {
                     Waves.init();
-                    Waves.attach(submitButton[0]);
+                    Waves.attach(submitButton2[0]);
                 }
             }, 1500);
         }
