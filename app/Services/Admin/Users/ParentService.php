@@ -12,7 +12,7 @@ class ParentService
 {
     use PreventDeletionIfRelated, PublicValidatesTrait, DatabaseTransactionTrait;
 
-    protected $relationships = [''];
+    protected $relationships = [];
     protected $transModelKey = 'admin/parents.parents';
 
     public function getParentsForDatatable($parentsQuery)
