@@ -17,7 +17,7 @@
         <th>{{ trans('main.actions') }}</th>
     </x-datatable>
 
-    <x-datatable datatableTitle="الطلبة المكررين">
+    <x-datatable id="dublicated" datatableTitle="الطلبة المكررين">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.name') }}</th>
@@ -66,7 +66,7 @@
             ],
         );
 
-        initializeDataTable('#datatable', "{{ route('teacher.dublicatedStudents') }}", [1, 2, 3],
+        initializeDataTable('#dublicated', "{{ route('teacher.dublicatedStudents') }}", [1, 2, 3],
             [{
                     data: "",
                     orderable: false,
