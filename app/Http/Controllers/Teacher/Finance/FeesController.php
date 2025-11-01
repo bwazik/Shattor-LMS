@@ -141,19 +141,27 @@ class FeesController extends Controller
             ->whereNull('invoices.teacher_id')
             ->whereNull('invoices.subscription_id')
             ->where('invoices.fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query
-                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            ->where('invoices.status', 2) // Only paid invoices
+            ->whereHas(
+                'student',
+                fn($query) => $query
+                    ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                    ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
             )
-            ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
-            ->whereBetween('transactions.date', [$dateRange->first(), $dateRange->last() . ' 23:59:59'])
-            ->selectRaw('DATE(transactions.date) as date, COUNT(DISTINCT invoices.student_id) as count')
-            ->join('transactions', 'invoices.id', '=', 'transactions.invoice_id')
-            ->groupBy('date')
-            ->pluck('count', 'date')
+            ->join('transactions', function ($join) {
+                $join->on('invoices.id', '=', 'transactions.invoice_id')
+                    ->where('transactions.type', 2);
+            })
+            ->whereBetween('transactions.date', [
+                $startDate->format('Y-m-d 00:00:00'),
+                $endDate->format('Y-m-d 23:59:59')
+            ])
+            ->selectRaw('DATE(transactions.date) as payment_date, COUNT(DISTINCT invoices.student_id) as paid_count')
+            ->groupBy('payment_date')
+            ->pluck('paid_count', 'payment_date')
             ->toArray();
 
-        $paymentTrends = $dateRange->mapWithKeys(function ($date) use ($paymentTrendsQuery) {
+        $paymentTrends = collect($dateRange)->mapWithKeys(function ($date) use ($paymentTrendsQuery) {
             return [$date => $paymentTrendsQuery[$date] ?? 0];
         })->values()->toArray();
 
@@ -166,9 +174,11 @@ class FeesController extends Controller
             ->whereNull('invoices.subscription_id')
             ->where('invoices.fee_id', $fee->id)
             ->where('status', 2)
-            ->whereHas('student', fn($query) => $query
-                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            ->whereHas(
+                'student',
+                fn($query) => $query
+                    ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                    ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
             )
             ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
             ->join('transactions', 'invoices.id', '=', 'transactions.invoice_id')
@@ -209,9 +219,11 @@ class FeesController extends Controller
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
             ->where('fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query
-                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            ->whereHas(
+                'student',
+                fn($query) => $query
+                    ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                    ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
             )
             ->with(['student', 'transactions' => fn($query) => $query->where('type', 2)]);
 
@@ -242,9 +254,11 @@ class FeesController extends Controller
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
             ->where('fee_id', $fee->id)
-            ->whereHas('student', fn($query) => $query
-                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-                ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+            ->whereHas(
+                'student',
+                fn($query) => $query
+                    ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                    ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
             )
             ->with(['student']);
 
