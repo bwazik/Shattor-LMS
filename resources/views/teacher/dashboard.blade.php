@@ -7,7 +7,7 @@
 @section('title', pageTitle('layouts/sidebar.dashboard'))
 
 @section('content')
-    <x-datatable datatableTitle="{{ trans('admin/lessons.todayLessons') }}">
+    <x-datatable cardClasses="mb-5" id="datatable" datatableTitle="{{ trans('admin/lessons.todayLessons') }}">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.title') }}</th>
@@ -17,7 +17,7 @@
         <th>{{ trans('main.actions') }}</th>
     </x-datatable>
 
-    <x-datatable id="dublicated" datatableTitle="الطلبة المكررين">
+    <x-datatable cardClasses="mb-5" id="dublicated" datatableTitle="الطلبة المكررين">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.name') }}</th>
