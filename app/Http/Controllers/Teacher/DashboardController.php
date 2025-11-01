@@ -61,40 +61,41 @@ class DashboardController extends Controller
 
     public function dublicatedStudents(Request $request)
     {
-        // 1. Get clean names that appear >1 time for this teacher
+        $locale = app()->getLocale();
+        $jsonPath = $locale === 'ar' ? '$.ar' : '$.en';
+
+        // 1. Get clean names that appear >1 time
         $duplicatedCleanNames = DB::table('students')
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->where('student_teacher.teacher_id', $this->teacherId)
-            ->selectRaw(
-                'TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) AS clean_name',
-                [app()->getLocale() === 'ar' ? '$.ar' : '$.en']
-            )
+            ->selectRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) AS clean_name", [$jsonPath])
             ->groupBy('clean_name')
             ->havingRaw('COUNT(*) > 1')
-            ->pluck('clean_name'); // Returns Collection of strings like "محمد احمد"
+            ->pluck('clean_name');
 
         if ($duplicatedCleanNames->isEmpty()) {
             return $request->ajax()
-                ? datatables()->of([])->make(true)
+                ? datatables()->of(collect([]))->make(true)
                 : view('teacher.dashboard.duplicates', ['duplicated' => collect()]);
         }
 
-        // 2. Main query: students with duplicated clean names
+        // 2. Main query with SAFE bindings
         $query = Student::query()
             ->with(['grade:id,name'])
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-            ->whereIn(DB::raw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))"), $duplicatedCleanNames->toArray(), 'and', [
-                app()->getLocale() === 'ar' ? '$.ar' : '$.en'
-            ])
+            ->where(function ($q) use ($jsonPath, $duplicatedCleanNames) {
+                $q->whereIn(DB::raw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))"), $duplicatedCleanNames->toArray())
+                    ->addBinding($jsonPath, 'where');
+            })
             ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.grade_id', 'students.profile_pic')
-            ->orderByRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))", [app()->getLocale() === 'ar' ? '$.ar' : '$.en'])
+            ->orderByRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))", [$jsonPath])
             ->orderBy('name');
 
         if ($request->ajax()) {
             return datatables()->eloquent($query)
                 ->addIndexColumn()
                 ->addColumn('details', fn($row) => generateDetailsColumn(
-                    $row->getTranslation('name', app()->getLocale()),
+                    $row->getTranslation('name', $locale),
                     $row->profile_pic,
                     'storage/profiles/students',
                     $row->phone,
