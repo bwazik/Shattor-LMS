@@ -16,6 +16,13 @@
         <th>{{ trans('main.status') }}</th>
         <th>{{ trans('main.actions') }}</th>
     </x-datatable>
+
+    <x-datatable datatableTitle="الطلبة المكررين">
+        <th></th>
+        <th>#</th>
+        <th>{{ trans('main.name') }}</th>
+        <th>{{ trans('main.grade') }}</th>
+    </x-datatable>
 @endsection
 
 @section('page-js')
