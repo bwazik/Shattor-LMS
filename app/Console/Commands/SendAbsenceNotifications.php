@@ -23,18 +23,22 @@ class SendAbsenceNotifications extends Command
 
     public function handle()
     {
-        // Allow testing with specific date or default to today
         $date = $this->option('date') ? Carbon::parse($this->option('date'))->toDateString() : now()->toDateString();
 
         $this->info("Processing absence notifications for: {$date}");
 
-        // Get all absent students for the specified date
+        // Get absences where student was ACTUALLY supposed to attend
         $absentAttendances = Attendance::with(['student.parent', 'lesson', 'group', 'lesson.group.teacher'])
             ->where('date', $date)
             ->where('status', 2) // Absent
             ->whereHas('student.parent') // Only students with parents
-            ->whereHas('group.students', function ($query) {
-                $query->whereColumn('students.id', 'attendances.student_id');
+            ->whereHas('student', function ($query) use ($date) {
+                // Verify student was actually in the group on that date
+                $query->whereHas('groups', function ($groupQuery) use ($date) {
+                    $groupQuery->whereColumn('student_group.group_id', 'attendances.group_id')
+                        ->whereRaw('DATE(student_group.created_at) <= ?', [$date])
+                        ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$date]);
+                });
             })
             ->get()
             ->groupBy('student_id');
@@ -48,17 +52,20 @@ class SendAbsenceNotifications extends Command
 
         $sentCount = 0;
         $skipped = 0;
+        $excludedGrades = ['5']; // Add grade IDs to exclude
+
+        Carbon::setLocale('ar');
+        $formattedDate = Carbon::parse($date)->translatedFormat('l j F Y');
 
         foreach ($absentAttendances as $studentId => $attendances) {
             try {
                 $student = $attendances->first()->student;
                 $parent = $student->parent;
-                $teacher = $attendances->first()->lesson->group->teacher;
 
-                $group = $attendances->first()->lesson->group;
-                $excludedGradeIds = ['5'];
-                if (in_array($group->grade_id, $excludedGradeIds)) {
-                    $this->warn("Skipping student ID {$studentId}: Excluded grade ({$group->grade_id})");
+                // Check if student's grade is excluded
+                if (in_array($student->grade_id, $excludedGrades)) {
+                    $this->warn("Skipping student ID {$studentId}: Excluded grade ({$student->grade_id})");
+                    $skipped++;
                     continue;
                 }
 
@@ -68,34 +75,28 @@ class SendAbsenceNotifications extends Command
                     continue;
                 }
 
-                // Build lessons list (only lesson name, no group duplication)
-                $lessonsList = $attendances->map(function ($attendance) {
-                    return "• " . $attendance->lesson->getTranslation('title', 'ar');
-                })->implode("\n");
+                // Get unique teachers
+                $teachers = $attendances->pluck('lesson.group.teacher')->unique('id');
 
-                $lessonCount = $attendances->count();
-                $studentName = $student->getTranslation('name', 'ar');
-                $teacherName = 'مستر ' . $teacher->getTranslation('name', 'ar');
+                if ($teachers->count() > 1) {
+                    // Multiple teachers - send separate message for each
+                    $byTeacher = $attendances->groupBy(function ($attendance) {
+                        return $attendance->lesson->group->teacher_id;
+                    });
 
-                // Use the actual absence date for the message
-                Carbon::setLocale('ar');
-                $formattedDate = Carbon::parse($date)->translatedFormat('l j F Y');
-
-                $this->whatsappService->sendMessage(
-                    $parent->phone,
-                    'student_absence_notification',
-                    [
-                        'student_name' => $studentName,
-                        'date' => $formattedDate,
-                        'lesson_count' => $lessonCount,
-                        'lessons_list' => $lessonsList,
-                        'teacher_name' => $teacherName,
-                    ],
-                    false // Not urgent
-                );
+                    foreach ($byTeacher as $teacherId => $teacherAttendances) {
+                        $teacher = $teacherAttendances->first()->lesson->group->teacher;
+                        $this->sendAbsenceNotification($student, $parent, $teacher, $teacherAttendances, $formattedDate);
+                    }
+                } else {
+                    // Single teacher
+                    $teacher = $teachers->first();
+                    $this->sendAbsenceNotification($student, $parent, $teacher, $attendances, $formattedDate);
+                }
 
                 $sentCount++;
-                $this->info("✓ Sent to: {$studentName} ({$parent->phone})");
+                $this->info("✓ Sent to: {$student->getTranslation('name', 'ar')} ({$parent->phone})");
+
             } catch (\Exception $e) {
                 $this->error("✗ Failed for student ID {$studentId}: {$e->getMessage()}");
                 Log::error('Failed to send absence notification', [
@@ -122,5 +123,31 @@ class SendAbsenceNotifications extends Command
         ]);
 
         return 0;
+    }
+
+    private function sendAbsenceNotification($student, $parent, $teacher, $attendances, $formattedDate)
+    {
+        // Build lessons list
+        $lessonsList = $attendances->map(function ($attendance) {
+            return "• " . $attendance->lesson->getTranslation('title', 'ar');
+        })->implode("\n");
+
+        $lessonCount = $attendances->count();
+        $studentName = $student->getTranslation('name', 'ar');
+        $teacherName = 'مستر ' . $teacher->getTranslation('name', 'ar');
+
+        // Send using the job template
+        $this->whatsappService->sendMessage(
+            $parent->phone,
+            'student_absence_notification',
+            [
+                'student_name' => $studentName,
+                'date' => $formattedDate,
+                'lesson_count' => $lessonCount,
+                'lessons_list' => $lessonsList,
+                'teacher_name' => $teacherName,
+            ],
+            false // Not urgent
+        );
     }
 }

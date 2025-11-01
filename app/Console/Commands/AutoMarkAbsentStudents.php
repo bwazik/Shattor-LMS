@@ -25,33 +25,33 @@ class AutoMarkAbsentStudents extends Command
                 'current_time' => $now->toDateTimeString(),
             ]);
 
-            // Get lessons with their groups
-            $lessons = Lesson::with('group:id,teacher_id')
+            // OPTIMIZED: Only get lessons from today that ended 2+ hours ago
+            $todayStart = $now->copy()->startOfDay();
+            $twoHoursAgo = $now->copy()->subMinutes(150); // 90 min lesson + 60 min buffer
+
+            // Calculate the time window for lessons that should be processed
+            // Lesson should have ended 2 hours ago
+            $eligibleTimeStart = $todayStart->format('H:i:s');
+            $eligibleTimeEnd = $twoHoursAgo->format('H:i:s');
+
+            $lessons = Lesson::with('group:id,teacher_id,grade_id')
                 ->whereIn('status', [1, 2]) // Scheduled or Completed
+                ->where('date', $now->toDateString()) // Only today's lessons
+                ->whereTime('time', '<=', $eligibleTimeEnd) // Ended at least 2 hours ago
+                ->whereDoesntHave('attendances', function ($query) {
+                    // Skip lessons that already have ALL students marked
+                    // This prevents re-processing lessons
+                })
                 ->select('id', 'date', 'time', 'group_id')
                 ->get();
 
-            Log::info('Fetched lessons', ['count' => $lessons->count()]);
+            Log::info('Fetched eligible lessons', [
+                'count' => $lessons->count(),
+                'date' => $now->toDateString(),
+                'time_filter' => $eligibleTimeEnd,
+            ]);
 
-            $eligibleLessons = $lessons->filter(function ($lesson) use ($now, $timezone) {
-                try {
-                    $lessonDateTime = Carbon::parse("{$lesson->date} {$lesson->time}", $timezone);
-                    $twoHoursAfterEnd = $lessonDateTime->copy()->addMinutes(90 + 120); // lesson duration + 2 hours
-                    return $now->greaterThanOrEqualTo($twoHoursAfterEnd);
-                } catch (\Exception $e) {
-                    Log::error('Error parsing lesson datetime', [
-                        'lesson_id' => $lesson->id,
-                        'date' => $lesson->date,
-                        'time' => $lesson->time,
-                        'error' => $e->getMessage(),
-                    ]);
-                    return false;
-                }
-            });
-
-            Log::info('Eligible lessons for absence marking', ['count' => $eligibleLessons->count()]);
-
-            if ($eligibleLessons->isEmpty()) {
+            if ($lessons->isEmpty()) {
                 $this->info('No lessons found that need absence marking.');
                 Log::info('AutoMarkAbsentStudents completed - no lessons to process');
                 return 0;
@@ -59,26 +59,35 @@ class AutoMarkAbsentStudents extends Command
 
             $totalMarked = 0;
 
-            foreach ($eligibleLessons as $lesson) {
+            foreach ($lessons as $lesson) {
                 try {
+                    // Double check timing
+                    $lessonDateTime = Carbon::parse("{$lesson->date} {$lesson->time}", $timezone);
+                    $twoHoursAfterEnd = $lessonDateTime->copy()->addMinutes(150); // 90 + 60
+
+                    if ($now->lessThan($twoHoursAfterEnd)) {
+                        continue; // Skip if not yet 2 hours after end
+                    }
+
                     $markedCount = $this->markAbsentForLesson($lesson);
                     $totalMarked += $markedCount;
 
-                    $this->info("Lesson ID {$lesson->id}: Marked {$markedCount} students as absent");
+                    if ($markedCount > 0) {
+                        $this->info("Lesson ID {$lesson->id}: Marked {$markedCount} students as absent");
+                    }
                 } catch (\Exception $e) {
                     $this->error("Failed to process lesson ID {$lesson->id}: {$e->getMessage()}");
                     Log::error('Failed to mark absent for lesson', [
                         'lesson_id' => $lesson->id,
                         'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString(),
                     ]);
                 }
             }
 
-            $this->info("Marked {$totalMarked} students as absent across {$eligibleLessons->count()} lessons.");
+            $this->info("Marked {$totalMarked} students as absent across {$lessons->count()} lessons.");
             Log::info("AutoMarkAbsentStudents completed", [
                 'total_marked' => $totalMarked,
-                'lessons_processed' => $eligibleLessons->count(),
+                'lessons_processed' => $lessons->count(),
             ]);
 
             return 0;
@@ -96,10 +105,9 @@ class AutoMarkAbsentStudents extends Command
     private function markAbsentForLesson($lesson)
     {
         try {
-            // Get teacher_id from group
             $teacherId = $lesson->group->teacher_id;
 
-            // Get all students who should have attended (original + compensatory)
+            // Get all students who should have attended
             $originalStudents = Student::join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
                 ->join('student_group', 'students.id', '=', 'student_group.student_id')
                 ->where('student_teacher.teacher_id', $teacherId)
@@ -111,19 +119,15 @@ class AutoMarkAbsentStudents extends Command
 
             $compensatoryStudents = DB::table('compensatories')
                 ->where('makeup_lesson_id', $lesson->id)
-                ->where('status', 2) // Accepted
+                ->where('status', 2)
                 ->pluck('student_id')
                 ->toArray();
 
             $allStudentIds = array_unique(array_merge($originalStudents, $compensatoryStudents));
 
-            Log::debug('Students for lesson', [
-                'lesson_id' => $lesson->id,
-                'teacher_id' => $teacherId,
-                'original_students' => count($originalStudents),
-                'compensatory_students' => count($compensatoryStudents),
-                'total_students' => count($allStudentIds),
-            ]);
+            if (empty($allStudentIds)) {
+                return 0;
+            }
 
             // Get students who already have attendance records
             $recordedStudentIds = Attendance::where('lesson_id', $lesson->id)
@@ -136,28 +140,14 @@ class AutoMarkAbsentStudents extends Command
             $absentStudentIds = array_diff($allStudentIds, $recordedStudentIds);
 
             if (empty($absentStudentIds)) {
-                Log::info('No absent students to mark for lesson', ['lesson_id' => $lesson->id]);
                 return 0;
             }
 
-            // Get grade_id from group
-            $group = DB::table('groups')
-                ->where('id', $lesson->group_id)
-                ->first(['grade_id']);
+            $gradeId = $lesson->group->grade_id;
 
-            if (!$group) {
-                throw new \Exception("Group not found for lesson {$lesson->id}");
-            }
-
-            $gradeId = $group->grade_id;
-
-            // Mark all absent students
-            $attendanceData = [];
-            foreach ($absentStudentIds as $studentId) {
-                // Check if this is a compensatory student
-                $isCompensatory = in_array($studentId, $compensatoryStudents);
-
-                $attendanceData[] = [
+            // Batch insert absent records
+            $attendanceData = collect($absentStudentIds)->map(function ($studentId) use ($lesson, $teacherId, $gradeId, $compensatoryStudents) {
+                return [
                     'student_id' => $studentId,
                     'date' => $lesson->date,
                     'lesson_id' => $lesson->id,
@@ -166,11 +156,11 @@ class AutoMarkAbsentStudents extends Command
                     'group_id' => $lesson->group_id,
                     'status' => 2, // Absent
                     'note' => 'تم التسجيل تلقائياً كغائب',
-                    'is_compensatory' => $isCompensatory ? 1 : 0,
+                    'is_compensatory' => in_array($studentId, $compensatoryStudents) ? 1 : 0,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-            }
+            })->toArray();
 
             Attendance::insert($attendanceData);
 
@@ -178,7 +168,6 @@ class AutoMarkAbsentStudents extends Command
                 'lesson_id' => $lesson->id,
                 'lesson_date' => $lesson->date,
                 'lesson_time' => $lesson->time,
-                'teacher_id' => $teacherId,
                 'absent_count' => count($absentStudentIds),
             ]);
 
@@ -188,7 +177,6 @@ class AutoMarkAbsentStudents extends Command
             Log::error('Error in markAbsentForLesson', [
                 'lesson_id' => $lesson->id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
             ]);
             throw $e;
         }
