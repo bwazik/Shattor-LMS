@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Teacher;
 use App\Models\Lesson;
 use App\Models\Student;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
@@ -60,30 +61,48 @@ class DashboardController extends Controller
 
     public function dublicatedStudents(Request $request)
     {
-        $baseQuery = Student::query()
+        // 1. Get clean names that appear >1 time for this teacher
+        $duplicatedCleanNames = DB::table('students')
+            ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
+            ->where('student_teacher.teacher_id', $this->teacherId)
+            ->selectRaw(
+                'TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) AS clean_name',
+                [app()->getLocale() === 'ar' ? '$.ar' : '$.en']
+            )
+            ->groupBy('clean_name')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('clean_name'); // Returns Collection of strings like "محمد احمد"
+
+        if ($duplicatedCleanNames->isEmpty()) {
+            return $request->ajax()
+                ? datatables()->of([])->make(true)
+                : view('teacher.dashboard.duplicates', ['duplicated' => collect()]);
+        }
+
+        // 2. Main query: students with duplicated clean names
+        $query = Student::query()
             ->with(['grade:id,name'])
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-            ->select('id', 'uuid', 'name', 'phone', 'grade_id', 'profile_pic');
-
-        // Sub-query that finds names that appear more than once
-        $duplicatedNames = Student::query()
-            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-            ->selectRaw('TRIM(LOWER(name)) AS clean_name')
-            ->groupBy('clean_name')
-            ->havingRaw('COUNT(*) > 1');
-
-        // Final query – only rows whose clean name is in the duplicated list
-        $query = $baseQuery
-            ->selectRaw('students.*, TRIM(LOWER(students.name)) AS clean_name')
-            ->whereIn('clean_name', $duplicatedNames->pluck('clean_name'))
-            ->orderBy('clean_name')
-            ->orderBy('students.name');
+            ->whereIn(DB::raw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))"), $duplicatedCleanNames->toArray(), 'and', [
+                app()->getLocale() === 'ar' ? '$.ar' : '$.en'
+            ])
+            ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.grade_id', 'students.profile_pic')
+            ->orderByRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))", [app()->getLocale() === 'ar' ? '$.ar' : '$.en'])
+            ->orderBy('name');
 
         if ($request->ajax()) {
             return datatables()->eloquent($query)
                 ->addIndexColumn()
-                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
+                ->addColumn('details', fn($row) => generateDetailsColumn(
+                    $row->getTranslation('name', app()->getLocale()),
+                    $row->profile_pic,
+                    'storage/profiles/students',
+                    $row->phone,
+                    'teacher.students.profile.index',
+                    $row->uuid
+                ))
                 ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
+                ->rawColumns(['details'])
                 ->make(true);
         }
     }
