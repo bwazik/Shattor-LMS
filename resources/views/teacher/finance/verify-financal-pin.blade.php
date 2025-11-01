@@ -43,7 +43,6 @@
 
     <script>
         const formId = $("#verify-pin-form");
-        const submitButton = formId.find('button[type="submit"]');
         const originalButtonContent = submitButton.html();
 
         $(formId).on('submit', function(e) {
