@@ -540,8 +540,8 @@ class StudentsProfileController extends Controller
                     ->select('id', 'uuid', 'fee_id', 'student_id', 'amount', 'date', 'status')
             ])
             ->select('fees.id', 'fees.uuid', 'fees.name', 'fees.grade_id', 'fees.specialization', 'fees.created_at')
-            ->where('fees.grade_id', $student->grade_id)
-            ->where('fees.teacher_id', $this->teacherId)
+            ->where('grade_id', $student->grade_id)
+            ->where('teacher_id', $this->teacherId)
             ->where(function ($query) use ($student) {
                 $query->whereNull('fees.specialization')
                     ->orWhere('fees.specialization', $student->specialization);
