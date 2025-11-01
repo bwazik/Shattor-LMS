@@ -181,6 +181,7 @@ class SendWhatsappMessage implements ShouldQueue
                     . "نحب نبلغ حضرتك إن الطالب/ة {$data['student_name']} كان/ت غائب/ة اليوم عن {$lessonWord} عند {$data['teacher_name']}:\n\n"
                     . "{$data['lessons_list']}\n\n"
                     . "برجاء المتابعة مع الطالب/ة.\n"
+                    . "للإستفسار يرجى التواصل مع السنتر علي الرقم: 01285527877.\n\n"
                     . "شكراً لتعاونكم 🙏";
             case 'multiple_account_attempt':
                 return "محاولة تسجيل دخول لحسابات متعددة:
