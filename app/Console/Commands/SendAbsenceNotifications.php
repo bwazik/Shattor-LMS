@@ -55,6 +55,13 @@ class SendAbsenceNotifications extends Command
                 $parent = $student->parent;
                 $teacher = $attendances->first()->lesson->group->teacher;
 
+                $group = $attendances->first()->lesson->group;
+                $excludedGradeIds = ['5'];
+                if (in_array($group->grade_id, $excludedGradeIds)) {
+                    $this->warn("Skipping student ID {$studentId}: Excluded grade ({$group->grade_id})");
+                    continue;
+                }
+
                 if (!$parent || !$parent->phone) {
                     $this->warn("Skipping student ID {$studentId}: No parent or phone");
                     $skipped++;
