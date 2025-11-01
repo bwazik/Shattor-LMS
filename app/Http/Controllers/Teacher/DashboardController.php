@@ -64,7 +64,7 @@ class DashboardController extends Controller
         $locale = app()->getLocale();
         $jsonPath = $locale === 'ar' ? '$.ar' : '$.en';
 
-        // 1. Get clean names that appear >1 time
+        // 1. Get duplicated clean names (SAFE)
         $duplicatedCleanNames = DB::table('students')
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->where('student_teacher.teacher_id', $this->teacherId)
@@ -79,13 +79,15 @@ class DashboardController extends Controller
                 : view('teacher.dashboard.duplicates', ['duplicated' => collect()]);
         }
 
-        // 2. Main query with SAFE bindings
+        // 2. Main query — SAFE bindings
         $query = Student::query()
             ->with(['grade:id,name'])
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
             ->where(function ($q) use ($jsonPath, $duplicatedCleanNames) {
-                $q->whereIn(DB::raw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))"), $duplicatedCleanNames->toArray())
-                    ->addBinding($jsonPath, 'where');
+                $q->whereRaw(
+                    "TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) IN (" . implode(',', array_fill(0, $duplicatedCleanNames->count(), '?')) . ")",
+                    array_merge([$jsonPath], $duplicatedCleanNames->toArray())
+                );
             })
             ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.grade_id', 'students.profile_pic')
             ->orderByRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))", [$jsonPath])
@@ -106,5 +108,8 @@ class DashboardController extends Controller
                 ->rawColumns(['details'])
                 ->make(true);
         }
+
+        $duplicated = $query->get()->groupBy(fn($s) => trim(strtolower($s->getTranslation('name', $locale))));
+        return view('teacher.dashboard.duplicates', compact('duplicated'));
     }
 }
