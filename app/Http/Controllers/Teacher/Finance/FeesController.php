@@ -165,6 +165,27 @@ class FeesController extends Controller
             return [$date => $paymentTrendsQuery[$date] ?? 0];
         })->values()->toArray();
 
+        // $paymentTrendsQuery = Invoice::query()
+        //     ->where('invoices.type', 2)
+        //     ->whereNull('invoices.teacher_id')
+        //     ->whereNull('invoices.subscription_id')
+        //     ->where('invoices.fee_id', $fee->id)
+        //     ->whereHas('student', fn($query) => $query
+        //         ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+        //         ->when($fee->specialization, fn($q) => $q->where('specialization', $fee->specialization))
+        //     )
+        //     ->whereHas('transactions', fn($query) => $query->where('transactions.type', 2))
+        //     ->whereBetween('transactions.date', [$dateRange->first(), $dateRange->last() . ' 23:59:59'])
+        //     ->selectRaw('DATE(transactions.date) as date, COUNT(DISTINCT invoices.student_id) as count')
+        //     ->join('transactions', 'invoices.id', '=', 'transactions.invoice_id')
+        //     ->groupBy('date')
+        //     ->pluck('count', 'date')
+        //     ->toArray();
+
+        // $paymentTrends = $dateRange->mapWithKeys(function ($date) use ($paymentTrendsQuery) {
+        //     return [$date => $paymentTrendsQuery[$date] ?? 0];
+        // })->values()->toArray();
+
         $paymentDates = $dateRange->map(fn($date) => Carbon::parse($date)->translatedFormat('d F', app()->getLocale()))->toArray();
 
         // Add to reports method

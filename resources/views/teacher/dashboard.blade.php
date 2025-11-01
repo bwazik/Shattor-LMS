@@ -58,5 +58,28 @@
                 }
             ],
         );
+
+        initializeDataTable('#datatable', "{{ route('teacher.dublicatedStudents') }}", [1, 2, 3],
+            [{
+                    data: "",
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'details',
+                    name: 'details'
+                },
+                {
+                    data: 'grade_id',
+                    name: 'grade_id'
+                }
+            ],
+        );
     </script>
 @endsection

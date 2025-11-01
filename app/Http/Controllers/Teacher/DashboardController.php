@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Models\Lesson;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
@@ -30,7 +31,7 @@ class DashboardController extends Controller
                 ->editColumn('title', fn($row) => $row->title)
                 ->editColumn('group_id', fn($row) => formatRelation($row->group_id, $row->group, 'name'))
                 ->editColumn('status', fn($row) => formatLessonStatus($row->status))
-                ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
+                ->addColumn('actions', fn($row) => $this->generateIndexActionButtons($row))
                 ->filterColumn('group_id', fn($query, $keyword) => filterByRelation($query, 'group', 'name', $keyword))
                 ->rawColumns(['selectbox', 'attendances', 'group_id', 'status', 'actions'])
                 ->make(true);
@@ -39,7 +40,7 @@ class DashboardController extends Controller
         return view('teacher.dashboard');
     }
 
-    private function generateActionButtons($row): string
+    private function generateIndexActionButtons($row): string
     {
         return
             '<div class="d-inline-block">' .
@@ -55,5 +56,35 @@ class DashboardController extends Controller
                     </li>' .
             '</ul>' .
             '</div>';
+    }
+
+    public function dublicatedStudents(Request $request)
+    {
+        $baseQuery = Student::query()
+            ->with(['grade:id,name'])
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->select('id', 'uuid', 'name', 'phone', 'grade_id', 'profile_pic');
+
+        // Sub-query that finds names that appear more than once
+        $duplicatedNames = Student::query()
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->selectRaw('TRIM(LOWER(name)) AS clean_name')
+            ->groupBy('clean_name')
+            ->havingRaw('COUNT(*) > 1');
+
+        // Final query – only rows whose clean name is in the duplicated list
+        $query = $baseQuery
+            ->selectRaw('students.*, TRIM(LOWER(students.name)) AS clean_name')
+            ->whereIn('clean_name', $duplicatedNames->pluck('clean_name'))
+            ->orderBy('clean_name')
+            ->orderBy('students.name');
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($query)
+                ->addIndexColumn()
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
+                ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
+                ->make(true);
+        }
     }
 }
