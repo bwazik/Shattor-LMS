@@ -31,7 +31,7 @@ if (config('app.env') === 'production') {
         ->everyThirtyMinutes()
         ->timezone('Africa/Cairo');
 
-    Schedule::command('attendance:send-absence-notifications')
-        ->dailyAt('21:00')
-        ->timezone('Africa/Cairo');
+    //Schedule::command('attendance:send-absence-notifications')
+    //   ->dailyAt('21:00')
+    //    ->timezone('Africa/Cairo');
 }
