@@ -112,4 +112,123 @@ class DashboardController extends Controller
         $duplicated = $query->get()->groupBy(fn($s) => trim(strtolower($s->getTranslation('name', $locale))));
         return view('teacher.dashboard.duplicates', compact('duplicated'));
     }
+
+    public function multipleGroupStudents(Request $request)
+    {
+        $violatingStudents = collect();
+
+        $groupTypes = [
+            5 => [
+                'pure' => [35, 36, 37, 38, 39, 40],      // مجموعات البحتة (Pure Math groups)
+                'applied' => [41, 42],   // مجموعات التطبيقية (Applied Math groups)
+            ],
+            6 => [
+                'pure' => [27, 29],      // مجموعات البحتة
+                'applied' => [22, 23, 26, 28],   // مجموعات التطبيقية
+            ],
+        ];
+
+        // Grade 4: Max 1 group only
+        $grade4Students = Student::with(['grade:id,name', 'groups:id,name'])
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->where('grade_id', 4)
+            ->whereHas('groups', function ($q) {
+                $q->whereNull('student_group.ended_at');
+            })
+            ->get();
+
+        foreach ($grade4Students as $student) {
+            $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+
+            if ($activeGroups->count() > 1) {
+                $violatingStudents->push([
+                    'student' => $student,
+                    'groups' => $activeGroups,
+                    'grade_order' => 4,
+                ]);
+            }
+        }
+
+        // Grades 5 & 6: Check pure/applied combinations
+        foreach ([5, 6] as $gradeId) {
+            $students = Student::with(['grade:id,name', 'groups:id,name'])
+                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+                ->where('grade_id', $gradeId)
+                ->whereHas('groups', function ($q) {
+                    $q->whereNull('student_group.ended_at');
+                })
+                ->get();
+
+            $pureGroupIds = $groupTypes[$gradeId]['pure'];
+            $appliedGroupIds = $groupTypes[$gradeId]['applied'];
+
+            foreach ($students as $student) {
+                $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+                $groupIds = $activeGroups->pluck('id')->toArray();
+                $groupCount = count($groupIds);
+
+                // Check if student is in more than 2 groups
+                if ($groupCount > 2) {
+                    $violatingStudents->push([
+                        'student' => $student,
+                        'groups' => $activeGroups,
+                        'grade_order' => $gradeId,
+                    ]);
+                    continue;
+                }
+
+                // Check if student is in 2 groups
+                if ($groupCount === 2) {
+                    $inPureGroups = array_intersect($groupIds, $pureGroupIds);
+                    $inAppliedGroups = array_intersect($groupIds, $appliedGroupIds);
+
+                    // Violation: 2 pure groups OR 2 applied groups
+                    if (count($inPureGroups) === 2) {
+                        $violatingStudents->push([
+                            'student' => $student,
+                            'groups' => $activeGroups,
+                            'grade_order' => $gradeId,
+                        ]);
+                    } elseif (count($inAppliedGroups) === 2) {
+                        $violatingStudents->push([
+                            'student' => $student,
+                            'groups' => $activeGroups,
+                            'grade_order' => $gradeId,
+                        ]);
+                    }
+                    // If 1 pure + 1 applied = OK, no violation
+                }
+            }
+        }
+
+        // Sort by grade (4, 5, 6)
+        $violatingStudents = $violatingStudents->sortBy('grade_order')->values();
+
+        if ($request->ajax()) {
+            return datatables()->of($violatingStudents)
+                ->addIndexColumn()
+                ->addColumn('details', function ($row) {
+                    $student = $row['student'];
+                    return generateDetailsColumn(
+                        $student->name,
+                        $student->profile_pic,
+                        'storage/profiles/students',
+                        $student->phone,
+                        'teacher.students.profile.index',
+                        $student->uuid
+                    );
+                })
+                ->addColumn('grade_id', fn($row) => formatRelation($row['student']->grade_id, $row['student']->grade, 'name'))
+                ->addColumn('groups', function ($row) {
+                    return $row['groups']->map(function ($group) {
+                        return '<span class="badge bg-label-primary me-1">' .
+                            $group->name .
+                            '</span>';
+                    })->implode('');
+                })
+                ->rawColumns(['details', 'groups'])
+                ->make(true);
+        }
+    }
+
 }

@@ -113,6 +113,7 @@ Route::group(
             Route::middleware('subscribed')->group(function () {
                 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
                 Route::get('/duplicated-students', [DashboardController::class, 'dublicatedStudents'])->name('dublicatedStudents');
+                Route::get('/multiple-group-students', [DashboardController::class, 'multipleGroupStudents'])->name('multipleGroupStudents');
 
                 # Api Responses
                 Route::prefix('fetch')->controller(DataFetchController::class)->name('fetch.')->group(function () {

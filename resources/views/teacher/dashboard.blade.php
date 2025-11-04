@@ -17,11 +17,19 @@
         <th>{{ trans('main.actions') }}</th>
     </x-datatable>
 
-    <x-datatable cardClasses="mb-5" id="dublicated" datatableTitle="الطلبة المكررين">
+    <x-datatable cardClasses="mb-5" id="dublicatedStudents" datatableTitle="الطلبة المكررين">
         <th></th>
         <th>#</th>
         <th>{{ trans('main.name') }}</th>
         <th>{{ trans('main.grade') }}</th>
+    </x-datatable>
+
+    <x-datatable cardClasses="mb-5" id="multipleGroupStudents" datatableTitle="الطلبة المتواجدين بأكتر من مجموعة">
+        <th></th>
+        <th>#</th>
+        <th>{{ trans('main.name') }}</th>
+        <th>{{ trans('main.grade') }}</th>
+        <th>{{ trans('main.groups') }}</th>
     </x-datatable>
 @endsection
 
@@ -66,7 +74,7 @@
             ],
         );
 
-        initializeDataTable('#dublicated', "{{ route('teacher.dublicatedStudents') }}", [1, 2, 3],
+        initializeDataTable('#dublicatedStudents', "{{ route('teacher.dublicatedStudents') }}", [1, 2, 3],
             [{
                     data: "",
                     orderable: false,
@@ -85,6 +93,33 @@
                 {
                     data: 'grade_id',
                     name: 'grade_id'
+                }
+            ],
+        );
+
+        initializeDataTable('#multipleGroupStudents', "{{ route('teacher.multipleGroupStudents') }}", [1, 2, 3],
+            [{
+                    data: "",
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'details',
+                    name: 'details'
+                },
+                {
+                    data: 'grade_id',
+                    name: 'grade_id'
+                },
+                {
+                    data: 'groups',
+                    name: 'groups'
                 }
             ],
         );
