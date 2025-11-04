@@ -221,7 +221,7 @@ class DashboardController extends Controller
                 ->addColumn('grade_id', fn($row) => formatRelation($row['student']->grade_id, $row['student']->grade, 'name'))
                 ->addColumn('groups', function ($row) {
                     return $row['groups']->map(function ($group) {
-                        return '<span class="badge bg-label-primary me-1">' .
+                        return '<span class="badge bg-label-warning me-1">' .
                             $group->name .
                             '</span>';
                     })->implode('');
