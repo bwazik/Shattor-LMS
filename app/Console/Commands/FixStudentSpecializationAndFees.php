@@ -117,30 +117,39 @@ class FixStudentSpecializationAndFees extends Command
 
     private function processStudent($student, $literaryFee, $isDryRun)
     {
-        // Check if student has any paid invoices
-        $hasPaidInvoices = Invoice::where('student_id', $student->id)
-            ->where('type', 2) // Fee type
-            ->whereIn('status', [2, 3]) // Paid or partially paid
-            ->exists();
+        // Get November invoices with scientific fees
+        $novemberInvoices = Invoice::where('student_id', $student->id)
+            ->where('type', 2)
+            ->whereHas('fee', function($q) {
+                $q->where('specialization', 1) // Scientific
+                  ->where('frequency', 2) // Monthly
+                  ->whereYear('created_at', 2025)
+                  ->whereMonth('created_at', 11); // November only
+            })
+            ->get();
 
-        if ($hasPaidInvoices) {
-            $this->stats['students_skipped_paid']++;
-            Log::channel('excel-import')->info('Skipped student with paid invoices', [
-                'student_id' => $student->id,
-                'student_name' => $student->name
-            ]);
+        if ($novemberInvoices->isEmpty()) {
+            // Student doesn't have November scientific fees, just update specialization
+            if (!$isDryRun) {
+                $student->update(['specialization' => 2]);
+            }
+            $this->stats['students_updated']++;
             return;
         }
 
-        // Get unpaid invoices with scientific fees
-        $unpaidInvoices = Invoice::where('student_id', $student->id)
-            ->where('type', 2)
-            ->where('status', 1) // Pending only
-            ->whereHas('fee', function($q) {
-                $q->where('specialization', 1) // Scientific
-                  ->where('frequency', 2); // Monthly
-            })
-            ->get();
+        // Separate paid and unpaid November invoices
+        $paidNovemberInvoices = $novemberInvoices->where('status', '!=', 1);
+        $unpaidInvoices = $novemberInvoices->where('status', 1);
+
+        if ($paidNovemberInvoices->isNotEmpty()) {
+            $this->stats['students_skipped_paid']++;
+            Log::channel('excel-import')->info('Skipped student with paid November invoices', [
+                'student_id' => $student->id,
+                'student_name' => $student->name,
+                'paid_invoices_count' => $paidNovemberInvoices->count()
+            ]);
+            return;
+        }
 
         if ($unpaidInvoices->isEmpty()) {
             // Student might not have fees yet, just update specialization
