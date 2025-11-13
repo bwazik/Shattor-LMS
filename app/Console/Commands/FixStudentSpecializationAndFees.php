@@ -215,7 +215,7 @@ class FixStudentSpecializationAndFees extends Command
             'invoice_id' => $invoice->id,
             'amount' => round($finalAmount, 2),
             'balance_after' => 0.00, // Will be updated by wallet logic
-            'description' => $literaryFee->name['ar'] . ' - ' . $literaryFee->name['en'],
+            'description' => $literaryFee->getTranslation('name', 'ar'),
             'date' => now()->startOfMonth()->toDateString(),
         ]);
         $this->stats['new_transactions_created']++;
