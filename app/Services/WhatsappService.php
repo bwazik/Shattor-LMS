@@ -58,7 +58,7 @@ class WhatsappService
             ]);
 
             // Calculate delay with proper sequencing
-            $delayGap = $isUrgent ? random_int(30, 50) : random_int(180, 220);
+            $delayGap = $isUrgent ? random_int(60, 120) : random_int(300, 600);
 
             // SEPARATE queues for urgent vs non-urgent
             $lastScheduledKey = $isUrgent
@@ -156,7 +156,7 @@ class WhatsappService
                     ]);
 
                     // Stagger delays: 180–220s per message
-                    $delayedSeconds = random_int(180, 220);
+                    $delayedSeconds = random_int(300, 600);
                     $delay = now()->addSeconds($baseDelay + $delayedSeconds);
 
                     // Dispatch with staggered delay
