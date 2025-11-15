@@ -29,7 +29,9 @@
         <th>#</th>
         <th>{{ trans('main.name') }}</th>
         <th>{{ trans('main.grade') }}</th>
+        <th>{{ trans('main.specialization') }}</th>
         <th>{{ trans('main.groups') }}</th>
+        <th>{{ trans('main.reason') }}</th>
     </x-datatable>
 @endsection
 
@@ -118,9 +120,17 @@
                     name: 'grade_id'
                 },
                 {
+                    data: 'specialization',
+                    name: 'specialization'
+                },
+                {
                     data: 'groups',
                     name: 'groups'
-                }
+                },
+                {
+                    data: 'violation',
+                    name: 'violation'
+                },
             ],
         );
     </script>
