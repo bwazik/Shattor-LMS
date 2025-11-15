@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Student;
+use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -176,18 +177,17 @@ class CleanupInactiveStudents extends Command
             }
         }
 
-        // Remove inactive teacher relationships
+        // Handle inactive teacher relationships
         if (!empty($teachersToRemove)) {
-            $this->removeTeacherRelationships($student, $teachersToRemove, $isDryRun);
+            $totalTeachers = $teachers->count();
+            $inactiveTeachersCount = count($teachersToRemove);
 
-            // Check if student has any teachers left
-            $remainingTeachers = $student->teachers()
-                ->whereNotIn('teacher_id', $teachersToRemove)
-                ->count();
-
-            if ($remainingTeachers === 0) {
-                // No teachers left, soft-delete student
+            // If student has only 1 teacher OR inactive with all teachers → soft-delete directly
+            if ($totalTeachers === 1 || $inactiveTeachersCount === $totalTeachers) {
                 $this->softDeleteStudent($student, 'Inactive with all teachers', $isDryRun);
+            } else {
+                // Student has multiple teachers, only remove inactive ones
+                $this->removeTeacherRelationships($student, $teachersToRemove, $isDryRun);
             }
         }
     }
