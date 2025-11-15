@@ -288,7 +288,7 @@ class DashboardController extends Controller
                 if (count($inPair1) != 1 || count($inPair2) != 1 || count($inLiterary) > 0) {
                     $hasViolation = true;
                     $reason = sprintf(
-                        'طالب علمي يجب أن يكون في مجموعة واحدة من كل زوج (حالياً: %d من الاساسيين + %d من الفرعيين + %d أدبية)',
+                        'طالب علمي يجب أن يكون في مجموعة واحدة من كل زوج (حالياً: %d من الزوج الأول + %d من الزوج الثاني + %d أدبية)',
                         count($inPair1),
                         count($inPair2),
                         count($inLiterary)
