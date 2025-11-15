@@ -160,16 +160,17 @@ class DashboardController extends Controller
 
         $groupTypes = [
             5 => [
-                'pure' => [35, 36, 37, 38, 39, 40],      // مجموعات البحتة (Pure Math groups)
-                'applied' => [41, 42],   // مجموعات التطبيقية (Applied Math groups)
+                'pure' => [35, 36, 37, 38, 39],
+                'applied' => [40, 41, 42, 43],
             ],
             6 => [
-                'pure' => [27, 29],      // مجموعات البحتة
-                'applied' => [22, 23, 26, 28],   // مجموعات التطبيقية
+                'literary' => [22, 23],
+                'scientific_pair1' => [26, 28],
+                'scientific_pair2' => [27, 29],
             ],
         ];
 
-        // Grade 4: Max 1 group only
+        // ==================== Grade 4: Max 1 group ====================
         $grade4Students = Student::with(['grade:id,name', 'groups:id,name'])
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
             ->where('grade_id', 4)
@@ -186,59 +187,122 @@ class DashboardController extends Controller
                     'student' => $student,
                     'groups' => $activeGroups,
                     'grade_order' => 4,
+                    'violation_reason' => 'يجب أن يكون الطالب في مجموعة واحدة فقط',
                 ]);
             }
         }
 
-        // Grades 5 & 6: Check pure/applied combinations
-        foreach ([5, 6] as $gradeId) {
-            $students = Student::with(['grade:id,name', 'groups:id,name'])
-                ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-                ->where('grade_id', $gradeId)
-                ->whereHas('groups', function ($q) {
-                    $q->whereNull('student_group.ended_at');
-                })
-                ->get();
+        // ==================== Grade 5: Pure + Applied rules ====================
+        $grade5Students = Student::with(['grade:id,name', 'groups:id,name'])
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->where('grade_id', 5)
+            ->whereHas('groups', function ($q) {
+                $q->whereNull('student_group.ended_at');
+            })
+            ->get();
 
-            $pureGroupIds = $groupTypes[$gradeId]['pure'];
-            $appliedGroupIds = $groupTypes[$gradeId]['applied'];
+        $pureGroupIds5 = $groupTypes[5]['pure'];
+        $appliedGroupIds5 = $groupTypes[5]['applied'];
 
-            foreach ($students as $student) {
-                $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
-                $groupIds = $activeGroups->pluck('id')->toArray();
-                $groupCount = count($groupIds);
+        foreach ($grade5Students as $student) {
+            $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+            $groupIds = $activeGroups->pluck('id')->toArray();
 
-                // Check if student is in more than 2 groups
-                if ($groupCount > 2) {
-                    $violatingStudents->push([
-                        'student' => $student,
-                        'groups' => $activeGroups,
-                        'grade_order' => $gradeId,
-                    ]);
-                    continue;
+            $inPure = array_intersect($groupIds, $pureGroupIds5);
+            $inApplied = array_intersect($groupIds, $appliedGroupIds5);
+
+            $hasViolation = false;
+            $reason = '';
+
+            if ($student->specialization == 1) {
+                // Scientific: Must have 1 pure + 1 applied
+                if (count($inPure) != 1 || count($inApplied) != 1) {
+                    $hasViolation = true;
+                    $reason = sprintf(
+                        'طالب علمي يجب أن يكون في مجموعة بحتة واحدة ومجموعة تطبيقية واحدة (حالياً: %d بحتة + %d تطبيقية)',
+                        count($inPure),
+                        count($inApplied)
+                    );
                 }
-
-                // Check if student is in 2 groups
-                if ($groupCount === 2) {
-                    $inPureGroups = array_intersect($groupIds, $pureGroupIds);
-                    $inAppliedGroups = array_intersect($groupIds, $appliedGroupIds);
-
-                    // Violation: 2 pure groups OR 2 applied groups
-                    if (count($inPureGroups) === 2) {
-                        $violatingStudents->push([
-                            'student' => $student,
-                            'groups' => $activeGroups,
-                            'grade_order' => $gradeId,
-                        ]);
-                    } elseif (count($inAppliedGroups) === 2) {
-                        $violatingStudents->push([
-                            'student' => $student,
-                            'groups' => $activeGroups,
-                            'grade_order' => $gradeId,
-                        ]);
-                    }
-                    // If 1 pure + 1 applied = OK, no violation
+            } elseif ($student->specialization == 2) {
+                // Literary: Must have 1 pure only (no applied)
+                if (count($inPure) != 1 || count($inApplied) > 0) {
+                    $hasViolation = true;
+                    $reason = sprintf(
+                        'طالب أدبي يجب أن يكون في مجموعة بحتة واحدة فقط (حالياً: %d بحتة + %d تطبيقية)',
+                        count($inPure),
+                        count($inApplied)
+                    );
                 }
+            }
+
+            if ($hasViolation) {
+                $violatingStudents->push([
+                    'student' => $student,
+                    'groups' => $activeGroups,
+                    'grade_order' => 5,
+                    'violation_reason' => $reason,
+                ]);
+            }
+        }
+
+        // ==================== Grade 6: Literary/Scientific rules ====================
+        $grade6Students = Student::with(['grade:id,name', 'groups:id,name'])
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->where('grade_id', 6)
+            ->whereHas('groups', function ($q) {
+                $q->whereNull('student_group.ended_at');
+            })
+            ->get();
+
+        $literaryGroups6 = $groupTypes[6]['literary'];
+        $scientificPair1 = $groupTypes[6]['scientific_pair1'];
+        $scientificPair2 = $groupTypes[6]['scientific_pair2'];
+
+        foreach ($grade6Students as $student) {
+            $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+            $groupIds = $activeGroups->pluck('id')->toArray();
+
+            $hasViolation = false;
+            $reason = '';
+
+            if ($student->specialization == 2) {
+                // Literary: Must have 1 from literary groups only
+                $inLiterary = array_intersect($groupIds, $literaryGroups6);
+                $inScientific = array_intersect($groupIds, array_merge($scientificPair1, $scientificPair2));
+
+                if (count($inLiterary) != 1 || count($inScientific) > 0) {
+                    $hasViolation = true;
+                    $reason = sprintf(
+                        'طالب أدبي يجب أن يكون في مجموعة أدبية واحدة فقط (حالياً: %d أدبية + %d علمية)',
+                        count($inLiterary),
+                        count($inScientific)
+                    );
+                }
+            } elseif ($student->specialization == 1) {
+                // Scientific: Must have 1 from pair1 + 1 from pair2
+                $inPair1 = array_intersect($groupIds, $scientificPair1);
+                $inPair2 = array_intersect($groupIds, $scientificPair2);
+                $inLiterary = array_intersect($groupIds, $literaryGroups6);
+
+                if (count($inPair1) != 1 || count($inPair2) != 1 || count($inLiterary) > 0) {
+                    $hasViolation = true;
+                    $reason = sprintf(
+                        'طالب علمي يجب أن يكون في مجموعة واحدة من كل زوج (حالياً: %d من الزوج الأول + %d من الزوج الثاني + %d أدبية)',
+                        count($inPair1),
+                        count($inPair2),
+                        count($inLiterary)
+                    );
+                }
+            }
+
+            if ($hasViolation) {
+                $violatingStudents->push([
+                    'student' => $student,
+                    'groups' => $activeGroups,
+                    'grade_order' => 6,
+                    'violation_reason' => $reason,
+                ]);
             }
         }
 
@@ -260,14 +324,24 @@ class DashboardController extends Controller
                     );
                 })
                 ->addColumn('grade_id', fn($row) => formatRelation($row['student']->grade_id, $row['student']->grade, 'name'))
+                ->addColumn('specialization', function ($row) {
+                    $student = $row['student'];
+                    if ($student->specialization == 1) {
+                        return formatSpan('success', trans('main.scientific'));
+                    } elseif ($student->specialization == 2) {
+                        return formatSpan('success', trans('main.literary'));
+                    }
+                    return '-';
+                })
                 ->addColumn('groups', function ($row) {
                     return $row['groups']->map(function ($group) {
-                        return '<span class="badge bg-label-warning me-1">' .
-                            $group->name .
-                            '</span>';
+                        return formatSpan('info', $group->name);
                     })->implode('');
                 })
-                ->rawColumns(['details', 'groups'])
+                ->addColumn('violation', function ($row) {
+                    return formatSpan('danger', $row['violation_reason']);
+                })
+                ->rawColumns(['details', 'groups', 'specialization', 'violation'])
                 ->make(true);
         }
     }

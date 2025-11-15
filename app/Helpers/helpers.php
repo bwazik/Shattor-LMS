@@ -24,18 +24,20 @@ if (!function_exists('isActiveRoute')) {
 }
 
 if (!function_exists('pageTitle')) {
-    function pageTitle($key) {
+    function pageTitle($key)
+    {
         return trans($key) . ' - ' . trans('layouts/sidebar.platformName');
     }
 }
 
 if (!function_exists('formatCurrency')) {
-    function formatCurrency($value) {
+    function formatCurrency($value)
+    {
         return number_format($value, 2, '.', ',');
     }
 }
 
-if(!function_exists('getDayName')) {
+if (!function_exists('getDayName')) {
     function getDayName(int $dayNumber)
     {
         $dayMapping = [
@@ -52,7 +54,7 @@ if(!function_exists('getDayName')) {
     }
 }
 
-if(!function_exists('mapDaysToNames')) {
+if (!function_exists('mapDaysToNames')) {
     function mapDaysToNames(array $days)
     {
         return array_map(function ($day) {
@@ -61,14 +63,14 @@ if(!function_exists('mapDaysToNames')) {
     }
 }
 
-if(!function_exists('isoFormat')) {
+if (!function_exists('isoFormat')) {
     function isoFormat(string $value)
     {
         return Carbon::parse($value, 'Africa/Cairo')->isoFormat('dddd D MMMM h:mm A');
     }
 }
 
-if(!function_exists('humanFormat')) {
+if (!function_exists('humanFormat')) {
     function humanFormat(string $value)
     {
         return Carbon::parse($value, 'Africa/Cairo')->format('Y-m-d H:i');
@@ -197,7 +199,7 @@ if (!function_exists('filterDetailsColumn')) {
     {
         $query->where(function ($q) use ($keyword, $secondaryField) {
             $q->where('name', 'like', "%{$keyword}%")
-              ->orWhere($secondaryField, 'like', "%{$keyword}%");
+                ->orWhere($secondaryField, 'like', "%{$keyword}%");
         });
     }
 }
@@ -207,7 +209,7 @@ if (!function_exists('generateSelectbox')) {
     {
         return
             '<td class="dt-checkboxes-cell">' .
-                '<input type="checkbox" value="' . $id . '" class="dt-checkboxes form-check-input">' .
+            '<input type="checkbox" value="' . $id . '" class="dt-checkboxes form-check-input">' .
             '</td>';
     }
 }
@@ -221,15 +223,15 @@ if (!function_exists('generateDetailsColumn')) {
 
         return
             '<div class="d-flex justify-content-start align-items-center">' .
-                '<div class="avatar-wrapper">' .
-                    '<div class="avatar avatar-sm me-3">' .
-                        '<img src="' . $picSrc . '" alt="Profile Picture" class="rounded-circle">' .
-                    '</div>' .
-                '</div>' .
-                '<div class="d-flex flex-column align-items-start">' .
-                    '<a target="_blank" href="' . $profileLink . '" class="text-truncate text-heading"><p class="mb-0 fw-medium">' . $name . '</p></a>' .
-                    '<small class="text-truncate">' . ($secondaryText ?? '-') . '</small>' .
-                '</div>' .
+            '<div class="avatar-wrapper">' .
+            '<div class="avatar avatar-sm me-3">' .
+            '<img src="' . $picSrc . '" alt="Profile Picture" class="rounded-circle">' .
+            '</div>' .
+            '</div>' .
+            '<div class="d-flex flex-column align-items-start">' .
+            '<a target="_blank" href="' . $profileLink . '" class="text-truncate text-heading"><p class="mb-0 fw-medium">' . $name . '</p></a>' .
+            '<small class="text-truncate">' . ($secondaryText ?? '-') . '</small>' .
+            '</div>' .
             '</div>';
     }
 }
@@ -294,13 +296,13 @@ if (!function_exists('formatPaymentMethod')) {
     {
         switch ($paymentMethod) {
             case 1:
-                return '<img width="30" height="30" src="' . asset('assets/img/brand/cash.png') . '" alt="' . trans('main.cash') .'">';
+                return '<img width="30" height="30" src="' . asset('assets/img/brand/cash.png') . '" alt="' . trans('main.cash') . '">';
             case 2:
-                return '<img width="30" height="30" src="' . asset('assets/img/brand/vodafone.png') . '" alt="' . trans('main.vodafoneCash') .'">';
+                return '<img width="30" height="30" src="' . asset('assets/img/brand/vodafone.png') . '" alt="' . trans('main.vodafoneCash') . '">';
             case 3:
-                return '<img width="30" height="30" src="' . asset('assets/img/brand/instapay.png') . '" alt="' . trans('main.instapay') .'">';
+                return '<img width="30" height="30" src="' . asset('assets/img/brand/instapay.png') . '" alt="' . trans('main.instapay') . '">';
             case 4:
-                return '<img width="30" height="30" src="' . asset('assets/img/brand/wallet.png') . '" alt="' . trans('main.wallet') .'">';
+                return '<img width="30" height="30" src="' . asset('assets/img/brand/wallet.png') . '" alt="' . trans('main.wallet') . '">';
             default:
                 return 'N/A';
         }
@@ -371,8 +373,8 @@ if (!function_exists('formatDuration')) {
 
         if ($hours > 0) {
             return $hours . ' ' . trans('admin/zooms.hours') . '' .
-            ($remainingMinutes > 0 ? ' ' . trans('admin/zooms.and') . ' ' .
-            $remainingMinutes . ' ' . trans('admin/zooms.minute') . '' : '');
+                ($remainingMinutes > 0 ? ' ' . trans('admin/zooms.and') . ' ' .
+                    $remainingMinutes . ' ' . trans('admin/zooms.minute') . '' : '');
         }
 
         return $remainingMinutes . ' ' . trans('admin/zooms.minutes') . '';
@@ -475,9 +477,9 @@ if (!function_exists('generateInvoiceBalanceColumn')) {
             'aria-label="' . $tooltip . '" ' .
             'data-bs-original-title="' . $tooltip . '">' .
             '<span class="badge rounded-pill ' . $statusData['class'] . ' px-2 py-1_5">' .
-                '<i class="icon-base ri ' . $statusData['icon'] . ' icon-16px my-50"></i>' .
+            '<i class="icon-base ri ' . $statusData['icon'] . ' icon-16px my-50"></i>' .
             '</span>' .
-        '</span>';
+            '</span>';
     }
 }
 
@@ -503,8 +505,7 @@ if (!function_exists('formatDate')) {
     {
         $format = 'd M Y';
 
-        if($isLesson)
-        {
+        if ($isLesson) {
             $format = 'l d M Y';
         }
 
@@ -564,7 +565,8 @@ if (!function_exists('getArabicOrdinal')) {
 }
 
 if (!function_exists('getDashboardRoute')) {
-    function getDashboardRoute() {
+    function getDashboardRoute()
+    {
         return match (true) {
             isAdmin() => route('admin.dashboard'),
             isTeacher() => route('teacher.dashboard'),
@@ -577,7 +579,8 @@ if (!function_exists('getDashboardRoute')) {
 }
 
 if (!function_exists('getHelpCenterRoute')) {
-    function getHelpCenterRoute() {
+    function getHelpCenterRoute()
+    {
         return match (true) {
             isAdmin() => route('admin.help-center.index'),
             isTeacher() => route('teacher.help-center.index'),
@@ -586,5 +589,12 @@ if (!function_exists('getHelpCenterRoute')) {
             isParent() => route('parent.help-center.index'),
             default => route('login.choose'),
         };
+    }
+}
+
+if (!function_exists('formatSpan')) {
+    function formatSpan($color, $text): string
+    {
+        return '<span class="badge rounded-pill bg-label-' . $color . ' text-capitalize">' . $text . '</span>';
     }
 }
