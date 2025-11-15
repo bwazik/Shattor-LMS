@@ -62,16 +62,22 @@ class DashboardController extends Controller
     public function dublicatedStudents(Request $request)
     {
         $locale = app()->getLocale();
-        $jsonPath = $locale === 'ar' ? '$.ar' : '$.en';
 
-        // 1. Get duplicated clean names (SAFE)
-        $duplicatedCleanNames = DB::table('students')
-            ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
-            ->where('student_teacher.teacher_id', $this->teacherId)
-            ->selectRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) AS clean_name", [$jsonPath])
+        $students = Student::with(['grade:id,name'])
+            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
+            ->get();
+
+        $studentsWithCleanNames = $students->map(function ($student) {
+            $rawName = $student->getTranslation('name', 'ar');
+            $student->clean_name = $this->normalizeArabicName($rawName);
+            return $student;
+        });
+
+        $duplicatedCleanNames = $studentsWithCleanNames
             ->groupBy('clean_name')
-            ->havingRaw('COUNT(*) > 1')
-            ->pluck('clean_name');
+            ->filter(fn($group) => $group->count() > 1)
+            ->keys()
+            ->values();
 
         if ($duplicatedCleanNames->isEmpty()) {
             return $request->ajax()
@@ -79,22 +85,14 @@ class DashboardController extends Controller
                 : view('teacher.dashboard.duplicates', ['duplicated' => collect()]);
         }
 
-        // 2. Main query — SAFE bindings
-        $query = Student::query()
-            ->with(['grade:id,name'])
-            ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
-            ->where(function ($q) use ($jsonPath, $duplicatedCleanNames) {
-                $q->whereRaw(
-                    "TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) IN (" . implode(',', array_fill(0, $duplicatedCleanNames->count(), '?')) . ")",
-                    array_merge([$jsonPath], $duplicatedCleanNames->toArray())
-                );
-            })
-            ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'students.grade_id', 'students.profile_pic')
-            ->orderByRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?))))", [$jsonPath])
-            ->orderBy('name');
+        $filtered = $studentsWithCleanNames->filter(function ($student) use ($duplicatedCleanNames) {
+            return $duplicatedCleanNames->contains($student->clean_name);
+        });
+
+        $duplicated = $filtered->groupBy('clean_name');
 
         if ($request->ajax()) {
-            return datatables()->eloquent($query)
+            return datatables()->of($filtered)
                 ->addIndexColumn()
                 ->addColumn('details', fn($row) => generateDetailsColumn(
                     $row->getTranslation('name', $locale),
@@ -109,9 +107,33 @@ class DashboardController extends Controller
                 ->make(true);
         }
 
-        $duplicated = $query->get()->groupBy(fn($s) => trim(strtolower($s->getTranslation('name', $locale))));
         return view('teacher.dashboard.duplicates', compact('duplicated'));
     }
+
+
+    function normalizeArabicName($name)
+    {
+        $name = mb_strtolower($name);
+
+        $name = str_replace(
+            ['أ', 'إ', 'آ'],
+            'ا',
+            $name
+        );
+
+        $name = str_replace('ة', 'ه', $name);
+
+        $name = str_replace('ى', 'ي', $name);
+
+        $name = str_replace('ؤ', 'و', $name);
+
+        $name = str_replace('ئ', 'ي', $name);
+
+        $name = preg_replace('/\s+/', ' ', $name);
+
+        return trim($name);
+    }
+
 
     public function multipleGroupStudents(Request $request)
     {
