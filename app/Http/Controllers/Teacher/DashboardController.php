@@ -180,7 +180,7 @@ class DashboardController extends Controller
             ->get();
 
         foreach ($grade4Students as $student) {
-            $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+            $activeGroups = $student->groups;
 
             if ($activeGroups->count() > 1) {
                 $violatingStudents->push([
@@ -205,7 +205,7 @@ class DashboardController extends Controller
         $appliedGroupIds5 = $groupTypes[5]['applied'];
 
         foreach ($grade5Students as $student) {
-            $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+            $activeGroups = $student->groups;
             $groupIds = $activeGroups->pluck('id')->toArray();
 
             $inPure = array_intersect($groupIds, $pureGroupIds5);
@@ -260,7 +260,7 @@ class DashboardController extends Controller
         $scientificPair2 = $groupTypes[6]['scientific_pair2'];
 
         foreach ($grade6Students as $student) {
-            $activeGroups = $student->groups()->wherePivot('ended_at', null)->get();
+            $activeGroups = $student->groups;
             $groupIds = $activeGroups->pluck('id')->toArray();
 
             $hasViolation = false;
