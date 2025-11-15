@@ -329,7 +329,7 @@ class DashboardController extends Controller
                     if ($student->specialization == 1) {
                         return formatSpan('success', trans('main.scientific'));
                     } elseif ($student->specialization == 2) {
-                        return formatSpan('success', trans('main.literary'));
+                        return formatSpan('warning', trans('main.literary'));
                     }
                     return '-';
                 })
