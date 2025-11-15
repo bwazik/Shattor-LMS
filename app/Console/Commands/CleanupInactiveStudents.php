@@ -31,6 +31,13 @@ class CleanupInactiveStudents extends Command
         $inactiveDays = (int) $this->option('days');
         $cutoffDate = Carbon::now()->subDays($inactiveDays)->toDateString();
 
+        // ============================================
+        // EXCLUDE SPECIFIC GRADES (Comment/Uncomment as needed)
+        // ============================================
+        $excludedGrades = [5]; // Add grade IDs to exclude
+        // $excludedGrades = []; // Uncomment this line to include all grades
+        // ============================================
+
         if ($isDryRun) {
             $this->warn('🔍 DRY RUN MODE - No changes will be made');
         } else {
@@ -42,14 +49,23 @@ class CleanupInactiveStudents extends Command
         }
 
         $this->info("Checking students inactive since: {$cutoffDate}");
+        if (!empty($excludedGrades)) {
+            $this->warn("Excluding grades: " . implode(', ', $excludedGrades));
+        }
         $this->line('');
 
         DB::beginTransaction();
 
         try {
             // Get all active students with their teachers
-            $students = Student::whereNull('deleted_at')
-                ->with(['teachers', 'groups', 'attendances' => function($query) {
+            $studentsQuery = Student::whereNull('deleted_at');
+
+            // Apply grade exclusion if specified
+            if (!empty($excludedGrades)) {
+                $studentsQuery->whereNotIn('grade_id', $excludedGrades);
+            }
+
+            $students = $studentsQuery->with(['teachers', 'groups', 'attendances' => function($query) {
                     $query->select('student_id', 'teacher_id', 'date', 'status', 'created_at');
                 }])
                 ->get();
