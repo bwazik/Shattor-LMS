@@ -205,8 +205,8 @@ class DashboardController extends Controller
         $appliedGroupIds5 = $groupTypes[5]['applied'];
 
         foreach ($grade5Students as $student) {
-            $activeGroups = $student->groups;
-            $groupIds = $activeGroups->pluck('id')->toArray();
+            $activeGroups = $student->groups->unique('id');
+            $groupIds = $activeGroups->pluck('id')->unique()->toArray();
 
             $inPure = array_intersect($groupIds, $pureGroupIds5);
             $inApplied = array_intersect($groupIds, $appliedGroupIds5);
@@ -260,8 +260,8 @@ class DashboardController extends Controller
         $scientificPair2 = $groupTypes[6]['scientific_pair2'];
 
         foreach ($grade6Students as $student) {
-            $activeGroups = $student->groups;
-            $groupIds = $activeGroups->pluck('id')->toArray();
+            $activeGroups = $student->groups->unique('id');
+            $groupIds = $activeGroups->pluck('id')->unique()->toArray();
 
             $hasViolation = false;
             $reason = '';
