@@ -64,22 +64,36 @@ class DashboardController extends Controller
         $locale = app()->getLocale();
         $jsonPath = $locale === 'ar' ? '$.ar' : '$.en';
 
-        // 1. Get duplicated clean names (SAFE)
-        $duplicatedCleanNames = DB::table('students')
+        // 1. Get duplicated clean names (RAW from SQL)
+        $rawCleanNames = DB::table('students')
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->where('student_teacher.teacher_id', $this->teacherId)
             ->selectRaw("TRIM(LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, ?)))) AS clean_name", [$jsonPath])
-            ->groupBy('clean_name')
-            ->havingRaw('COUNT(*) > 1')
             ->pluck('clean_name');
 
+        // 🔥 NEW: normalize all SQL clean names
+        $normalizedMap = $rawCleanNames->map(fn($n) => $this->normalizeArabicName($n));
+
+        // 🔥 NEW: find only duplicated normalized versions
+        $duplicatedNormalized = $normalizedMap
+            ->groupBy(fn($n) => $n)
+            ->filter(fn($group) => $group->count() > 1)
+            ->keys()
+            ->values();
+
+        // convert normalized duplicates back → original raw names
+        $duplicatedCleanNames = $rawCleanNames->filter(function ($original) use ($duplicatedNormalized) {
+            return $duplicatedNormalized->contains($this->normalizeArabicName($original));
+        })->values();
+
+        // لو مفيش تكرار
         if ($duplicatedCleanNames->isEmpty()) {
             return $request->ajax()
                 ? datatables()->of(collect([]))->make(true)
                 : view('teacher.dashboard.duplicates', ['duplicated' => collect()]);
         }
 
-        // 2. Main query — SAFE bindings
+        // 2. Main query — SAME without modification
         $query = Student::query()
             ->with(['grade:id,name'])
             ->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))
@@ -109,7 +123,11 @@ class DashboardController extends Controller
                 ->make(true);
         }
 
-        $duplicated = $query->get()->groupBy(fn($s) => trim(strtolower($s->getTranslation('name', $locale))));
+        $duplicated = $query->get()->groupBy(
+            fn($s) =>
+            trim(strtolower($s->getTranslation('name', $locale)))
+        );
+
         return view('teacher.dashboard.duplicates', compact('duplicated'));
     }
 
@@ -135,7 +153,6 @@ class DashboardController extends Controller
 
         return trim($name);
     }
-
 
     public function multipleGroupStudents(Request $request)
     {
