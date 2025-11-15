@@ -230,5 +230,4 @@ class DashboardController extends Controller
                 ->make(true);
         }
     }
-
 }
