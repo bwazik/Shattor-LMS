@@ -491,22 +491,22 @@ class StudentsProfileController extends Controller
     {
         if ($model === 'quiz') {
             $scores = StudentResult::where('quiz_id', $id)
-            ->orderBy('total_score', 'desc')
-            ->pluck('total_score')
-            ->values()
-            ->toArray();
+                ->orderBy('total_score', 'desc')
+                ->pluck('total_score')
+                ->values()
+                ->toArray();
         } elseif ($model === 'assignment') {
             $scores = AssignmentSubmission::where('assignment_id', $id)
-            ->orderBy('score', 'desc')
-            ->pluck('score')
-            ->values()
-            ->toArray();
+                ->orderBy('score', 'desc')
+                ->pluck('score')
+                ->values()
+                ->toArray();
         } elseif ($model === 'offlineQuiz') {
             $scores = OfflineQuizResult::where('offline_quiz_id', $id)
-            ->orderBy('total_score', 'desc')
-            ->pluck('total_score')
-            ->values()
-            ->toArray();
+                ->orderBy('total_score', 'desc')
+                ->pluck('total_score')
+                ->values()
+                ->toArray();
         } else {
             $scores = [];
         }
@@ -542,6 +542,7 @@ class StudentsProfileController extends Controller
             ->select('fees.id', 'fees.uuid', 'fees.name', 'fees.grade_id', 'fees.specialization', 'fees.created_at')
             ->where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
+            ->where('created_at', '>=', $student->created_at)
             ->where(function ($query) use ($student) {
                 $query->whereNull('fees.specialization')
                     ->orWhere('fees.specialization', $student->specialization);
@@ -569,6 +570,7 @@ class StudentsProfileController extends Controller
     {
         $feesQuery = Fee::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
+            ->where('created_at', '>=', $student->created_at)
             ->where(function ($query) use ($student) {
                 $query->whereNull('specialization')
                     ->orWhere('specialization', $student->specialization);
@@ -578,6 +580,7 @@ class StudentsProfileController extends Controller
             ->where('type', 2)
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
+            ->where('created_at', '>=', $student->created_at)
             ->whereIn('fee_id', $feesQuery->pluck('id'))
             ->with(['transactions' => fn($q) => $q->where('type', 2)]);
         $paidFees = $invoices->clone()->where('status', 2)->count();
