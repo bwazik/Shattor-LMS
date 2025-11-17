@@ -2,6 +2,16 @@
 
 @section('page-css')
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/plyr/plyr.css') }}" />
+
+    <style>
+        .plyr__menu__container [data-plyr="quality"] {
+            display: block !important;
+        }
+
+        .plyr__menu__container .plyr__control[role="menuitemradio"] {
+            display: block !important;
+        }
+    </style>
 @endsection
 
 @section('title', pageTitle('admin/resources.resources'))
@@ -27,7 +37,11 @@
                         @if ($resource->video_url)
                             <div class="p-2">
                                 <div class="cursor-pointer">
-
+                                    <div class="plyr__video-embed" id="player">
+                                        <iframe
+                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
+                                            allowfullscreen allowtransparency allow="autoplay"></iframe>
+                                    </div>
                                     <div class="plyr__video-embed" id="player">
                                         <iframe
                                             src="https://www.youtube.com/embed/{{ $resource->video_url }}?enablejsapi=1&origin={{ urlencode(config('app.url')) }}&rel=0&modestbranding=1&playsinline=1&widget_referrer={{ urlencode(url()->current()) }}"
@@ -169,9 +183,9 @@
                     options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
                 },
                 quality: {
-                    default: 720,
+                    default: 480,
                     options: [1080, 720, 576, 480, 360, 240],
-                    forced: true,
+                    forced: true
                 }
             });
 
