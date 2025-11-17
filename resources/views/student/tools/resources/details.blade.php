@@ -45,7 +45,7 @@
                                     <div class="plyr__video-embed" id="player">
                                         <iframe
                                             src="https://www.youtube.com/embed/{{ $resource->video_url }}?enablejsapi=1&origin={{ urlencode(config('app.url')) }}&rel=0&modestbranding=1&playsinline=1&widget_referrer={{ urlencode(url()->current()) }}"
-                                            allowfullscreen allowtransparency allow="autoplay; encrypted-media">
+                                            allowfullscreen allowtransparency qualitychange allow="autoplay; encrypted-media">
                                         </iframe>
                                     </div>
                                 </div>
