@@ -193,12 +193,12 @@
             const sendEvent = async (type, data = {}) => {
                 try {
                     console.log('Sending analytics event:', type, data);
-                    await axios.post("{{ route('student.resources.track') }}", {
-                        resource_id: resourceId,
-                        event_type: type,
-                        data: data,
-                        _token: '{{ csrf_token() }}'
-                    });
+                    // await axios.post("{{ route('student.resources.track') }}", {
+                    //     resource_id: resourceId,
+                    //     event_type: type,
+                    //     data: data,
+                    //     _token: '{{ csrf_token() }}'
+                    // });
                 } catch (err) {
                     console.warn('Analytics event failed:', err);
                 }
