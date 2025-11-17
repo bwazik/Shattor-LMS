@@ -149,38 +149,52 @@
     <script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
 
     <script>
-        if (document.getElementById('player')) {
-            const videoPlayer = new Plyr('#player');
-            document.getElementsByClassName('plyr')[0].style.borderRadius = '10px';
-            document.getElementsByClassName('plyr__poster')[0].style.display = 'none';
-        }
-
         toggleShareButton();
-    </script>
 
-    <script>
         document.addEventListener('DOMContentLoaded', function () {
-            if (!document.getElementById('player')) return;
+            const playerElement = document.getElementById('player');
+            if (!playerElement) return;
 
             const player = new Plyr('#player', {
                 debug: false,
-                ratio: '16:9',
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
                 settings: ['captions', 'quality', 'speed'],
-                quality: {
-                    default: 720,
-                    options: [1080, 720, 576, 480, 360]
-                },
-                speed: {
-                    selected: 1,
-                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-                }
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] },
+                quality: { default: 720, options: [1080, 720, 576, 480, 360, 240] }
             });
 
             const resourceId = '{{ $resource->id }}';
             const studentId = '{{ auth('student')->id() }}';
 
-            // Debounce function
+            // دالة إرسال الحدث للسيرفر
+            const sendEvent = async (type, data = {}) => {
+                try {
+                    console.log('Analytics event:', type, data);
+                } catch (err) {
+                    console.warn('Analytics event failed (silently):', err.message);
+                }
+            };
+
+            // دالة تتبع التقدم (مع حماية كاملة)
+            const trackProgress = () => {
+                if (!player.media || player.media.readyState < 1) return;
+
+                const currentTime = player.currentTime || 0;
+                const duration = player.duration || 0;
+                if (duration === 0) return;
+
+                const percent = (currentTime / duration) * 100;
+                const durationWatched = Math.floor(currentTime);
+
+                sendEvent('progress', {
+                    currentTime: parseFloat(currentTime.toFixed(2)),
+                    duration: parseFloat(duration.toFixed(2)),
+                    percent: parseFloat(percent.toFixed(2)),
+                    duration_watched: durationWatched
+                });
+            };
+
+            // دالة debounce
             const debounce = (func, wait) => {
                 let timeout;
                 return (...args) => {
@@ -189,52 +203,49 @@
                 };
             };
 
-            // Send event to backend
-            const sendEvent = async (type, data = {}) => {
-                try {
-                    console.log('Sending analytics event:', type, data);
+            const debouncedProgress = debounce(trackProgress, 8000); // كل 8 ثواني
 
-                } catch (err) {
-                    console.warn('Analytics event failed:', err);
-                }
-            };
+            // ننتظر لحد ما Plyr يجهز تماماً
+            player.on('ready', () => {
+                console.log('Plyr is ready – YouTube loaded');
 
-            // Track events
-            player.on('play', () => sendEvent('play'));
-            player.on('pause', () => sendEvent('pause'));
-            player.on('ended', () => sendEvent('ended'));
-            player.on('enterfullscreen', () => sendEvent('fullscreen_enter'));
-            player.on('exitfullscreen', () => sendEvent('fullscreen_exit'));
+                // أول زيارة
+                sendEvent('view');
 
-            // Speed change
-            player.on('ratechange', () => {
-                sendEvent('ratechange', { speed: player.speed });
-            });
+                // تتبع الأحداث الأساسية
+                player.on('play', () => sendEvent('play'));
+                player.on('pause', () => sendEvent('pause'));
+                player.on('ended', () => sendEvent('ended'));
+                player.on('enterfullscreen', () => sendEvent('fullscreen_enter'));
+                player.on('exitfullscreen', () => sendEvent('fullscreen_exit'));
 
-            // Quality change (YouTube only)
-            player.on('qualitychange', (event) => {
-                sendEvent('qualitychange', { quality: event.detail.quality });
-            });
-
-            // Progress tracking (every 10 seconds + on pause/ended)
-            const trackProgress = debounce(() => {
-                const percent = (player.currentTime / player.duration) * 100 || 0;
-                const duration = Math.floor(player.currentTime);
-                sendEvent('progress', {
-                    currentTime: player.currentTime,
-                    duration: player.duration,
-                    percent: percent.toFixed(2),
-                    duration_watched: duration
+                // تغيير السرعة
+                player.on('ratechange', () => {
+                    if (player.media) {
+                        sendEvent('ratechange', { speed: player.speed });
+                    }
                 });
-            }, 8000); // every 8 seconds
 
-            player.on('timeupdate', trackProgress);
-            player.on('pause', trackProgress);
-            player.on('ended', trackProgress);
-            player.on('seeked', trackProgress);
+                // تغيير الجودة (YouTube فقط)
+                player.on('qualitychange', (e) => {
+                    sendEvent('qualitychange', { quality: e.detail.quality });
+                });
 
-            // Initial view
-            sendEvent('view');
+                // تتبع التقدم
+                player.on('timeupdate', debouncedProgress);
+                player.on('pause', trackProgress);
+                player.on('ended', trackProgress);
+                player.on('seeked', trackProgress);
+
+                // تحديث فوري عند أول تشغيل
+                player.on('playing', trackProgress);
+            });
+
+            // في حالة إن الـ ready ما اشتغلش (نادر جداً)
+            player.on('canplay', () => {
+                if (!player.media) return;
+                sendEvent('canplay');
+            });
         });
     </script>
 @endsection

@@ -56,6 +56,7 @@ Route::group(
                     Route::get('/', 'index')->name('index');
                     Route::get('{uuid}', 'details')->name('details');
                     Route::get('{uuid}/download', 'downloadFile')->name('download');
+                    Route::post('track', 'trackEvent')->name('track');
                 });
             # End Tools
 

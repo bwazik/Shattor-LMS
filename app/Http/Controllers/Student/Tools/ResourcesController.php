@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student\Tools;
 
 use App\Models\Resource;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Traits\DatabaseTransactionTrait;
@@ -106,6 +107,32 @@ class ResourcesController extends Controller
         }
 
         abort(404);
+    }
+
+    public function trackEvent(Request $request)
+    {
+        if (in_array($request->event_type, ['play', 'pause', 'ended', 'ratechange', 'qualitychange', 'progress', 'fullscreen_enter', 'fullscreen_exit'])) {
+            ResourceVideoEvent::create([
+                'resource_id' => $request->resource_id,
+                'student_id' => $this->studentId,
+                'event_type' => $request->event_type,
+                'data' => $request->data ?? [],
+                'timestamp' => $data['currentTime'] ?? null,
+            ]);
+        }
+
+        ResourceView::updateOrCreate(
+            ['resource_id' => $request->resource_id, 'student_id' => $this->studentId],
+            [
+                'views' => DB::raw('views + 1'),
+                'duration_watched' => DB::raw("GREATEST(duration_watched, " . ($data['duration_watched'] ?? 0) . ")"),
+                'percent_watched' => DB::raw("GREATEST(percent_watched, " . ($data['percent'] ?? 0) . ")"),
+                'last_watched_at' => now(),
+                'first_watched_at' => DB::raw('COALESCE(first_watched_at, NOW())'),
+            ]
+        );
+
+        return response()->json(['status' => 'ok']);
     }
 
     # Helpers
