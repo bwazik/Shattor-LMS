@@ -157,4 +157,89 @@
 
         toggleShareButton();
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!document.getElementById('player')) return;
+
+            const player = new Plyr('#player', {
+                debug: false,
+                ratio: '16:9',
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+                settings: ['captions', 'quality', 'speed'],
+                quality: {
+                    default: 720,
+                    options: [1080, 720, 576, 480, 360]
+                },
+                speed: {
+                    selected: 1,
+                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+                }
+            });
+
+            const resourceId = '{{ $resource->id }}';
+            const studentId = '{{ auth('student')->id() }}';
+
+            // Debounce function
+            const debounce = (func, wait) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            };
+
+            // Send event to backend
+            const sendEvent = async (type, data = {}) => {
+                try {
+                    console.log('Sending analytics event:', type, data);
+                    await axios.post("{{ route('student.resources.track') }}", {
+                        resource_id: resourceId,
+                        event_type: type,
+                        data: data,
+                        _token: '{{ csrf_token() }}'
+                    });
+                } catch (err) {
+                    console.warn('Analytics event failed:', err);
+                }
+            };
+
+            // Track events
+            player.on('play', () => sendEvent('play'));
+            player.on('pause', () => sendEvent('pause'));
+            player.on('ended', () => sendEvent('ended'));
+            player.on('enterfullscreen', () => sendEvent('fullscreen_enter'));
+            player.on('exitfullscreen', () => sendEvent('fullscreen_exit'));
+
+            // Speed change
+            player.on('ratechange', () => {
+                sendEvent('ratechange', { speed: player.speed });
+            });
+
+            // Quality change (YouTube only)
+            player.on('qualitychange', (event) => {
+                sendEvent('qualitychange', { quality: event.detail.quality });
+            });
+
+            // Progress tracking (every 10 seconds + on pause/ended)
+            const trackProgress = debounce(() => {
+                const percent = (player.currentTime / player.duration) * 100 || 0;
+                const duration = Math.floor(player.currentTime);
+                sendEvent('progress', {
+                    currentTime: player.currentTime,
+                    duration: player.duration,
+                    percent: percent.toFixed(2),
+                    duration_watched: duration
+                });
+            }, 8000); // every 8 seconds
+
+            player.on('timeupdate', trackProgress);
+            player.on('pause', trackProgress);
+            player.on('ended', trackProgress);
+            player.on('seeked', trackProgress);
+
+            // Initial view
+            sendEvent('view');
+        });
+    </script>
 @endsection

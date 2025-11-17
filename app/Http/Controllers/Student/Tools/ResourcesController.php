@@ -128,14 +128,10 @@ class ResourcesController extends Controller
         }
     }
 
-    /**
-     * Increment downloads count with rate limiting to prevent spam
-     */
     protected function incrementDownloads($resourceId)
     {
         $cacheKey = "resource_download_{$resourceId}_student_{$this->studentId}";
 
-        // Only increment if this student hasn't downloaded this resource in the last 10 minutes
         if (!Cache::has($cacheKey)) {
             Resource::where('id', $resourceId)->increment('downloads');
             Cache::put($cacheKey, true, now()->addMinutes(10));
