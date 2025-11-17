@@ -12,43 +12,53 @@ use Illuminate\Support\Facades\DB;
 
 class AutoMarkAbsentStudents extends Command
 {
-    protected $signature = 'attendance:auto-mark-absent';
-    protected $description = 'Automatically mark students as absent 2 hours after lesson ends';
+    protected $signature = 'attendance:auto-mark-absent
+                            {--days=0 : Process lessons from the last N days (0 = today only)}
+                            {--dry-run : Show what would be marked without saving}';
+
+    protected $description = 'Automatically mark students as absent 1.5 hours after lesson ends';
 
     public function handle()
     {
         try {
             $timezone = config('app.timezone', 'Africa/Cairo');
             $now = Carbon::now($timezone);
+            $daysBack = (int) $this->option('days');
+            $isDryRun = $this->option('dry-run');
+
+            if ($isDryRun) {
+                $this->warn('🔍 DRY RUN MODE - No changes will be made');
+            }
 
             Log::info('AutoMarkAbsentStudents started', [
                 'current_time' => $now->toDateTimeString(),
+                'days_back' => $daysBack,
+                'dry_run' => $isDryRun,
             ]);
 
-            // OPTIMIZED: Only get lessons from today that ended 2+ hours ago
-            $todayStart = $now->copy()->startOfDay();
-            $twoHoursAgo = $now->copy()->subMinutes(150); // 90 min lesson + 60 min buffer
+            // Calculate date range
+            $startDate = $now->copy()->subDays($daysBack)->startOfDay()->toDateString();
+            $endDate = $now->toDateString();
 
-            // Calculate the time window for lessons that should be processed
-            // Lesson should have ended 2 hours ago
-            $eligibleTimeStart = $todayStart->format('H:i:s');
-            $eligibleTimeEnd = $twoHoursAgo->format('H:i:s');
+            $this->info("Processing lessons from {$startDate} to {$endDate}");
+            $this->line('');
 
             $lessons = Lesson::with('group:id,teacher_id,grade_id')
-                ->whereIn('status', [1, 2]) // Scheduled or Completed
-                ->where('date', $now->toDateString()) // Only today's lessons
-                ->whereTime('time', '<=', $eligibleTimeEnd) // Ended at least 2 hours ago
-                ->whereDoesntHave('attendances', function ($query) {
-                    // Skip lessons that already have ALL students marked
-                    // This prevents re-processing lessons
-                })
-                ->select('id', 'date', 'time', 'group_id')
-                ->get();
+                ->whereIn('status', [1, 2])
+                ->whereBetween('date', [$startDate, $endDate])
+                ->select('id', 'date', 'time', 'group_id', 'status')
+                ->get()
+                ->filter(function ($lesson) use ($now, $timezone) {
+                    $lessonStart = Carbon::parse("{$lesson->date} {$lesson->time}", $timezone);
+
+                    $lessonEndPlusBuffer = $lessonStart->copy()->addMinutes(90);
+
+                    return $now->greaterThanOrEqualTo($lessonEndPlusBuffer);
+                });
 
             Log::info('Fetched eligible lessons', [
                 'count' => $lessons->count(),
-                'date' => $now->toDateString(),
-                'time_filter' => $eligibleTimeEnd,
+                'date_range' => "{$startDate} to {$endDate}",
             ]);
 
             if ($lessons->isEmpty()) {
@@ -57,37 +67,69 @@ class AutoMarkAbsentStudents extends Command
                 return 0;
             }
 
+            $this->info("Found {$lessons->count()} eligible lessons");
+
+            $progressBar = $this->output->createProgressBar($lessons->count());
+            $progressBar->start();
+
             $totalMarked = 0;
+            $stats = [
+                'lessons_processed' => 0,
+                'lessons_skipped' => 0,
+                'students_marked' => 0,
+                'errors' => 0,
+            ];
 
             foreach ($lessons as $lesson) {
                 try {
-                    // Double check timing
-                    $lessonDateTime = Carbon::parse("{$lesson->date} {$lesson->time}", $timezone);
-                    $twoHoursAfterEnd = $lessonDateTime->copy()->addMinutes(150); // 90 + 60
-
-                    if ($now->lessThan($twoHoursAfterEnd)) {
-                        continue; // Skip if not yet 2 hours after end
-                    }
-
-                    $markedCount = $this->markAbsentForLesson($lesson);
+                    $markedCount = $this->markAbsentForLesson($lesson, $isDryRun);
                     $totalMarked += $markedCount;
 
                     if ($markedCount > 0) {
-                        $this->info("Lesson ID {$lesson->id}: Marked {$markedCount} students as absent");
+                        $stats['lessons_processed']++;
+                        $stats['students_marked'] += $markedCount;
+                    } else {
+                        $stats['lessons_skipped']++;
                     }
+
+                    $progressBar->advance();
                 } catch (\Exception $e) {
-                    $this->error("Failed to process lesson ID {$lesson->id}: {$e->getMessage()}");
+                    $stats['errors']++;
+                    $this->error("\nFailed to process lesson ID {$lesson->id}: {$e->getMessage()}");
                     Log::error('Failed to mark absent for lesson', [
                         'lesson_id' => $lesson->id,
                         'error' => $e->getMessage(),
                     ]);
+                    $progressBar->advance();
                 }
             }
 
-            $this->info("Marked {$totalMarked} students as absent across {$lessons->count()} lessons.");
+            $progressBar->finish();
+            $this->line("\n");
+
+            // Display summary
+            $this->info('═══════════════════════════════════════');
+            $this->info("📊 Summary:");
+            $this->table(
+                ['Metric', 'Count'],
+                [
+                    ['Total Lessons Checked', $lessons->count()],
+                    ['Lessons with Absences Marked', $stats['lessons_processed']],
+                    ['Lessons Already Complete', $stats['lessons_skipped']],
+                    ['Total Students Marked Absent', $stats['students_marked']],
+                    ['Errors', $stats['errors']],
+                ]
+            );
+            $this->info('═══════════════════════════════════════');
+
+            if ($isDryRun) {
+                $this->warn("\n🔍 This was a dry run - no actual changes were made");
+            }
+
             Log::info("AutoMarkAbsentStudents completed", [
                 'total_marked' => $totalMarked,
-                'lessons_processed' => $lessons->count(),
+                'stats' => $stats,
+                'dry_run' => $isDryRun,
             ]);
 
             return 0;
@@ -102,7 +144,7 @@ class AutoMarkAbsentStudents extends Command
         }
     }
 
-    private function markAbsentForLesson($lesson)
+    private function markAbsentForLesson($lesson, $isDryRun = false)
     {
         try {
             $teacherId = $lesson->group->teacher_id;
@@ -113,7 +155,7 @@ class AutoMarkAbsentStudents extends Command
                 ->where('student_teacher.teacher_id', $teacherId)
                 ->where('student_group.group_id', $lesson->group_id)
                 ->whereRaw('DATE(student_group.created_at) <= ?', [$lesson->date])
-                ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date])
+                ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?)', [$lesson->date])
                 ->pluck('students.id')
                 ->toArray();
 
@@ -141,6 +183,17 @@ class AutoMarkAbsentStudents extends Command
 
             if (empty($absentStudentIds)) {
                 return 0;
+            }
+
+            if ($isDryRun) {
+                Log::info("[DRY RUN] Would mark students as absent", [
+                    'lesson_id' => $lesson->id,
+                    'lesson_date' => $lesson->date,
+                    'lesson_time' => $lesson->time,
+                    'absent_count' => count($absentStudentIds),
+                    'student_ids' => $absentStudentIds,
+                ]);
+                return count($absentStudentIds);
             }
 
             $gradeId = $lesson->group->grade_id;
