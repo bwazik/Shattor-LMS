@@ -450,7 +450,7 @@ class StudentsProfileController extends Controller
             ->whereHas('teacher.students', function ($query) use ($student) {
                 $query->where('students.id', $student->id);
             })
-            ->where('created_at', '>=', $student->created_at)
+            ->where('created_at', '>=', $student->created_at->startOfMonth())
             ->where(function ($query) use ($student) {
                 $query->whereNull('fees.specialization')
                     ->orWhere('fees.specialization', $student->specialization);
@@ -478,7 +478,7 @@ class StudentsProfileController extends Controller
     {
         $feesQuery = Fee::where('grade_id', $student->grade_id)
             ->whereHas('teacher.students', fn($q) => $q->where('students.id', $student->id))
-            ->where('created_at', '>=', $student->created_at)
+            ->where('created_at', '>=', $student->created_at->startOfMonth())
             ->where(function ($query) use ($student) {
                 $query->whereNull('specialization')
                     ->orWhere('specialization', $student->specialization);
@@ -488,7 +488,7 @@ class StudentsProfileController extends Controller
             ->where('type', 2)
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
-            ->where('created_at', '>=', $student->created_at)
+            ->where('created_at', '>=', $student->created_at->startOfMonth())
             ->whereIn('fee_id', $feesQuery->pluck('id'))
             ->with(['transactions' => fn($q) => $q->where('type', 2)]);
         $paidFees = $invoices->clone()->where('status', 2)->count();
