@@ -37,16 +37,10 @@
                         @if ($resource->video_url)
                             <div class="p-2">
                                 <div class="cursor-pointer">
-                                    {{-- <div class="plyr__video-embed" id="player">
+                                    <div class="plyr__video-embed" id="player">
                                         <iframe
                                             src="https://www.youtube.com/embed/{{ $resource->video_url }}?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
                                             allowfullscreen allowtransparency allow="autoplay"></iframe>
-                                    </div> --}}
-                                    <div class="plyr__video-embed" id="player">
-                                        <iframe
-                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?enablejsapi=1&origin={{ urlencode(config('app.url')) }}&rel=0&modestbranding=1&playsinline=1&widget_referrer={{ urlencode(url()->current()) }}"
-                                            allowfullscreen allowtransparency qualitychange allow="autoplay; encrypted-media">
-                                        </iframe>
                                     </div>
                                 </div>
                                 <hr class="my-6" />
@@ -163,119 +157,57 @@
 @endsection
 
 @section('page-js')
-    <script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
-
-    <script>
-        toggleShareButton();
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const playerElement = document.getElementById('player');
-            if (!playerElement) return;
-
-            const player = new Plyr('#player', {
-                debug: false,
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings',
-                    'pip', 'airplay', 'fullscreen'
-                ],
-                settings: ['captions', 'quality', 'speed'],
-                speed: {
-                    selected: 1,
-                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-                },
-                quality: {
-                    default: 480,
-                    options: [1080, 720, 576, 480, 360, 240],
-                    forced: true
-                }
-            });
-
-            const resourceId = '{{ $resource->id }}';
-            const studentId = '{{ auth('student')->id() }}';
-
-            // دالة إرسال الحدث للسيرفر
-            const sendEvent = async (type, data = {}) => {
-                try {
-                    console.log('Analytics event:', type, data);
-                } catch (err) {
-                    console.warn('Analytics event failed (silently):', err.message);
-                }
-            };
-
-            // دالة تتبع التقدم (مع حماية كاملة)
-            const trackProgress = () => {
-                if (!player.media || player.media.readyState < 1) return;
-
-                const currentTime = player.currentTime || 0;
-                const duration = player.duration || 0;
-                if (duration === 0) return;
-
-                const percent = (currentTime / duration) * 100;
-                const durationWatched = Math.floor(currentTime);
-
-                sendEvent('progress', {
-                    currentTime: parseFloat(currentTime.toFixed(2)),
-                    duration: parseFloat(duration.toFixed(2)),
-                    percent: parseFloat(percent.toFixed(2)),
-                    duration_watched: durationWatched
-                });
-            };
-
-            // دالة debounce
-            const debounce = (func, wait) => {
-                let timeout;
-                return (...args) => {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(this, args), wait);
-                };
-            };
-
-            const debouncedProgress = debounce(trackProgress, 8000); // كل 8 ثواني
-
-            // ننتظر لحد ما Plyr يجهز تماماً
-            player.on('ready', () => {
-                console.log('Plyr is ready – YouTube loaded');
-
-                // أول زيارة
-                sendEvent('view');
-
-                // تتبع الأحداث الأساسية
-                player.on('play', () => sendEvent('play'));
-                player.on('pause', () => sendEvent('pause'));
-                player.on('ended', () => sendEvent('ended'));
-                player.on('enterfullscreen', () => sendEvent('fullscreen_enter'));
-                player.on('exitfullscreen', () => sendEvent('fullscreen_exit'));
-
-                // تغيير السرعة
-                player.on('ratechange', () => {
-                    if (player.media) {
-                        sendEvent('ratechange', {
-                            speed: player.speed
-                        });
-                    }
-                });
-
-                // تغيير الجودة (YouTube فقط)
-                player.on('qualitychange', (e) => {
-                    sendEvent('qualitychange', {
-                        quality: e.detail.quality
-                    });
-                });
-
-                // تتبع التقدم
-                player.on('timeupdate', debouncedProgress);
-                player.on('pause', trackProgress);
-                player.on('ended', trackProgress);
-                player.on('seeked', trackProgress);
-
-                // تحديث فوري عند أول تشغيل
-                player.on('playing', trackProgress);
-            });
-
-            // في حالة إن الـ ready ما اشتغلش (نادر جداً)
-            player.on('canplay', () => {
-                if (!player.media) return;
-                sendEvent('canplay');
-            });
+<script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
+            settings: ['captions', 'quality', 'speed'],
+            quality: {
+                default: 720,
+                options: [1080, 720, 576, 480, 360, 240, 144],
+                forced: true
+            },
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] }
         });
-    </script>
+
+        player.on('ready', () => {
+            console.clear();
+            console.log('Plyr جاهز تمام، الـ iframe تحمل');
+
+            const ytPlayer = player.embed; // ده هو الـ YouTube Player الحقيقي
+
+            if (!ytPlayer) {
+                console.error('ما لقيناش YouTube Player object');
+                return;
+            }
+
+            // 1. نشوف الجودات المتاحة من يوتيوب
+            const available = ytPlayer.getAvailableQualityLevels?.() || [];
+            console.log('الجودات المتاحة من YouTube:', available);
+
+            // 2. الجودة الحالية
+            const current = ytPlayer.getPlaybackQuality?.();
+            console.log('الجودة الحالية:', current);
+
+            // 3. لو مفيش جودات خالص
+            if (available.length === 0) {
+                console.warn('يوتيوب رجّع جودات فاضية → الفيديو ده محظور أو unlisted أو معطل الجودات');
+            } else if (available.length === 1) {
+                console.warn('فيه جودة واحدة بس:', available[0], '→ Plyr هيخفي الزرار عادي');
+            } else {
+                console.log('فيه أكتر من جودة → لازم الزرار يظهر دلوقتي!');
+            }
+
+            // 4. نجرب نغيّر الجودة يدوي
+            setTimeout(() => {
+                if (available.length > 1) {
+                    console.log('بنغيّر الجودة يدوي لـ hd720 عشان نتأكد إن الـ API شغال');
+                    ytPlayer.setPlaybackQualityRange('hd720');
+                    ytPlayer.setPlaybackQuality('hd720');
+                }
+            }, 3000);
+        });
+    });
+</script>
 @endsection
