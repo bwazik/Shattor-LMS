@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Users\Students;
 
+use Carbon\Carbon;
 use App\Models\Fee;
 use App\Models\Quiz;
 use App\Models\Group;
@@ -433,7 +434,15 @@ class StudentsProfileController extends Controller
     public function fees(Request $request, $id)
     {
         $student = $this->getStudent($id);
-        $stats = $this->getFeeStats($student);
+
+        $studentTeacherCreatedAt = DB::table('student_teacher')
+            ->where('student_id', $student->id)
+            ->value('created_at');
+        $relationshipDate = $studentTeacherCreatedAt
+            ? Carbon::parse($studentTeacherCreatedAt)->startOfMonth()
+            : $student->created_at->startOfMonth();
+
+        $stats = $this->getFeeStats($student, $relationshipDate);
 
         $feesQuery = Fee::query()
             ->with([
@@ -450,7 +459,7 @@ class StudentsProfileController extends Controller
             ->whereHas('teacher.students', function ($query) use ($student) {
                 $query->where('students.id', $student->id);
             })
-            ->where('created_at', '>=', $student->created_at->startOfMonth())
+            ->where('created_at', '>=', $relationshipDate)
             ->where(function ($query) use ($student) {
                 $query->whereNull('fees.specialization')
                     ->orWhere('fees.specialization', $student->specialization);
@@ -474,11 +483,11 @@ class StudentsProfileController extends Controller
         return view('admin.users.students.profile.fees', compact('student', 'stats'));
     }
 
-    private function getFeeStats($student)
+    private function getFeeStats($student, $relationshipDate)
     {
         $feesQuery = Fee::where('grade_id', $student->grade_id)
             ->whereHas('teacher.students', fn($q) => $q->where('students.id', $student->id))
-            ->where('created_at', '>=', $student->created_at->startOfMonth())
+            ->where('created_at', '>=', $relationshipDate)
             ->where(function ($query) use ($student) {
                 $query->whereNull('specialization')
                     ->orWhere('specialization', $student->specialization);
@@ -488,7 +497,7 @@ class StudentsProfileController extends Controller
             ->where('type', 2)
             ->whereNull('teacher_id')
             ->whereNull('subscription_id')
-            ->where('created_at', '>=', $student->created_at->startOfMonth())
+            ->where('created_at', '>=', $relationshipDate)
             ->whereIn('fee_id', $feesQuery->pluck('id'))
             ->with(['transactions' => fn($q) => $q->where('type', 2)]);
         $paidFees = $invoices->clone()->where('status', 2)->count();
