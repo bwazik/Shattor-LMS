@@ -14,7 +14,8 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap mb-6 gap-1">
                         <div class="me-1">
                             <h5 class="mb-0">{{ $resource->title }}</h5>
-                            <p class="mb-0">{{ trans('main.mr') }}: <span class="fw-medium text-heading"> {{ $resource->teacher->name ?? 'N/A' }} </span></p>
+                            <p class="mb-0">{{ trans('main.mr') }}: <span class="fw-medium text-heading">
+                                    {{ $resource->teacher->name ?? 'N/A' }} </span></p>
                         </div>
                         <div class="d-flex align-items-center">
                             <span class="badge bg-label-success rounded-pill">{{ $resource->grade->name ?? 'N/A' }}</span>
@@ -26,10 +27,12 @@
                         @if ($resource->video_url)
                             <div class="p-2">
                                 <div class="cursor-pointer">
+
                                     <div class="plyr__video-embed" id="player">
                                         <iframe
-                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?enablejsapi=1?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
-                                            allowfullscreen allowtransparency allow="autoplay"></iframe>
+                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?enablejsapi=1&origin={{ urlencode(config('app.url')) }}&rel=0&modestbranding=1&playsinline=1&widget_referrer={{ urlencode(url()->current()) }}"
+                                            allowfullscreen allowtransparency allow="autoplay; encrypted-media">
+                                        </iframe>
                                     </div>
                                 </div>
                                 <hr class="my-6" />
@@ -151,16 +154,25 @@
     <script>
         toggleShareButton();
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const playerElement = document.getElementById('player');
             if (!playerElement) return;
 
             const player = new Plyr('#player', {
                 debug: false,
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings',
+                    'pip', 'airplay', 'fullscreen'
+                ],
                 settings: ['captions', 'quality', 'speed'],
-                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] },
-                quality: { default: 720, options: [1080, 720, 576, 480, 360, 240] }
+                speed: {
+                    selected: 1,
+                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+                },
+                quality: {
+                    default: 720,
+                    options: [1080, 720, 576, 480, 360, 240],
+                    forced: true,
+                }
             });
 
             const resourceId = '{{ $resource->id }}';
@@ -222,13 +234,17 @@
                 // تغيير السرعة
                 player.on('ratechange', () => {
                     if (player.media) {
-                        sendEvent('ratechange', { speed: player.speed });
+                        sendEvent('ratechange', {
+                            speed: player.speed
+                        });
                     }
                 });
 
                 // تغيير الجودة (YouTube فقط)
                 player.on('qualitychange', (e) => {
-                    sendEvent('qualitychange', { quality: e.detail.quality });
+                    sendEvent('qualitychange', {
+                        quality: e.detail.quality
+                    });
                 });
 
                 // تتبع التقدم
