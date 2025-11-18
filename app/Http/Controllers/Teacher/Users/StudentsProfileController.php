@@ -359,9 +359,13 @@ class StudentsProfileController extends Controller
             ->select('id', 'uuid', 'name', 'conducted_at')
             ->where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(offline_quizzes.conducted_at)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > offline_quizzes.conducted_at')))
+            ->whereIn('group_id', function ($query) use ($student) {
+                $query->select('group_id')
+                    ->from('student_group')
+                    ->where('student_id', $student->id)
+                    ->whereRaw('DATE(student_group.created_at) <= DATE(offline_quizzes.conducted_at)')
+                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(offline_quizzes.conducted_at))');
+            })
             ->orderBy('conducted_at', 'desc');
 
         if ($request->ajax()) {
@@ -383,10 +387,13 @@ class StudentsProfileController extends Controller
     {
         $offlineQuizzesQuery = OfflineQuiz::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(offline_quizzes.conducted_at)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > offline_quizzes.conducted_at')));
-
+            ->whereIn('group_id', function ($query) use ($student) {
+                $query->select('group_id')
+                    ->from('student_group')
+                    ->where('student_id', $student->id)
+                    ->whereRaw('DATE(student_group.created_at) <= DATE(offline_quizzes.conducted_at)')
+                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(offline_quizzes.conducted_at))');
+            });
         $totalQuizzes = $offlineQuizzesQuery->count();
         $offlineQuizResults = OfflineQuizResult::where('student_id', $student->id)
             ->whereIn('offline_quiz_id', $offlineQuizzesQuery->pluck('id'))
