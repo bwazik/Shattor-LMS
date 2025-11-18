@@ -112,8 +112,19 @@ class OfflineQuizzesController extends Controller
                 ->with(['offlineQuizResults' => fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id)]);
 
             if ($offlineQuiz->groups()->exists()) {
-                $studentsQuery->whereHas('groups', fn($q) => $q->whereIn('group_id', $offlineQuiz->groups->pluck('id')));
+                $groupIds = $offlineQuiz->groups->pluck('id');
+                $studentsQuery->whereHas('allGroups', function ($q) use ($groupIds, $offlineQuiz) {
+                    $q->whereIn('groups.id', $groupIds)
+                        ->whereDate('student_group.created_at', '<=', $offlineQuiz->conducted_at)
+                        ->where(function ($q2) use ($offlineQuiz) {
+                            $q2->whereNull('student_group.ended_at')
+                                ->orWhereDate('student_group.ended_at', '>', $offlineQuiz->conducted_at);
+                        });
+                });
             }
+            // if ($offlineQuiz->groups()->exists()) {
+            //     $studentsQuery->whereHas('groups', fn($q) => $q->whereIn('group_id', $offlineQuiz->groups->pluck('id')));
+            // }
 
             return $this->offlineQuizService->getOfflineQuizScoresForDatatable($studentsQuery, $offlineQuiz);
         }
