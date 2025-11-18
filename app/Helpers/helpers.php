@@ -527,42 +527,69 @@ if (!function_exists('getArabicOrdinal')) {
 
         $number = (int) $number;
 
-        if ($number <= 10) {
-            return trans("main.ordinals.{$number}");
+        // 1–20 مباشرة
+        $ordinals = [
+            1 => 'الأول',
+            2 => 'الثاني',
+            3 => 'الثالث',
+            4 => 'الرابع',
+            5 => 'الخامس',
+            6 => 'السادس',
+            7 => 'السابع',
+            8 => 'الثامن',
+            9 => 'التاسع',
+            10 => 'العاشر',
+            11 => 'الحادي عشر',
+            12 => 'الثاني عشر',
+            13 => 'الثالث عشر',
+            14 => 'الرابع عشر',
+            15 => 'الخامس عشر',
+            16 => 'السادس عشر',
+            17 => 'السابع عشر',
+            18 => 'الثامن عشر',
+            19 => 'التاسع عشر',
+            20 => 'العشرون',
+        ];
+
+        if (isset($ordinals[$number])) {
+            return $ordinals[$number];
         }
 
-        $units = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
-        $tens = ['', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
-        $hundreds = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+        // 21–99
+        $units = [
+            1 => 'الحادي',
+            2 => 'الثاني',
+            3 => 'الثالث',
+            4 => 'الرابع',
+            5 => 'الخامس',
+            6 => 'السادس',
+            7 => 'السابع',
+            8 => 'الثامن',
+            9 => 'التاسع',
+        ];
 
-        $result = '';
+        $tens = [
+            2 => 'العشرون',
+            3 => 'الثلاثون',
+            4 => 'الأربعون',
+            5 => 'الخمسون',
+            6 => 'الستون',
+            7 => 'السبعون',
+            8 => 'الثمانون',
+            9 => 'التسعون',
+        ];
 
-        if ($number >= 100) {
-            $hundredCount = floor($number / 100);
-            $number %= 100;
-            $result .= $hundreds[$hundredCount];
+        $u = $number % 10;       // الآحاد
+        $t = intdiv($number, 10); // العشرات
+
+        if ($u === 0) {
+            return $tens[$t];
         }
 
-        if ($number > 0) {
-            if ($result) {
-                $result .= ' و';
-            }
-            if ($number >= 10) {
-                $tenCount = floor($number / 10);
-                $unitCount = $number % 10;
-                if ($unitCount == 0) {
-                    $result .= $tens[$tenCount];
-                } else {
-                    $result .= $units[$unitCount] . ' و' . $tens[$tenCount];
-                }
-            } else {
-                $result .= $units[$number];
-            }
-        }
-
-        return 'ال' . trim($result);
+        return $units[$u] . ' و' . $tens[$t];
     }
 }
+
 
 if (!function_exists('getDashboardRoute')) {
     function getDashboardRoute()
