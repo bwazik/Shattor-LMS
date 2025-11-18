@@ -359,12 +359,17 @@ class StudentsProfileController extends Controller
             ->select('id', 'uuid', 'name', 'conducted_at')
             ->where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
-            ->whereIn('group_id', function ($query) use ($student) {
-                $query->select('group_id')
-                    ->from('student_group')
-                    ->where('student_id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(offline_quizzes.conducted_at)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(offline_quizzes.conducted_at))');
+            ->whereHas('groups', function ($query) use ($student) {
+                $query->whereIn('groups.id', function ($subquery) use ($student) {
+                    $subquery->select('group_id')
+                        ->from('student_group')
+                        ->where('student_id', $student->id)
+                        ->whereColumn('student_group.created_at', '<=', 'offline_quizzes.conducted_at')
+                        ->where(function ($q) {
+                            $q->whereNull('student_group.ended_at')
+                                ->orWhereColumn('student_group.ended_at', '>=', 'offline_quizzes.conducted_at');
+                        });
+                });
             })
             ->orderBy('conducted_at', 'desc');
 
@@ -387,12 +392,17 @@ class StudentsProfileController extends Controller
     {
         $offlineQuizzesQuery = OfflineQuiz::where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
-            ->whereIn('group_id', function ($query) use ($student) {
-                $query->select('group_id')
-                    ->from('student_group')
-                    ->where('student_id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(offline_quizzes.conducted_at)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(offline_quizzes.conducted_at))');
+            ->whereHas('groups', function ($query) use ($student) {
+                $query->whereIn('groups.id', function ($subquery) use ($student) {
+                    $subquery->select('group_id')
+                        ->from('student_group')
+                        ->where('student_id', $student->id)
+                        ->whereColumn('student_group.created_at', '<=', 'offline_quizzes.conducted_at')
+                        ->where(function ($q) {
+                            $q->whereNull('student_group.ended_at')
+                                ->orWhereColumn('student_group.ended_at', '>=', 'offline_quizzes.conducted_at');
+                        });
+                });
             });
         $totalQuizzes = $offlineQuizzesQuery->count();
         $offlineQuizResults = OfflineQuizResult::where('student_id', $student->id)
