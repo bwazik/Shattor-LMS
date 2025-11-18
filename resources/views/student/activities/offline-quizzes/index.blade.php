@@ -13,9 +13,9 @@
         <th>#</th>
         <th>{{ trans('main.title') }}</th>
         <th>{{ trans('main.teacher') }}</th>
-        <th>{{ trans('admin/quizzes.totalScore') }}</th>
+        <th>{{ trans('admin/quizzes.finalScore') }}</th>
         <th>{{ trans('main.conducted_at') }}</th>
-        <th>{{ trans('main.link') }}</th>
+        <th>{{ trans('admin/quizzes.showMeMyScore') }}</th>
     </x-datatable>
     <!--/ DataTable -->
 @endsection

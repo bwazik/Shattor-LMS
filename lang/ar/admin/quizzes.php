@@ -35,6 +35,8 @@ return [
     ],
     'totalQuestions' => 'إجمالي الأسئلة',
     'totalScore' => 'إجمالي الدرجات',
+    'finalScore' => 'الدرجة النهائية',
+    'showMeMyScore' => 'وريني درجتي',
     'questionNavigator' => 'التنقل بين الأسئلة',
     'of' => 'من أصل',
     'timeRemaining' => 'الوقت المتبقي',

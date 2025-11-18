@@ -35,6 +35,8 @@ return [
     ],
     'totalQuestions' => 'Total Questions',
     'totalScore' => 'Total Score',
+    'finalScore' => 'Finak Score',
+    'showMeMyScore' => 'Show my score',
     'questionNavigator' => 'Question Navigator',
     'of' => 'of',
     'timeRemaining' => 'Time Remaining',
