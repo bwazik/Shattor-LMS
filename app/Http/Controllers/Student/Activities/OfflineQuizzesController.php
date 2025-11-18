@@ -98,12 +98,16 @@ class OfflineQuizzesController extends Controller
         );
         $aiMessage = $this->geminiService->generateContent($prompt);
 
-        $this->whatsappService->sendMessage('01098617164', 'offline_quiz_notification', [
-            'name' => $this->student->name,
-            'quiz_name' => $offlineQuiz->name,
-            'date' => now()->translatedFormat('l j F Y'),
-            'time' => now()->translatedFormat('h:i A'),
-        ], true);
+        $cacheKey = "offline_quiz_whatsapp_sent:{$this->studentId}:{$offlineQuiz->id}";
+        if (!Cache::has($cacheKey)) {
+            $this->whatsappService->sendMessage('01098617164', 'offline_quiz_notification', [
+                'name' => $this->student->name,
+                'quiz_name' => $offlineQuiz->name,
+                'date' => now()->translatedFormat('l j F Y'),
+                'time' => now()->translatedFormat('h:i A'),
+            ], true);
+            Cache::put($cacheKey, true, now()->addMinutes(10));
+        }
 
         return view('student.activities.offline-quizzes.review', compact('offlineQuiz', 'result', 'rank', 'aiMessage'));
     }
@@ -164,4 +168,3 @@ class OfflineQuizzesController extends Controller
         return $formattedRank;
     }
 }
-
