@@ -15,6 +15,7 @@ class WhatsappService
         'security_code_updated',
         'multiple_account_attempt',
         'import_main_report',
+        'offline_quiz_notification',
     ];
 
     public function sendMessage(string $phone, string $template, array $data, bool $isUrgent = false)

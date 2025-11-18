@@ -197,6 +197,8 @@ class SendWhatsappMessage implements ShouldQueue
                     - ايدي الجهاز: {$data['device_id']}
                     - عنوان الـ IP: {$data['ip']}
                     - التاريخ: يوم {$data['date']} الساعة {$data['time']}";
+            case 'offline_quiz_notification':
+                return "تمت مراجعة الكويز الأوفلاين \"{$data['quiz_name']}\" بواسطة الطالب/ة {$data['name']} يوم {$data['date']} الساعة {$data['time']}.";
             default:
                 return "إشعار: رسالة افتراضية";
         }

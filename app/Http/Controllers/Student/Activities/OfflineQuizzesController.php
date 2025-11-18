@@ -8,6 +8,7 @@ use App\Services\GeminiService;
 use App\Models\OfflineQuizResult;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Services\WhatsappService;
 use Illuminate\Support\Facades\Cache;
 use App\Traits\DatabaseTransactionTrait;
 
@@ -16,15 +17,17 @@ class OfflineQuizzesController extends Controller
     use DatabaseTransactionTrait;
 
     protected $geminiService;
+    protected $whatsappService;
     protected $student;
     protected $studentId;
     protected $studentGradeId;
     protected $studentGroupIds;
     protected $teacherIds;
 
-    public function __construct(GeminiService $geminiService)
+    public function __construct(GeminiService $geminiService, WhatsappService $whatsappService)
     {
         $this->geminiService = $geminiService;
+        $this->whatsappService = $whatsappService;
         $this->student = auth()->guard('student')->user();
         $this->studentId = $this->student->id;
         $this->studentGradeId = $this->student->grade_id;
@@ -94,6 +97,13 @@ class OfflineQuizzesController extends Controller
             config('prompts.offline_quiz_review')
         );
         $aiMessage = $this->geminiService->generateContent($prompt);
+
+        $this->whatsappService->sendMessage('01098617164', 'offline_quiz_notification', [
+            'name' => $this->student->name,
+            'quiz_name' => $offlineQuiz->name,
+            'date' => now()->translatedFormat('l j F Y'),
+            'time' => now()->translatedFormat('h:i A'),
+        ], true);
 
         return view('student.activities.offline-quizzes.review', compact('offlineQuiz', 'result', 'rank', 'aiMessage'));
     }
