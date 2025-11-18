@@ -15,7 +15,7 @@
         <th>{{ trans('main.teacher') }}</th>
         <th>{{ trans('admin/quizzes.finalScore') }}</th>
         <th>{{ trans('main.conducted_at') }}</th>
-        <th>{{ trans('admin/quizzes.showMeMyScore') }}</th>
+        <th>{{ trans('main.link') }}</th>
     </x-datatable>
     <!--/ DataTable -->
 @endsection

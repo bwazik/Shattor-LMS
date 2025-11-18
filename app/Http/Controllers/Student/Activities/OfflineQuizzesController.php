@@ -134,7 +134,7 @@ class OfflineQuizzesController extends Controller
         if ($result && now()->greaterThanOrEqualTo($row->conducted_at)) {
             return formatSpanUrl(
                 route('student.offline-quizzes.review', $row->uuid),
-                trans('admin/quizzes.result'),
+                trans('admin/quizzes.showMeMyScore'),
                 'success',
                 false
             );
