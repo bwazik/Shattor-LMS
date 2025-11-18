@@ -36,7 +36,7 @@ return [
     # Datatable headers
     'name' => 'الإسم',
     'title' => 'العنوان',
-    'username' => 'اسم المستخدم',
+    'username' => 'اليوزرنيم',
     'email' => 'الإيميل',
     'phone' => 'الموبايل',
     'plan' => 'الخطة',
