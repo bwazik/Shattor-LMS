@@ -11,7 +11,6 @@ use App\Models\OfflineQuizResult;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
 use App\Traits\ServiceResponseTrait;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\Teacher\Activities\OfflineQuizService;
 use App\Http\Requests\Admin\Activities\OfflineQuizzesRequest;
@@ -148,34 +147,41 @@ class OfflineQuizzesController extends Controller
             ->uuid($uuid)
             ->where('teacher_id', $this->teacherId)
             ->firstOrFail();
- Log::debug('Offline Quiz Reports - Initial Data', [
- 'quiz_id' => $offlineQuiz->id,
- 'grade_id' => $offlineQuiz->grade_id,
- 'conducted_at' => $offlineQuiz->conducted_at,
- 'group_ids' => $offlineQuiz->groups->pluck('id')->toArray(),
- ]);
+
         $groupIds = $offlineQuiz->groups()->pluck('groups.id');
+
+        // Check how many students are CURRENTLY in group 28
+$currentlyInGroup28 = Student::where('grade_id', 6)
+    ->whereHas('groups', fn($q) => $q->where('groups.id', 28)) // Current groups only
+    ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+    ->count();
+
+// Check student_group table directly
+$studentGroupRecords = \DB::table('student_group')
+    ->where('group_id', 28)
+    ->where(function($q) use ($offlineQuiz) {
+        $q->where('created_at', '<=', $offlineQuiz->conducted_at)
+          ->where(function($q2) use ($offlineQuiz) {
+              $q2->whereNull('ended_at')
+                 ->orWhere('ended_at', '>', $offlineQuiz->conducted_at);
+          });
+    })
+    ->count();
+
+dd([
+    'currentlyInGroup28' => $currentlyInGroup28,
+    'studentGroupRecords_at_quiz_time' => $studentGroupRecords,
+    'totalStudents_from_query' => 176,
+]);
 
         // Total students eligible for the quiz
         $totalStudents = Student::where('grade_id', $offlineQuiz->grade_id)
             ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
                 ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at >= ?', [$offlineQuiz->conducted_at]))
+                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->count();
 
- Log::debug('Offline Quiz Reports - Group Filtered Students', [
- 'groupIds' => $groupIds->toArray(),
- 'totalStudents' => $totalStudents,
- ]);
-$allGradeStudents = Student::where('grade_id', $offlineQuiz->grade_id)
-    ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-    ->count();
-
-dd([
-    'totalStudents_filtered' => $totalStudents,
-    'allGradeStudents' => $allGradeStudents,
-]);
         // Students who actually took the quiz
         $tookQuiz = $offlineQuiz->offline_quiz_results_count;
         $didntTakeQuiz = $totalStudents - $tookQuiz;
