@@ -150,35 +150,16 @@ class OfflineQuizzesController extends Controller
 
         $groupIds = $offlineQuiz->groups()->pluck('groups.id');
 
-        // Check how many students are CURRENTLY in group 28
-$currentlyInGroup28 = Student::where('grade_id', 6)
-    ->whereHas('groups', fn($q) => $q->where('groups.id', 28)) // Current groups only
-    ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-    ->count();
-
-// Check student_group table directly
-$studentGroupRecords = \DB::table('student_group')
-    ->where('group_id', 28)
-    ->where(function($q) use ($offlineQuiz) {
-        $q->where('created_at', '<=', $offlineQuiz->conducted_at)
-          ->where(function($q2) use ($offlineQuiz) {
-              $q2->whereNull('ended_at')
-                 ->orWhere('ended_at', '>', $offlineQuiz->conducted_at);
-          });
-    })
-    ->count();
-
-dd([
-    'currentlyInGroup28' => $currentlyInGroup28,
-    'studentGroupRecords_at_quiz_time' => $studentGroupRecords,
-    'totalStudents_from_query' => 176,
-]);
-
         // Total students eligible for the quiz
         $totalStudents = Student::where('grade_id', $offlineQuiz->grade_id)
-            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
-                ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
+            ->whereHas('allGroups', function ($q) use ($groupIds, $offlineQuiz) {
+                $q->whereIn('groups.id', $groupIds)
+                    ->whereDate('student_group.created_at', '<=', $offlineQuiz->conducted_at)
+                    ->where(function ($q2) use ($offlineQuiz) {
+                        $q2->whereNull('student_group.ended_at')
+                            ->orWhereDate('student_group.ended_at', '>', $offlineQuiz->conducted_at);
+                    });
+            })
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->count();
 
@@ -318,9 +299,14 @@ dd([
 
         $studentsTakenQuery = Student::query()
             ->with(['offlineQuizResults' => fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id)])
-            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
-                ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
+            ->whereHas('allGroups', function ($q) use ($groupIds, $offlineQuiz) {
+                $q->whereIn('groups.id', $groupIds)
+                    ->whereDate('student_group.created_at', '<=', $offlineQuiz->conducted_at)
+                    ->where(function ($q2) use ($offlineQuiz) {
+                        $q2->whereNull('student_group.ended_at')
+                            ->orWhereDate('student_group.ended_at', '>', $offlineQuiz->conducted_at);
+                    });
+            })
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereHas('offlineQuizResults', fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id))
             ->select('id', 'uuid', 'name', 'phone', 'profile_pic')
@@ -359,9 +345,14 @@ dd([
 
         $studentsNotTakenQuery = Student::query()
             ->where('grade_id', $offlineQuiz->grade_id)
-            ->whereHas('allGroups', fn($q) => $q->whereIn('groups.id', $groupIds)
-                ->where('student_group.created_at', '<=', $offlineQuiz->conducted_at)
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > ?', [$offlineQuiz->conducted_at]))
+            ->whereHas('allGroups', function ($q) use ($groupIds, $offlineQuiz) {
+                $q->whereIn('groups.id', $groupIds)
+                    ->whereDate('student_group.created_at', '<=', $offlineQuiz->conducted_at)
+                    ->where(function ($q2) use ($offlineQuiz) {
+                        $q2->whereNull('student_group.ended_at')
+                            ->orWhereDate('student_group.ended_at', '>', $offlineQuiz->conducted_at);
+                    });
+            })
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
             ->whereDoesntHave('offlineQuizResults', fn($q) => $q->where('offline_quiz_id', $offlineQuiz->id))
             ->select('id', 'name', 'phone', 'profile_pic');
