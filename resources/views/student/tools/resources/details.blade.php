@@ -1,17 +1,6 @@
 @extends('layouts.student.master')
 
 @section('page-css')
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/plyr/plyr.css') }}" />
-
-    <style>
-        .plyr__menu__container [data-plyr="quality"] {
-            display: block !important;
-        }
-
-        .plyr__menu__container .plyr__control[role="menuitemradio"] {
-            display: block !important;
-        }
-    </style>
 @endsection
 
 @section('title', pageTitle('admin/resources.resources'))
@@ -35,24 +24,12 @@
                     </div>
                     <div class="card academy-content shadow-none border">
                         @if ($resource->video_url)
-                            <div class="p-2">
-                                <div class="cursor-pointer">
-                                    <div class="plyr__video-embed" id="player">
-                                        <iframe
-                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?origin=https://shattor.com&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
-                                            allowfullscreen allowtransparency allow="autoplay"></iframe>
+                            <div class="p-2 video-player-container position-relative">
+                                @if ($resource->video_url)
+                                    <div class="ratio ratio-16x9">
+                                        <div id="youtube-player"></div>
                                     </div>
-                                    <div id="dynamic-watermark" class="position-absolute"
-                                        style="
-                                        top: 0; left: 0; pointer-events: none; opacity: 0.75;
-                                        color: #ffffff;
-                                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
-                                        font-size: 20px;
-                                        font-weight: 900;
-                                        z-index: 1000;
-                                        transition: none !important;">
-                                    </div>
-                                </div>
+                                @endif
                                 <hr class="my-6" />
                             </div>
                         @endif
@@ -142,7 +119,9 @@
                                             {{ $resource->file_name }}
                                         </a>
                                         <small class="text-body d-block">
-                                            {{ $resource->file_size >= 1024 * 1024 ? number_format($resource->file_size / (1024 * 1024), 2) . ' MB' : number_format($resource->file_size / 1024, 2) . ' KB' }}
+                                            {{ $resource->file_size >= 1024 * 1024
+                                                ? number_format($resource->file_size / (1024 * 1024), 2) . ' MB'
+                                                : number_format($resource->file_size / 1024, 2) . ' KB' }}
                                         </small>
                                     </span>
                                     <div class="ms-auto">
@@ -167,183 +146,153 @@
 @endsection
 
 @section('page-js')
-    <script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
     <script>
         toggleShareButton();
 
-        // 1. DYNAMIC WATERMARK CONFIG
-        const studentName = '{{ auth()->guard('student')->name ?? 'N/A' }}';
-        const studentIdentifier =
-        '{{ auth()->guard('student')->phone?? 0 }}';
-        const watermarkContent = `${studentName} | ID: ${studentIdentifier}`;
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            sendEvent('security_inspect_attempt', {
+                method: 'right_click'
+            });
+            toastr.warning("{{ trans('admin/resources.security_warning') }}");
+        });
 
-        const watermarkEl = document.getElementById('dynamic-watermark');
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e.key ===
+                    'C'))) {
+                e.preventDefault();
+                sendEvent('security_inspect_attempt', {
+                    method: 'keyboard_shortcut',
+                    key: e.key
+                });
+                toastr.warning("{{ trans('admin/resources.security_warning') }}");
+            }
+        });
 
-        // We will get the Plyr wrapper element after Plyr initializes
-        let playerContainer;
+        function handleDisplayChange() {
+            const isTypeSupportedCheck = typeof navigator.mediaCapabilities !== 'undefined' &&
+                typeof navigator.mediaCapabilities.isTypeSupported === 'function';
 
-        function moveWatermark() {
-            if (!playerContainer) return;
+            const isExtendedScreen = typeof window.screen.isExtended !== 'undefined' && window.screen.isExtended;
 
-            const containerRect = playerContainer.getBoundingClientRect();
-            const watermarkRect = watermarkEl.getBoundingClientRect();
+            if (isExtendedScreen || (isTypeSupportedCheck && navigator.mediaCapabilities.isTypeSupported(
+                    'video/webm; codecs=vp8') && !document.hidden)) {
+                sendEvent('security_screen_capture', {
+                    action: 'suspicion_raised',
+                    message: 'display_extended_or_visible_media_capability'
+                });
+            }
+        }
+        window.addEventListener('blur', handleDisplayChange);
+        window.addEventListener('focus', handleDisplayChange);
 
-            // Calculate max safe positions (10px buffer)
-            const maxX = containerRect.width - watermarkRect.width - 10;
-            const maxY = containerRect.height - watermarkRect.height - 10;
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-            if (maxX > 0 && maxY > 0) {
-                const newX = Math.floor(Math.random() * maxX);
-                const newY = Math.floor(Math.random() * maxY);
+        var player;
 
-                // Watermark is absolutely positioned relative to the .video-player-container
-                watermarkEl.style.left = `${newX}px`;
-                watermarkEl.style.top = `${newY}px`;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                videoId: "{{ $resource->video_url }}",
+                playerVars: {
+                    rel: 0,
+                    modestbranding: 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            sendEvent('view');
+        }
+
+        let lastTime = 0;
+        let lastQuality = '';
+        let lastSpeed = 1;
+        let duration = 0;
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                sendEvent('play');
+                duration = player.getDuration();
+
+                // تتبع كل ثانية
+                setInterval(() => {
+                    if (!player || !player.getCurrentTime) return;
+                    const currentTime = Math.floor(player.getCurrentTime());
+
+                    // تجنب إرسال نفس الثانية أكتر من مرة
+                    if (currentTime !== lastTime) {
+                        const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+                        sendEvent('progress', {
+                            current_time: currentTime,
+                            duration: Math.floor(duration),
+                            percent: parseFloat(percent.toFixed(2)),
+                            duration_watched: currentTime
+                        });
+
+                        // كشف Rewind
+                        if (currentTime < lastTime - 5) {
+                            sendEvent('rewind', {
+                                from: lastTime,
+                                to: currentTime
+                            });
+                        }
+
+                        lastTime = currentTime;
+
+                        // إذا كمل 95% أو أكتر → completed
+                        if (percent >= 95) {
+                            sendEvent('completed');
+                        }
+                    }
+
+                    // تتبع السرعة والجودة كل 5 ثواني
+                    const currentSpeed = player.getPlaybackRate();
+                    const currentQuality = player.getPlaybackQuality();
+
+                    if (currentSpeed !== lastSpeed) {
+                        sendEvent('ratechange', {
+                            speed: currentSpeed
+                        });
+                        lastSpeed = currentSpeed;
+                    }
+
+                    if (currentQuality && currentQuality !== lastQuality) {
+                        sendEvent('qualitychange', {
+                            quality: currentQuality
+                        });
+                        lastQuality = currentQuality;
+                    }
+
+                }, 1000); // كل ثانية
+
+            } else if (event.data == YT.PlayerState.PAUSED) {
+                sendEvent('pause');
+            } else if (event.data == YT.PlayerState.ENDED) {
+                sendEvent('ended');
+                sendEvent('completed');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Plyr
-            const player = new Plyr('#player', {
-                // Plyr settings to ensure speed and quality controls are available
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings',
-                    'fullscreen'
-                ],
-                settings: ['quality', 'speed'],
-                speed: {
-                    selected: 1,
-                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-                },
-                ratio: '16:9'
-            });
-
-            // 2. Identify the PLYR wrapper element
-            // Plyr typically wraps the target element in a div with class .plyr
-            const plyrWrapper = document.getElementById('player').closest('.plyr');
-            if (plyrWrapper) {
-                // Set the PLYR wrapper as the container for watermark positioning
-                playerContainer = plyrWrapper;
-
-                // Set watermark content and begin movement
-                if (watermarkEl) {
-                    watermarkEl.innerHTML = watermarkContent;
-
-                    // Set the initial position and start the interval
-                    moveWatermark();
-                    setInterval(moveWatermark, 5000);
-
-                    // Ensure the watermark covers the video when Plyr goes fullscreen
-                    // This custom CSS rule handles the z-index fix when Plyr enters fullscreen mode
-                    document.addEventListener('fullscreenchange', () => {
-                        if (document.fullscreenElement) {
-                            watermarkEl.style.zIndex =
-                            20; // Must be higher than Plyr's z-index (usually around 19)
-                            // Log fullscreen enter (analytics)
-                            sendEvent('fullscreen_enter');
-                        } else {
-                            watermarkEl.style.zIndex = 1000; // Reset z-index when exiting
-                            // Log fullscreen exit (analytics)
-                            sendEvent('fullscreen_exit');
-                        }
-                    });
-                }
-            }
-
-            // 3. Security (Right-Click/Inspect Block)
-            const containerToProtect = document.querySelector('.video-player-container');
-            if (containerToProtect) {
-                // Block right-click (context menu)
-                containerToProtect.addEventListener('contextmenu', function(e) {
-                    e.preventDefault();
-                    sendEvent('security_inspect_attempt', {
-                        method: 'right_click'
-                    });
-                    toastr.warning("{{ trans('admin/resources.security_warning') }}");
-                });
-
-                // Block common Inspect Element shortcuts (F12, Ctrl/Cmd + Shift + I/J/C)
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e
-                            .key === 'C'))) {
-                        e.preventDefault();
-                        sendEvent('security_inspect_attempt', {
-                            method: 'keyboard_shortcut',
-                            key: e.key
-                        });
-                        toastr.warning("{{ trans('admin/resources.security_warning') }}");
-                    }
-                });
-            }
-
-            // 4. Plyr Event Listeners for Analytics (Simplified)
-            player.on('play', () => sendEvent('play'));
-            player.on('pause', () => sendEvent('pause'));
-            player.on('ended', () => {
-                sendEvent('ended');
-                sendEvent('completed');
-            });
-            player.on('ratechange', (event) => {
-                const speed = event.detail.plyr.speed;
-                if (speed > 5 || speed < 0) { // Security Check
-                    sendEvent('security_rate_manipulation', {
-                        speed: speed,
-                        message: 'impossible_rate_detected'
-                    });
-                    toastr.error("{{ trans('admin/resources.security_error_rate') }}");
-                }
-                sendEvent('ratechange', {
-                    speed: speed
-                });
-            });
-
-            // Plyr only exposes "qualitychange" for non-YouTube sources.
-            // For YouTube, we rely on the iframe to report it (which Plyr does not easily expose).
-            // We will log quality changes if a custom event handler is found, but rely on the standard ratechange.
-            // For Plyr + YouTube, tracking playback quality changes is very difficult. We'll rely on speed.
-
-            // Initial view log
-            sendEvent('view');
-
-            // We'll need a way to track progress/duration watched. Since Plyr doesn't fire a "progress" event
-            // every second, we'll manually set an interval, using the Plyr API's currentTime
-            setInterval(() => {
-                if (player.playing) {
-                    const currentTime = Math.floor(player.currentTime);
-                    const duration = Math.floor(player.duration);
-                    const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-                    sendEvent('progress', {
-                        current_time: currentTime,
-                        duration: duration,
-                        percent: parseFloat(percent.toFixed(2)),
-                        duration_watched: currentTime
-                    });
-                }
-            }, 1000); // Check every second
-
-            // 5. Screen Capture Detection (Retaining the safer check)
-            function handleDisplayChange() {
-                const isTypeSupportedCheck = typeof navigator.mediaCapabilities !== 'undefined' && typeof navigator
-                    .mediaCapabilities.isTypeSupported === 'function';
-                const isExtendedScreen = typeof window.screen.isExtended !== 'undefined' && window.screen
-                .isExtended;
-
-                if (isExtendedScreen || (isTypeSupportedCheck && navigator.mediaCapabilities.isTypeSupported(
-                        'video/webm; codecs=vp8') && !document.hidden)) {
-                    sendEvent('security_screen_capture', {
-                        action: 'suspicion_raised',
-                        message: 'display_extended_or_visible_media_capability'
-                    });
-                }
-            }
-            window.addEventListener('blur', handleDisplayChange);
-            window.addEventListener('focus', handleDisplayChange);
-
-            // 6. Server Event Sender (The final piece)
-            function sendEvent(type, data = {}) {
-                console.log(type, data); // Keep console logging for debugging
-                // This is where we will add the AJAX call in the next step
+        // Fullscreen tracking
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                sendEvent('fullscreen_enter');
+            } else {
+                sendEvent('fullscreen_exit');
             }
         });
+
+        // إرسال الأحداث للسيرفر
+        function sendEvent(type, data = {}) {
+            console.log(type, data);
+        }
     </script>
 @endsection
