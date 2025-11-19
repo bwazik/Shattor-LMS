@@ -31,9 +31,12 @@
                                     </div>
                                     <div id="dynamic-watermark" class="position-absolute"
                                         style="
-                                        top: 0; left: 0; pointer-events: none; opacity: 0.5;
-                                        color: rgba(255, 255, 255, 0.7); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
-                                        font-size: 14px; font-weight: bold; z-index: 1000; transition: none !important;">
+                                        top: 0; left: 0; pointer-events: none; opacity: 0.75;
+                                        color: #ffffff; /* Bright White */
+                                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 1); /* Strong Black Shadow */
+                                        font-size: 20px; /* Bigger Font Size */
+                                        font-weight: 900; /* Extra Bold */
+                                        z-index: 1000; transition: none !important;">
                                     </div>
                                 @endif
                                 <hr class="my-6" />
