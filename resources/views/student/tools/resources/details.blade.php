@@ -36,15 +36,7 @@
                         @if ($resource->video_url)
                             <div class="p-2">
                                 @if ($resource->video_url)
-                                    <div class="ratio ratio-16x9 rounded overflow-hidden shadow-lg"
-                                        style="border-radius: 16px;">
-                                        <iframe id="youtube-player" width="560" height="315"
-                                            src="https://www.youtube-nocookie.com/embed/{{ $resource->video_url }}"
-                                            title="YouTube video player" frameborder="0"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                            allowfullscreen referrerpolicy="strict-origin-when-cross-origin">
-                                        </iframe>
-                                    </div>
+                                    <div id="youtube-player"></div>
                                 @endif
                                 <hr class="my-6" />
                             </div>
@@ -175,6 +167,7 @@
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
+                videoId: "{{ $resource->video_url }}",
                 events: {
                     'onReady': onPlayerReady,
                     'onStateChange': onPlayerStateChange
