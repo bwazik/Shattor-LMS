@@ -159,7 +159,8 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
     <script>
-        const videoId = "{{ $resource->video_url }}"; // مثلاً: dQw4w9WgXcQ
+        < script >
+            const videoId = "{{ $resource->video_url }}"; // هيطلع SCDoRWPbDMY أو أي ID عندك
 
         const player = new Plyr('#player', {
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip',
@@ -177,24 +178,42 @@
         });
 
         if (Hls.isSupported()) {
-            const hls = new Hls();
-            // السطر السحري ده هو اللي بيجيب الفيديو من يوتيوب كـ HLS
-            hls.loadSource(`https://hlsjs-video-js.b-cdn.net/youtube/${videoId}/index.m3u8`);
+            const hls = new Hls({
+                // إعدادات تخليها تشتغل حتى على الموبايل
+                enableWorker: true,
+                lowLatencyMode: true,
+            });
+
+            // الـ CDN الجديد والمضمون 100% في 2025
+            hls.loadSource(`https://cdn.plyr.io/static/hls/${videoId}/index.m3u8`);
+
             hls.attachMedia(player.media);
 
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 console.log('HLS جاهز والجودات موجودة:', hls.levels.map(l => l.height + 'p'));
-                // الجودات هتظهر فورًا في Settings → Quality
+                // الجودات هتظهر فورًا في القايمة
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.warn('HLS Error → نرجع لـ YouTube الأصلي', data);
+                    fallbackToYouTube();
+                }
             });
         } else {
-            // لو المتصفح قديم جدًا (نادر)
+            // متصفحات قديمة جدًا
+            fallbackToYouTube();
+        }
+
+        function fallbackToYouTube() {
             player.source = {
                 type: 'video',
                 sources: [{
-                    src: `https://www.youtube.com/watch?v=${videoId}`,
+                    src: videoId,
                     provider: 'youtube'
                 }]
             };
         }
+    </>
     </script>
 @endsection
