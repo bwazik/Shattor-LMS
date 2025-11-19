@@ -158,8 +158,8 @@
     <script>
         toggleShareButton();
 
-        const studentName = '{{ auth()->user->name ?? 'N/A' }}';
-        const studentPhone = '{{ auth()->user->phone ?? 0 }}';
+        const studentName = '{{ auth()->guard('student')->user()->name ?? 'N/A' }}';
+        const studentPhone = '{{ auth()->guard('student')->user()->phone ?? 0 }}';
         const watermarkContent = `${studentName} - Phone:${studentPhone}`;
         const watermarkEl = document.getElementById('dynamic-watermark');
         const videoContainer = document.querySelector('.video-player-container');
