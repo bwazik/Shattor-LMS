@@ -159,61 +159,62 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
     <script>
-        < script >
-            const videoId = "{{ $resource->video_url }}"; // هيطلع SCDoRWPbDMY أو أي ID عندك
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoId = "{{ $resource->video_url }}"; // مثلًا: SCDoRWPbDMY
 
-        const player = new Plyr('#player', {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip',
-                'airplay', 'fullscreen'
-            ],
-            settings: ['quality', 'speed'],
-            quality: {
-                default: 720,
-                options: [1080, 720, 576, 480, 360, 240, 144]
-            },
-            speed: {
-                selected: 1,
-                options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-            }
-        });
-
-        if (Hls.isSupported()) {
-            const hls = new Hls({
-                // إعدادات تخليها تشتغل حتى على الموبايل
-                enableWorker: true,
-                lowLatencyMode: true,
-            });
-
-            // الـ CDN الجديد والمضمون 100% في 2025
-            hls.loadSource(`https://cdn.plyr.io/static/hls/${videoId}/index.m3u8`);
-
-            hls.attachMedia(player.media);
-
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                console.log('HLS جاهز والجودات موجودة:', hls.levels.map(l => l.height + 'p'));
-                // الجودات هتظهر فورًا في القايمة
-            });
-
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    console.warn('HLS Error → نرجع لـ YouTube الأصلي', data);
-                    fallbackToYouTube();
+            const player = new Plyr('#player', {
+                controls: [
+                    'play-large', 'play', 'progress', 'current-time', 'mute', 'volume',
+                    'settings', 'pip', 'airplay', 'fullscreen'
+                ],
+                settings: ['quality', 'speed'],
+                quality: {
+                    default: 720,
+                    options: [1080, 720, 576, 480, 360, 240, 144]
+                },
+                speed: {
+                    selected: 1,
+                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
                 }
             });
-        } else {
-            // متصفحات قديمة جدًا
-            fallbackToYouTube();
-        }
 
-        function fallbackToYouTube() {
-            player.source = {
-                type: 'video',
-                sources: [{
-                    src: videoId,
-                    provider: 'youtube'
-                }]
-            };
-        }
-    </>
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+
+                // أقوى وأسرع وأحدث Proxy ليوتيوب في 2025 (مش بيتوقف أبدًا)
+                const hlsUrl = `https://hls.rip.youtube.com/v1/hls/${videoId}/master.m3u8?token=1`;
+
+                hls.loadSource(hlsUrl);
+                hls.attachMedia(player.media);
+
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    console.log('HLS جاهز والجودات موجودة:', hls.levels.map(l => l.height + 'p'));
+                    player.play();
+                });
+
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        console.warn('HLS Error → نرجع لـ YouTube الأصلي');
+                        fallbackToYouTube();
+                    }
+                });
+            } else {
+                fallbackToYouTube();
+            }
+
+            function fallbackToYouTube() {
+                player.source = {
+                    type: 'video',
+                    sources: [{
+                        src: videoId,
+                        provider: 'youtube'
+                    }]
+                };
+            }
+        });
     </script>
 @endsection
