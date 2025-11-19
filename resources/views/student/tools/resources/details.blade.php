@@ -36,7 +36,7 @@
                         @if ($resource->video_url)
                             <div class="p-2">
                                 @if ($resource->video_url)
-                                    <div id="youtube-player"></div>
+                                    <div id="youtube-player" class="w-100"></div>
                                 @endif
                                 <hr class="my-6" />
                             </div>
@@ -157,6 +157,8 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
     <script>
+        toggleShareButton();
+
         // تفعيل YouTube IFrame API
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
