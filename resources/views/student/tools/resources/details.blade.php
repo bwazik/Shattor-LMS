@@ -1,6 +1,7 @@
 @extends('layouts.student.master')
 
 @section('page-css')
+    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.css') }}">
 @endsection
 
 @section('title', pageTitle('admin/resources.resources'))
@@ -146,6 +147,8 @@
 @endsection
 
 @section('page-js')
+    <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.js') }}"></script>
+
     <script>
         toggleShareButton();
 
