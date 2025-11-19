@@ -236,7 +236,6 @@
             player = new YT.Player('youtube-player', {
                 videoId: "{{ $resource->video_url }}",
                 playerVars: {
-                    controls: 0,
                     rel: 0,
                     modestbranding: 1
                 },
