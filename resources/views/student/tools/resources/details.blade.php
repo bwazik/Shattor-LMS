@@ -39,7 +39,7 @@
                                     <div class="ratio ratio-16x9 rounded overflow-hidden shadow-lg"
                                         style="border-radius: 16px;">
                                         <iframe id="youtube-player"
-                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?enablejsapi=1&origin={{ urlencode(config('app.url')) }}&rel=0&modestbranding=1&playsinline=1"
+                                            src="https://www.youtube-nocookie.com/embed/{{ $resource->video_url }}?enablejsapi=1&origin={{ urlencode(config('app.url')) }}&rel=0&modestbranding=1&playsinline=1"
                                             title="YouTube video" frameborder="0"
                                             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                                             allowfullscreen class="rounded w-100"
