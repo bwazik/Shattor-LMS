@@ -156,13 +156,45 @@
 @endsection
 
 @section('page-js')
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const player = new Plyr(document.getElementById('player'),
-                {
-                    settings: ['captions', 'quality', 'speed', 'loop']
-                });
+        const videoId = "{{ $resource->video_url }}"; // مثلاً: dQw4w9WgXcQ
+
+        const player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip',
+                'airplay', 'fullscreen'
+            ],
+            settings: ['quality', 'speed'],
+            quality: {
+                default: 720,
+                options: [1080, 720, 576, 480, 360, 240, 144]
+            },
+            speed: {
+                selected: 1,
+                options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+            }
         });
+
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            // السطر السحري ده هو اللي بيجيب الفيديو من يوتيوب كـ HLS
+            hls.loadSource(`https://hlsjs-video-js.b-cdn.net/youtube/${videoId}/index.m3u8`);
+            hls.attachMedia(player.media);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log('HLS جاهز والجودات موجودة:', hls.levels.map(l => l.height + 'p'));
+                // الجودات هتظهر فورًا في Settings → Quality
+            });
+        } else {
+            // لو المتصفح قديم جدًا (نادر)
+            player.source = {
+                type: 'video',
+                sources: [{
+                    src: `https://www.youtube.com/watch?v=${videoId}`,
+                    provider: 'youtube'
+                }]
+            };
+        }
     </script>
 @endsection
