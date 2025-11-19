@@ -1,8 +1,7 @@
 @extends('layouts.student.master')
 
 @section('page-css')
-    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/plyr/plyr.css') }}" />
-
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.8.3/plyr.css" />
     <style>
         .plyr__menu__container [data-plyr="quality"] {
             display: block !important;
@@ -157,7 +156,7 @@
 @endsection
 
 @section('page-js')
-<script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
+<script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const player = new Plyr('#player');
