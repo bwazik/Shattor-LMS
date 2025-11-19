@@ -149,12 +149,43 @@
     <script>
         toggleShareButton();
 
+        function showAlert(title, text, icon, confirmButtonText) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                return Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    confirmButtonText: confirmButtonText || '{{ trans('main.submit') }}',
+                    customClass: {
+                        confirmButton: 'btn btn-primary waves-effect waves-light'
+                    },
+                    buttonsStyling: false
+                });
+            } else {
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    confirmButtonText: confirmButtonText || '{{ trans('main.submit') }}',
+                    customClass: {
+                        confirmButton: 'btn btn-primary waves-effect waves-light'
+                    },
+                    buttonsStyling: false
+                });
+            }
+        }
+
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             sendEvent('security_inspect_attempt', {
                 method: 'right_click'
             });
-            toastr.warning("{{ trans('admin/resources.security_warning') }}");
+            showAlert(
+                "{{ trans('main.warning') }}",
+                "{{ trans('admin/quizzes.unansweredQuestions') }}",
+                "warning",
+                "{{ trans('main.submit') }}"
+            )
         });
 
         document.addEventListener('keydown', function(e) {
@@ -165,7 +196,12 @@
                     method: 'keyboard_shortcut',
                     key: e.key
                 });
-                toastr.warning("{{ trans('admin/resources.security_warning') }}");
+                showAlert(
+                    "{{ trans('main.warning') }}",
+                    "{{ trans('admin/quizzes.unansweredQuestions') }}",
+                    "warning",
+                    "{{ trans('main.submit') }}"
+                )
             }
         });
 
