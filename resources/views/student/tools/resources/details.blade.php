@@ -160,54 +160,7 @@
 <script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const player = new Plyr('#player', {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
-            settings: ['captions', 'quality', 'speed'],
-            quality: {
-                default: 720,
-                options: [1080, 720, 576, 480, 360, 240, 144],
-                forced: true
-            },
-            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] }
-        });
-
-        player.on('ready', () => {
-            console.clear();
-            console.log('Plyr جاهز تمام، الـ iframe تحمل');
-
-            const ytPlayer = player.embed; // ده هو الـ YouTube Player الحقيقي
-
-            if (!ytPlayer) {
-                console.error('ما لقيناش YouTube Player object');
-                return;
-            }
-
-            // 1. نشوف الجودات المتاحة من يوتيوب
-            const available = ytPlayer.getAvailableQualityLevels?.() || [];
-            console.log('الجودات المتاحة من YouTube:', available);
-
-            // 2. الجودة الحالية
-            const current = ytPlayer.getPlaybackQuality?.();
-            console.log('الجودة الحالية:', current);
-
-            // 3. لو مفيش جودات خالص
-            if (available.length === 0) {
-                console.warn('يوتيوب رجّع جودات فاضية → الفيديو ده محظور أو unlisted أو معطل الجودات');
-            } else if (available.length === 1) {
-                console.warn('فيه جودة واحدة بس:', available[0], '→ Plyr هيخفي الزرار عادي');
-            } else {
-                console.log('فيه أكتر من جودة → لازم الزرار يظهر دلوقتي!');
-            }
-
-            // 4. نجرب نغيّر الجودة يدوي
-            setTimeout(() => {
-                if (available.length > 1) {
-                    console.log('بنغيّر الجودة يدوي لـ hd720 عشان نتأكد إن الـ API شغال');
-                    ytPlayer.setPlaybackQualityRange('hd720');
-                    ytPlayer.setPlaybackQuality('hd720');
-                }
-            }, 3000);
-        });
+        const player = new Plyr('#player');
     });
 </script>
 @endsection
