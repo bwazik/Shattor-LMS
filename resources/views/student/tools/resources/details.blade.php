@@ -176,7 +176,7 @@
         }
 
         document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
+            // e.preventDefault();
             sendEvent('security_inspect_attempt', {
                 method: 'right_click'
             });
@@ -191,7 +191,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e.key ===
                     'C'))) {
-                e.preventDefault();
+                // e.preventDefault();
                 sendEvent('security_inspect_attempt', {
                     method: 'keyboard_shortcut',
                     key: e.key
