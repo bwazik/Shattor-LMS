@@ -37,15 +37,15 @@
                             <div class="p-2">
 @if($resource->video_url)
 <div class="ratio ratio-16x9 rounded overflow-hidden shadow-lg" style="border-radius: 16px;">
-    <iframe
-        src="https://www.youtube.com/embed/{{ $resource->video_url }}?rel=0&modestbranding=1&playsinline=1"
-        title="YouTube video player"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen
-        class="rounded"
-        style="border-radius: 16px;">
-    </iframe>
+<iframe
+    width="560" height="315"
+    src="https://www.youtube-nocookie.com/embed/{{ $video_id }}"
+    title="YouTube video player"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen
+    referrerpolicy="strict-origin-when-cross-origin">
+</iframe>
 </div>
 @endif
                                 <hr class="my-6" />
