@@ -35,13 +35,19 @@
                     <div class="card academy-content shadow-none border">
                         @if ($resource->video_url)
                             <div class="p-2">
-                                <div class="cursor-pointer">
-                                    <div class="plyr__video-embed" id="player">
-                                        <iframe
-                                            src="https://www.youtube.com/embed/{{ $resource->video_url }}?origin=https://shattor.com/ar/student/resources/0bca267f-6718-4144-896a-662c2e181850&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
-                                            allowfullscreen allowtransparency allow="autoplay"></iframe>
-                                    </div>
-                                </div>
+@if($resource->video_url)
+<div class="ratio ratio-16x9 rounded overflow-hidden shadow-lg" style="border-radius: 16px;">
+    <iframe
+        src="https://www.youtube.com/embed/{{ $resource->video_url }}?rel=0&modestbranding=1&playsinline=1"
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        class="rounded"
+        style="border-radius: 16px;">
+    </iframe>
+</div>
+@endif
                                 <hr class="my-6" />
                             </div>
                         @endif
@@ -158,63 +164,5 @@
 @section('page-js')
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const videoId = "{{ $resource->video_url }}"; // مثلًا: SCDoRWPbDMY
 
-            const player = new Plyr('#player', {
-                controls: [
-                    'play-large', 'play', 'progress', 'current-time', 'mute', 'volume',
-                    'settings', 'pip', 'airplay', 'fullscreen'
-                ],
-                settings: ['quality', 'speed'],
-                quality: {
-                    default: 720,
-                    options: [1080, 720, 576, 480, 360, 240, 144]
-                },
-                speed: {
-                    selected: 1,
-                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
-                }
-            });
-
-            if (Hls.isSupported()) {
-                const hls = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    backBufferLength: 90
-                });
-
-                // أقوى وأسرع وأحدث Proxy ليوتيوب في 2025 (مش بيتوقف أبدًا)
-                const hlsUrl = `https://hls.rip.youtube.com/v1/hls/${videoId}/master.m3u8?token=1`;
-
-                hls.loadSource(hlsUrl);
-                hls.attachMedia(player.media);
-
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    console.log('HLS جاهز والجودات موجودة:', hls.levels.map(l => l.height + 'p'));
-                    player.play();
-                });
-
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        console.warn('HLS Error → نرجع لـ YouTube الأصلي');
-                        fallbackToYouTube();
-                    }
-                });
-            } else {
-                fallbackToYouTube();
-            }
-
-            function fallbackToYouTube() {
-                player.source = {
-                    type: 'video',
-                    sources: [{
-                        src: videoId,
-                        provider: 'youtube'
-                    }]
-                };
-            }
-        });
-    </script>
 @endsection
