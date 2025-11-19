@@ -48,6 +48,7 @@ class StudentsProfileController extends Controller
                 'teachers:id'
             ])
             ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.grade_id', 'students.specialization', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
+            ->withTrashed()
             ->findOrFail($id);
     }
 
