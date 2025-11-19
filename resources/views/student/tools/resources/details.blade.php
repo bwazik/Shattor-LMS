@@ -156,10 +156,13 @@
 @endsection
 
 @section('page-js')
-<script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const player = new Plyr('#player');
-    });
-</script>
+    <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const player = new Plyr(document.getElementById('player'),
+                {
+                    settings: ['captions', 'quality', 'speed', 'loop']
+                });
+        });
+    </script>
 @endsection
