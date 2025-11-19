@@ -1,16 +1,6 @@
 @extends('layouts.student.master')
 
 @section('page-css')
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.8.3/plyr.css" />
-    <style>
-        .plyr__menu__container [data-plyr="quality"] {
-            display: block !important;
-        }
-
-        .plyr__menu__container .plyr__control[role="menuitemradio"] {
-            display: block !important;
-        }
-    </style>
 @endsection
 
 @section('title', pageTitle('admin/resources.resources'))
@@ -38,6 +28,12 @@
                                 @if ($resource->video_url)
                                     <div class="ratio ratio-16x9">
                                         <div id="youtube-player"></div>
+                                    </div>
+                                    <div id="dynamic-watermark" class="position-absolute"
+                                        style="
+                                        top: 0; left: 0; pointer-events: none; opacity: 0.5;
+                                        color: rgba(255, 255, 255, 0.7); text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+                                        font-size: 14px; font-weight: bold; z-index: 1000; transition: none !important;">
                                     </div>
                                 @endif
                                 <hr class="my-6" />
@@ -156,12 +152,74 @@
 @endsection
 
 @section('page-js')
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.plyr.io/3.8.3/plyr.js"></script>
     <script>
         toggleShareButton();
 
-        // تفعيل YouTube IFrame API
+        const studentName = '{{ $student->name ?? 'N/A' }}';
+        const studentPhone = '{{ $student->phone ?? 0 }}';
+        const watermarkContent = `${studentName} - Phone:${studentPhone}`;
+        const watermarkEl = document.getElementById('dynamic-watermark');
+        const videoContainer = document.querySelector('.video-player-container');
+
+        if (watermarkEl) {
+            watermarkEl.innerHTML = watermarkContent;
+
+            function moveWatermark() {
+                if (!videoContainer) return;
+
+                const containerRect = videoContainer.getBoundingClientRect();
+                const watermarkRect = watermarkEl.getBoundingClientRect();
+
+                const maxX = containerRect.width - watermarkRect.width - 20;
+                const maxY = containerRect.height - watermarkRect.height - 20;
+
+                if (maxX > 0 && maxY > 0) {
+                    const newX = Math.floor(Math.random() * maxX);
+                    const newY = Math.floor(Math.random() * maxY);
+
+                    watermarkEl.style.left = `${newX}px`;
+                    watermarkEl.style.top = `${newY}px`;
+                }
+            }
+
+            moveWatermark();
+            setInterval(moveWatermark, 5000);
+        }
+
+        if (videoContainer) {
+            videoContainer.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                sendEvent('security_inspect_attempt', {
+                    method: 'right_click'
+                });
+                toastr.warning("{{ trans('admin/resources.security_warning') }}");
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e.key ===
+                        'C'))) {
+                    e.preventDefault();
+                    sendEvent('security_inspect_attempt', {
+                        method: 'keyboard_shortcut',
+                        key: e.key
+                    });
+                    toastr.warning("{{ trans('admin/resources.security_warning') }}");
+                }
+            });
+        }
+
+        function handleDisplayChange() {
+            if (window.screen.isExtended || navigator.mediaCapabilities.isTypeSupported('video/webm; codecs=vp8') && !
+                document.hidden) {
+                sendEvent('security_screen_capture', {
+                    action: 'suspicion_raised',
+                    message: 'display_extended_or_visible_media_capability'
+                });
+            }
+        }
+        window.addEventListener('blur', handleDisplayChange);
+        window.addEventListener('focus', handleDisplayChange);
+
         var tag = document.createElement('script');
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
@@ -172,6 +230,11 @@
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
                 videoId: "{{ $resource->video_url }}",
+                playerVars: {
+                    controls: 0,
+                    rel: 0,
+                    modestbranding: 1
+                },
                 events: {
                     'onReady': onPlayerReady,
                     'onStateChange': onPlayerStateChange
@@ -180,7 +243,6 @@
         }
 
         function onPlayerReady(event) {
-            // أول زيارة
             sendEvent('view');
         }
 
@@ -189,75 +251,68 @@
         let lastSpeed = 1;
         let duration = 0;
 
-        let trackingInterval = null;
-
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.PLAYING) {
-
-                if (!trackingInterval) {
-                    duration = player.getDuration();
-
-                    trackingInterval = setInterval(() => {
-                        trackProgress();
-                    }, 1000);
-                }
-
                 sendEvent('play');
+                duration = player.getDuration();
+
+                // تتبع كل ثانية
+                setInterval(() => {
+                    if (!player || !player.getCurrentTime) return;
+                    const currentTime = Math.floor(player.getCurrentTime());
+
+                    // تجنب إرسال نفس الثانية أكتر من مرة
+                    if (currentTime !== lastTime) {
+                        const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+                        sendEvent('progress', {
+                            current_time: currentTime,
+                            duration: Math.floor(duration),
+                            percent: parseFloat(percent.toFixed(2)),
+                            duration_watched: currentTime
+                        });
+
+                        // كشف Rewind
+                        if (currentTime < lastTime - 5) {
+                            sendEvent('rewind', {
+                                from: lastTime,
+                                to: currentTime
+                            });
+                        }
+
+                        lastTime = currentTime;
+
+                        // إذا كمل 95% أو أكتر → completed
+                        if (percent >= 95) {
+                            sendEvent('completed');
+                        }
+                    }
+
+                    // تتبع السرعة والجودة كل 5 ثواني
+                    const currentSpeed = player.getPlaybackRate();
+                    const currentQuality = player.getPlaybackQuality();
+
+                    if (currentSpeed !== lastSpeed) {
+                        sendEvent('ratechange', {
+                            speed: currentSpeed
+                        });
+                        lastSpeed = currentSpeed;
+                    }
+
+                    if (currentQuality && currentQuality !== lastQuality) {
+                        sendEvent('qualitychange', {
+                            quality: currentQuality
+                        });
+                        lastQuality = currentQuality;
+                    }
+
+                }, 1000); // كل ثانية
+
             } else if (event.data == YT.PlayerState.PAUSED) {
                 sendEvent('pause');
             } else if (event.data == YT.PlayerState.ENDED) {
                 sendEvent('ended');
                 sendEvent('completed');
-                clearInterval(trackingInterval);
-                trackingInterval = null;
-            }
-        }
-
-
-        function trackProgress() {
-            if (!player || !player.getCurrentTime) return;
-
-            const currentTime = Math.floor(player.getCurrentTime());
-            const percent = duration ? (currentTime / duration) * 100 : 0;
-
-            if (currentTime !== lastTime) {
-                sendEvent('progress', {
-                    current_time: currentTime,
-                    duration: Math.floor(duration),
-                    percent: parseFloat(percent.toFixed(2)),
-                    duration_watched: currentTime
-                });
-
-                if (currentTime < lastTime - 5) {
-                    sendEvent('rewind', {
-                        from: lastTime,
-                        to: currentTime
-                    });
-                }
-
-                if (percent >= 95) {
-                    sendEvent('completed');
-                }
-
-                lastTime = currentTime;
-            }
-
-            // سرعة و جودة
-            const currentSpeed = player.getPlaybackRate();
-            const currentQuality = player.getPlaybackQuality();
-
-            if (currentSpeed !== lastSpeed) {
-                sendEvent('ratechange', {
-                    speed: currentSpeed
-                });
-                lastSpeed = currentSpeed;
-            }
-
-            if (currentQuality !== lastQuality) {
-                sendEvent('qualitychange', {
-                    quality: currentQuality
-                });
-                lastQuality = currentQuality;
             }
         }
 
@@ -269,10 +324,7 @@
                 sendEvent('fullscreen_exit');
             }
         });
-const watermark = document.createElement('div');
-watermark.innerText = "Student: {{ auth()->user()->name }} - {{ auth()->user()->phone }}";
-watermark.style = "position:absolute; top:10px; left:10px; opacity:0.10; font-size:20px; z-index:9999;";
-document.querySelector('#youtube-player').appendChild(watermark);
+
         // إرسال الأحداث للسيرفر
         function sendEvent(type, data = {}) {
             console.log(type, data);

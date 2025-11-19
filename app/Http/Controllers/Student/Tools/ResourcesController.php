@@ -109,30 +109,94 @@ class ResourcesController extends Controller
         abort(404);
     }
 
-    public function trackEvent(Request $request)
+    public function trackEvent(Request $request, $uuid)
     {
-        if (in_array($request->event_type, ['play', 'pause', 'ended', 'ratechange', 'qualitychange', 'progress', 'fullscreen_enter', 'fullscreen_exit'])) {
-            ResourceVideoEvent::create([
-                'resource_id' => $request->resource_id,
-                'student_id' => $this->studentId,
-                'event_type' => $request->event_type,
-                'data' => $request->data ?? [],
-                'timestamp' => $data['currentTime'] ?? null,
-            ]);
+        $resource = $this->getResourceQuery()->uuid($uuid)->first();
+
+        if (!$resource) {
+            return response()->json(['error' => 'Resource not found'], 404);
         }
 
-        ResourceView::updateOrCreate(
-            ['resource_id' => $request->resource_id, 'student_id' => $this->studentId],
-            [
-                'views' => DB::raw('views + 1'),
-                'duration_watched' => DB::raw("GREATEST(duration_watched, " . ($data['duration_watched'] ?? 0) . ")"),
-                'percent_watched' => DB::raw("GREATEST(percent_watched, " . ($data['percent'] ?? 0) . ")"),
-                'last_watched_at' => now(),
-                'first_watched_at' => DB::raw('COALESCE(first_watched_at, NOW())'),
-            ]
-        );
+        $eventType = $request->input('type');
+        $eventData = $request->input('data') ?? [];
+        $resourceId = $resource->id;
+        $studentId = $this->studentId;
+        $banTriggered = false;
 
-        return response()->json(['status' => 'ok']);
+        try {
+            DB::beginTransaction();
+
+            // 1. Log the detailed event
+            ResourceVideoEvent::create([
+                'resource_id' => $resourceId,
+                'student_id' => $studentId,
+                'event_type' => $eventType,
+                'data' => json_encode($eventData),
+                'timestamp' => $request->input('timestamp', time()),
+            ]);
+
+            // 2. Update the summarized ResourceView record
+            $view = ResourceView::firstOrNew([
+                'resource_id' => $resourceId,
+                'student_id' => $studentId,
+            ]);
+
+            if (in_array($eventType, ['view', 'play'])) {
+                if (!$view->exists) {
+                    $view->first_watched_at = now();
+                    $view->views = 1;
+                } else {
+                    $view->views++;
+                }
+                $view->last_watched_at = now();
+            }
+
+            if ($eventType === 'progress' && isset($eventData['percent']) && isset($eventData['duration_watched'])) {
+                // Only update with a greater value to handle seeking/rewind correctly
+                $view->percent_watched = max($view->percent_watched, (int) $eventData['percent']);
+                $view->duration_watched = max($view->duration_watched, (int) $eventData['duration_watched']);
+            }
+
+            // Save the view summary record
+            $view->save();
+
+            // 3. Handle Security Events and Ban Logic
+            if (str_starts_with($eventType, 'security_')) {
+                $suspiciousCount = ResourceVideoEvent::where('resource_id', $resourceId)
+                    ->where('student_id', $studentId)
+                    ->where('event_type', 'like', 'security_%')
+                    ->where('created_at', '>', now()->subMinutes(30)) // Within the 30-minute window
+                    ->count();
+
+                // Recommended Ban Threshold: 5 attempts in 30 minutes
+                if ($suspiciousCount >= 5) {
+                    // You need a column on the ResourceView or Student table to mark the ban.
+                    // For this example, we will mark the student as banned from THIS resource.
+                    $view->is_banned = true; // Assumes you add is_banned boolean to resource_views table
+                    $view->save();
+                    $banTriggered = true;
+                }
+            }
+
+            DB::commit();
+
+            // If a view was just created, increment the global view count as well (if using the old logic)
+            if ($eventType === 'view' && !$view->wasRecentlyCreated) {
+                // We will rely on the new detailed tracking and *remove* the old `incrementViews` from the details method later
+            }
+
+
+            return response()->json([
+                'success' => true,
+                'ban_triggered' => $banTriggered
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // Log the error
+            \Log::error("Failed to store resource event: " . $e->getMessage(), ['uuid' => $uuid, 'type' => $eventType]);
+            return response()->json(['error' => 'Server error'], 500);
+        }
     }
 
     # Helpers

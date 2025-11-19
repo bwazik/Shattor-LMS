@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->integer('views')->default(0);
             $table->integer('duration_watched')->default(0);
             $table->integer('percent_watched')->default(0);
+            $table->boolean('is_banned')->default(false);
             $table->timestamp('first_watched_at')->nullable();
             $table->timestamp('last_watched_at')->nullable();
             $table->unique(['resource_id', 'student_id']);
