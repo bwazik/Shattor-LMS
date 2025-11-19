@@ -189,27 +189,25 @@
             setInterval(moveWatermark, 5000);
         }
 
-        if (videoContainer) {
-            videoContainer.addEventListener('contextmenu', function(e) {
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            sendEvent('security_inspect_attempt', {
+                method: 'right_click'
+            });
+            toastr.warning("{{ trans('admin/resources.security_warning') }}");
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e.key ===
+                    'C'))) {
                 e.preventDefault();
                 sendEvent('security_inspect_attempt', {
-                    method: 'right_click'
+                    method: 'keyboard_shortcut',
+                    key: e.key
                 });
                 toastr.warning("{{ trans('admin/resources.security_warning') }}");
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e.key ===
-                        'C'))) {
-                    e.preventDefault();
-                    sendEvent('security_inspect_attempt', {
-                        method: 'keyboard_shortcut',
-                        key: e.key
-                    });
-                    toastr.warning("{{ trans('admin/resources.security_warning') }}");
-                }
-            });
-        }
+            }
+        });
 
         function handleDisplayChange() {
             const isTypeSupportedCheck = typeof navigator.mediaCapabilities !== 'undefined' &&
