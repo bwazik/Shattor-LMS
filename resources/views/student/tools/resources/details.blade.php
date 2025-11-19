@@ -42,6 +42,16 @@
                                             src="https://www.youtube.com/embed/{{ $resource->video_url }}?origin=https://shattor.com&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
                                             allowfullscreen allowtransparency allow="autoplay"></iframe>
                                     </div>
+                                    <div id="dynamic-watermark" class="position-absolute"
+                                        style="
+                                        top: 0; left: 0; pointer-events: none; opacity: 0.75;
+                                        color: #ffffff;
+                                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
+                                        font-size: 20px;
+                                        font-weight: 900;
+                                        z-index: 1000;
+                                        transition: none !important;">
+                                    </div>
                                 </div>
                                 <hr class="my-6" />
                             </div>
@@ -157,10 +167,183 @@
 @endsection
 
 @section('page-js')
-<script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const player = new Plyr('#player');
-    });
-</script>
+    <script src="{{ asset('assets/vendor/libs/plyr/plyr.js') }}"></script>
+    <script>
+        toggleShareButton();
+
+        // 1. DYNAMIC WATERMARK CONFIG
+        const studentName = '{{ auth()->guard('student')->name ?? 'N/A' }}';
+        const studentIdentifier =
+        '{{ auth()->guard('student')->phone?? 0 }}';
+        const watermarkContent = `${studentName} | ID: ${studentIdentifier}`;
+
+        const watermarkEl = document.getElementById('dynamic-watermark');
+
+        // We will get the Plyr wrapper element after Plyr initializes
+        let playerContainer;
+
+        function moveWatermark() {
+            if (!playerContainer) return;
+
+            const containerRect = playerContainer.getBoundingClientRect();
+            const watermarkRect = watermarkEl.getBoundingClientRect();
+
+            // Calculate max safe positions (10px buffer)
+            const maxX = containerRect.width - watermarkRect.width - 10;
+            const maxY = containerRect.height - watermarkRect.height - 10;
+
+            if (maxX > 0 && maxY > 0) {
+                const newX = Math.floor(Math.random() * maxX);
+                const newY = Math.floor(Math.random() * maxY);
+
+                // Watermark is absolutely positioned relative to the .video-player-container
+                watermarkEl.style.left = `${newX}px`;
+                watermarkEl.style.top = `${newY}px`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Plyr
+            const player = new Plyr('#player', {
+                // Plyr settings to ensure speed and quality controls are available
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings',
+                    'fullscreen'
+                ],
+                settings: ['quality', 'speed'],
+                speed: {
+                    selected: 1,
+                    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+                },
+                ratio: '16:9'
+            });
+
+            // 2. Identify the PLYR wrapper element
+            // Plyr typically wraps the target element in a div with class .plyr
+            const plyrWrapper = document.getElementById('player').closest('.plyr');
+            if (plyrWrapper) {
+                // Set the PLYR wrapper as the container for watermark positioning
+                playerContainer = plyrWrapper;
+
+                // Set watermark content and begin movement
+                if (watermarkEl) {
+                    watermarkEl.innerHTML = watermarkContent;
+
+                    // Set the initial position and start the interval
+                    moveWatermark();
+                    setInterval(moveWatermark, 5000);
+
+                    // Ensure the watermark covers the video when Plyr goes fullscreen
+                    // This custom CSS rule handles the z-index fix when Plyr enters fullscreen mode
+                    document.addEventListener('fullscreenchange', () => {
+                        if (document.fullscreenElement) {
+                            watermarkEl.style.zIndex =
+                            20; // Must be higher than Plyr's z-index (usually around 19)
+                            // Log fullscreen enter (analytics)
+                            sendEvent('fullscreen_enter');
+                        } else {
+                            watermarkEl.style.zIndex = 1000; // Reset z-index when exiting
+                            // Log fullscreen exit (analytics)
+                            sendEvent('fullscreen_exit');
+                        }
+                    });
+                }
+            }
+
+            // 3. Security (Right-Click/Inspect Block)
+            const containerToProtect = document.querySelector('.video-player-container');
+            if (containerToProtect) {
+                // Block right-click (context menu)
+                containerToProtect.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    sendEvent('security_inspect_attempt', {
+                        method: 'right_click'
+                    });
+                    toastr.warning("{{ trans('admin/resources.security_warning') }}");
+                });
+
+                // Block common Inspect Element shortcuts (F12, Ctrl/Cmd + Shift + I/J/C)
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'F12' || (e.shiftKey && e.ctrlKey && (e.key === 'I' || e.key === 'J' || e
+                            .key === 'C'))) {
+                        e.preventDefault();
+                        sendEvent('security_inspect_attempt', {
+                            method: 'keyboard_shortcut',
+                            key: e.key
+                        });
+                        toastr.warning("{{ trans('admin/resources.security_warning') }}");
+                    }
+                });
+            }
+
+            // 4. Plyr Event Listeners for Analytics (Simplified)
+            player.on('play', () => sendEvent('play'));
+            player.on('pause', () => sendEvent('pause'));
+            player.on('ended', () => {
+                sendEvent('ended');
+                sendEvent('completed');
+            });
+            player.on('ratechange', (event) => {
+                const speed = event.detail.plyr.speed;
+                if (speed > 5 || speed < 0) { // Security Check
+                    sendEvent('security_rate_manipulation', {
+                        speed: speed,
+                        message: 'impossible_rate_detected'
+                    });
+                    toastr.error("{{ trans('admin/resources.security_error_rate') }}");
+                }
+                sendEvent('ratechange', {
+                    speed: speed
+                });
+            });
+
+            // Plyr only exposes "qualitychange" for non-YouTube sources.
+            // For YouTube, we rely on the iframe to report it (which Plyr does not easily expose).
+            // We will log quality changes if a custom event handler is found, but rely on the standard ratechange.
+            // For Plyr + YouTube, tracking playback quality changes is very difficult. We'll rely on speed.
+
+            // Initial view log
+            sendEvent('view');
+
+            // We'll need a way to track progress/duration watched. Since Plyr doesn't fire a "progress" event
+            // every second, we'll manually set an interval, using the Plyr API's currentTime
+            setInterval(() => {
+                if (player.playing) {
+                    const currentTime = Math.floor(player.currentTime);
+                    const duration = Math.floor(player.duration);
+                    const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+                    sendEvent('progress', {
+                        current_time: currentTime,
+                        duration: duration,
+                        percent: parseFloat(percent.toFixed(2)),
+                        duration_watched: currentTime
+                    });
+                }
+            }, 1000); // Check every second
+
+            // 5. Screen Capture Detection (Retaining the safer check)
+            function handleDisplayChange() {
+                const isTypeSupportedCheck = typeof navigator.mediaCapabilities !== 'undefined' && typeof navigator
+                    .mediaCapabilities.isTypeSupported === 'function';
+                const isExtendedScreen = typeof window.screen.isExtended !== 'undefined' && window.screen
+                .isExtended;
+
+                if (isExtendedScreen || (isTypeSupportedCheck && navigator.mediaCapabilities.isTypeSupported(
+                        'video/webm; codecs=vp8') && !document.hidden)) {
+                    sendEvent('security_screen_capture', {
+                        action: 'suspicion_raised',
+                        message: 'display_extended_or_visible_media_capability'
+                    });
+                }
+            }
+            window.addEventListener('blur', handleDisplayChange);
+            window.addEventListener('focus', handleDisplayChange);
+
+            // 6. Server Event Sender (The final piece)
+            function sendEvent(type, data = {}) {
+                console.log(type, data); // Keep console logging for debugging
+                // This is where we will add the AJAX call in the next step
+            }
+        });
+    </script>
 @endsection
