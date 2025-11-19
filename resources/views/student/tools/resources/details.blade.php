@@ -24,7 +24,7 @@
                     </div>
                     <div class="card academy-content shadow-none border">
                         @if ($resource->video_url)
-                            <div class="p-2">
+                            <div class="p-2 video-player-container position-relative">
                                 @if ($resource->video_url)
                                     <div class="ratio ratio-16x9">
                                         <div id="youtube-player"></div>
@@ -155,13 +155,13 @@
     <script>
         toggleShareButton();
 
-        const studentName = '{{ $student->name ?? 'N/A' }}';
-        const studentPhone = '{{ $student->phone ?? 0 }}';
+        const studentName = '{{ auth()->user->name ?? 'N/A' }}';
+        const studentPhone = '{{ auth()->user->phone ?? 0 }}';
         const watermarkContent = `${studentName} - Phone:${studentPhone}`;
         const watermarkEl = document.getElementById('dynamic-watermark');
         const videoContainer = document.querySelector('.video-player-container');
 
-        if (watermarkEl) {
+        if (watermarkEl && videoContainer) {
             watermarkEl.innerHTML = watermarkContent;
 
             function moveWatermark() {
@@ -209,8 +209,13 @@
         }
 
         function handleDisplayChange() {
-            if (window.screen.isExtended || navigator.mediaCapabilities.isTypeSupported('video/webm; codecs=vp8') && !
-                document.hidden) {
+            const isTypeSupportedCheck = typeof navigator.mediaCapabilities !== 'undefined' &&
+                typeof navigator.mediaCapabilities.isTypeSupported === 'function';
+
+            const isExtendedScreen = typeof window.screen.isExtended !== 'undefined' && window.screen.isExtended;
+
+            if (isExtendedScreen || (isTypeSupportedCheck && navigator.mediaCapabilities.isTypeSupported(
+                    'video/webm; codecs=vp8') && !document.hidden)) {
                 sendEvent('security_screen_capture', {
                     action: 'suspicion_raised',
                     message: 'display_extended_or_visible_media_capability'
