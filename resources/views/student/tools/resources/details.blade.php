@@ -36,7 +36,9 @@
                         @if ($resource->video_url)
                             <div class="p-2">
                                 @if ($resource->video_url)
-                                    <div id="youtube-player" class="w-100"></div>
+                                    <div class="ratio ratio-16x9">
+                                        <div id="youtube-player"></div>
+                                    </div>
                                 @endif
                                 <hr class="my-6" />
                             </div>
@@ -187,68 +189,75 @@
         let lastSpeed = 1;
         let duration = 0;
 
+        let trackingInterval = null;
+
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.PLAYING) {
+
+                if (!trackingInterval) {
+                    duration = player.getDuration();
+
+                    trackingInterval = setInterval(() => {
+                        trackProgress();
+                    }, 1000);
+                }
+
                 sendEvent('play');
-                duration = player.getDuration();
-
-                // تتبع كل ثانية
-                setInterval(() => {
-                    if (!player || !player.getCurrentTime) return;
-                    const currentTime = Math.floor(player.getCurrentTime());
-
-                    // تجنب إرسال نفس الثانية أكتر من مرة
-                    if (currentTime !== lastTime) {
-                        const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-                        sendEvent('progress', {
-                            current_time: currentTime,
-                            duration: Math.floor(duration),
-                            percent: parseFloat(percent.toFixed(2)),
-                            duration_watched: currentTime
-                        });
-
-                        // كشف Rewind
-                        if (currentTime < lastTime - 5) {
-                            sendEvent('rewind', {
-                                from: lastTime,
-                                to: currentTime
-                            });
-                        }
-
-                        lastTime = currentTime;
-
-                        // إذا كمل 95% أو أكتر → completed
-                        if (percent >= 95) {
-                            sendEvent('completed');
-                        }
-                    }
-
-                    // تتبع السرعة والجودة كل 5 ثواني
-                    const currentSpeed = player.getPlaybackRate();
-                    const currentQuality = player.getPlaybackQuality();
-
-                    if (currentSpeed !== lastSpeed) {
-                        sendEvent('ratechange', {
-                            speed: currentSpeed
-                        });
-                        lastSpeed = currentSpeed;
-                    }
-
-                    if (currentQuality && currentQuality !== lastQuality) {
-                        sendEvent('qualitychange', {
-                            quality: currentQuality
-                        });
-                        lastQuality = currentQuality;
-                    }
-
-                }, 1000); // كل ثانية
-
             } else if (event.data == YT.PlayerState.PAUSED) {
                 sendEvent('pause');
             } else if (event.data == YT.PlayerState.ENDED) {
                 sendEvent('ended');
                 sendEvent('completed');
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+        }
+
+
+        function trackProgress() {
+            if (!player || !player.getCurrentTime) return;
+
+            const currentTime = Math.floor(player.getCurrentTime());
+            const percent = duration ? (currentTime / duration) * 100 : 0;
+
+            if (currentTime !== lastTime) {
+                sendEvent('progress', {
+                    current_time: currentTime,
+                    duration: Math.floor(duration),
+                    percent: parseFloat(percent.toFixed(2)),
+                    duration_watched: currentTime
+                });
+
+                if (currentTime < lastTime - 5) {
+                    sendEvent('rewind', {
+                        from: lastTime,
+                        to: currentTime
+                    });
+                }
+
+                if (percent >= 95) {
+                    sendEvent('completed');
+                }
+
+                lastTime = currentTime;
+            }
+
+            // سرعة و جودة
+            const currentSpeed = player.getPlaybackRate();
+            const currentQuality = player.getPlaybackQuality();
+
+            if (currentSpeed !== lastSpeed) {
+                sendEvent('ratechange', {
+                    speed: currentSpeed
+                });
+                lastSpeed = currentSpeed;
+            }
+
+            if (currentQuality !== lastQuality) {
+                sendEvent('qualitychange', {
+                    quality: currentQuality
+                });
+                lastQuality = currentQuality;
             }
         }
 
