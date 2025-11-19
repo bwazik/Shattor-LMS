@@ -36,6 +36,7 @@ return new class extends Migration {
             $table->integer('resource_id')->unsigned();
             $table->integer('student_id')->unsigned();
             $table->string('event_type');
+            $table->timestamp('detected_at')->useCurrent();
             $table->json('data');
             $table->integer('timestamp')->nullable();
             $table->timestamps();
