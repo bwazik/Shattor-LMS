@@ -269,7 +269,10 @@
                 sendEvent('fullscreen_exit');
             }
         });
-
+const watermark = document.createElement('div');
+watermark.innerText = "Student: {{ auth()->user()->name }} - {{ auth()->user()->phone }}";
+watermark.style = "position:absolute; top:10px; left:10px; opacity:0.10; font-size:20px; z-index:9999;";
+document.querySelector('#youtube-player').appendChild(watermark);
         // إرسال الأحداث للسيرفر
         function sendEvent(type, data = {}) {
             console.log(type, data);
