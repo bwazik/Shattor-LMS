@@ -144,7 +144,6 @@ class ResourcesController extends Controller
             if ($eventType !== 'progress') {
                 $shouldCreateEvent = true;
 
-                // DEBUG: Log play events
                 if ($eventType === 'play') {
                     \Log::info('PLAY EVENT RECEIVED', [
                         'resource_id' => $resourceId,
@@ -161,19 +160,30 @@ class ResourcesController extends Controller
                         ->first();
 
                     if ($lastEvent && $lastEvent->created_at->diffInSeconds(now()) < 5) {
-                        goto update_view_stats;
+                        $shouldCreateEvent = false;
+                        if ($eventType === 'play') {
+                            \Log::info('PLAY EVENT THROTTLED');
+                        }
                     }
                 }
 
-                ResourceVideoEvent::create([
-                    'resource_id' => $resourceId,
-                    'student_id' => $studentId,
-                    'event_type' => $eventType,
-                    'data' => json_encode($eventData),
-                ]);
+                if ($shouldCreateEvent) {
+                    if ($eventType === 'play') {
+                        \Log::info('CREATING PLAY EVENT');
+                    }
+                    
+                    $created = ResourceVideoEvent::create([
+                        'resource_id' => $resourceId,
+                        'student_id' => $studentId,
+                        'event_type' => $eventType,
+                        'data' => json_encode($eventData),
+                    ]);
+                    
+                    if ($eventType === 'play') {
+                        \Log::info('PLAY EVENT CREATED', ['id' => $created->id]);
+                    }
+                }
             }
-
-            update_view_stats:
 
             if (in_array($eventType, ['view', 'play'])) {
                 if (!$view->exists || ($view->last_watched_at && $view->last_watched_at->diffInMinutes(now()) > 10)) {
