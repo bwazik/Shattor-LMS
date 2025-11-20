@@ -215,7 +215,7 @@ class ResourcesController extends Controller
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
             ->with(['teacher:id,name', 'grade:id,name'])
-            ->withSum('studentViews', 'views')
+            ->withSum('resourceViews', 'views')
             ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
     }
 
