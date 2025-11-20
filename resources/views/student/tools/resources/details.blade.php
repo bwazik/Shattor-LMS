@@ -402,6 +402,8 @@
         });
 
         function sendEvent(type, data = {}) {
+            console.log(type, data);
+
             if (type === 'ratechange' && (data.speed > 5 || data.speed < 0)) {
                 sendEvent('security_rate_manipulation', {
                     speed: data.speed,
