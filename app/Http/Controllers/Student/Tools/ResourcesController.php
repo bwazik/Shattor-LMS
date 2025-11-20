@@ -82,6 +82,14 @@ class ResourcesController extends Controller
             ]);
         }
 
+        // DEBUG: Check what's in the resources
+        \Log::info('INDEX Resources', [
+            'count' => $resources->count(),
+            'first_resource_id' => $resources->first()->id ?? 'none',
+            'first_resource_sum' => $resources->first()->resource_views_sum_views ?? 'null',
+            'first_resource_attributes' => $resources->first()->getAttributes() ?? []
+        ]);
+
         return view('student.tools.resources.index', compact('resources'));
     }
 
