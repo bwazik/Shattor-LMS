@@ -94,15 +94,12 @@ class ResourcesController extends Controller
             'student_id' => $this->studentId,
         ]);
 
-        $totalViews = ResourceView::where('resource_id', $resource->id)
-            ->sum('views');
-
         if ($view && $view->is_banned) {
             return redirect()->route('student.resources.index')
                 ->with('error', trans('admin/resources.accessRevokedBySecurity'));
         }
 
-        return view('student.tools.resources.details', compact('resource', 'totalViews'));
+        return view('student.tools.resources.details', compact('resource'));
     }
 
     public function downloadFile($uuid)
