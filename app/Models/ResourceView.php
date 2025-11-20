@@ -24,6 +24,12 @@ class ResourceView extends Model
         'updated_at',
     ];
 
+    protected $casts = [
+        'is_banned' => 'boolean',
+        'first_watched_at' => 'datetime',
+        'last_watched_at' => 'datetime',
+    ];
+
     # Relationships
 
     public function resource()
