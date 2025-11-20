@@ -313,6 +313,8 @@
         }
 
         function onPlaybackQualityChange(event) {
+            sendProgress();
+
             const newQuality = event.data;
             sendEvent('qualitychange', {
                 quality: newQuality
@@ -328,12 +330,14 @@
 
             const now = Date.now();
             const timeDiffSeconds = (now - lastUpdateTimestamp) / 1000;
-
+            
             let incrementalDuration = 0;
             if (timeDiffSeconds > 0 && timeDiffSeconds < 300) {
                  incrementalDuration = Math.round(timeDiffSeconds * lastSpeed);
             }
-
+            
+            console.log('TimeDiff:', timeDiffSeconds, 'Speed:', lastSpeed, 'Inc:', incrementalDuration);
+            
             lastUpdateTimestamp = now;
 
             sendEvent('progress', {
