@@ -63,7 +63,7 @@ class ResourcesController extends Controller
                             'file_name' => $resource->file_name,
                             'file_size' => $resource->file_size,
                             'video_url' => $resource->video_url,
-                            'views' => $resource->student_views_sum_views ?? 0,
+                            'views' => $resource->resource_views_sum_views ?? 0,
                             'downloads' => $resource->downloads,
                             'created_at' => $resource->created_at ? isoFormat($resource->created_at) : isoFormat(now()),
                             'grade' => [
