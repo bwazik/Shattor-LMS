@@ -262,9 +262,9 @@ class ResourcesController extends Controller
         return Resource::active()
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
-            ->with(['teacher:id,name', 'grade:id,name', 'resourceViews'])
-            ->withSum('resourceViews', 'views')
-            ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
+            ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at')
+            ->with(['teacher:id,name', 'grade:id,name'])
+            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum');
     }
 
     protected function incrementDownloads($resourceId)
