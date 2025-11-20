@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Student\Tools;
 
 use App\Models\Resource;
+use App\Models\ResourceView;
 use Illuminate\Http\Request;
+use App\Models\ResourceVideoEvent;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -62,7 +64,7 @@ class ResourcesController extends Controller
                             'file_name' => $resource->file_name,
                             'file_size' => $resource->file_size,
                             'video_url' => $resource->video_url,
-                            'views' => $resource->views,
+                            'views' => $resource->student_views_sum_views ?? 0,
                             'downloads' => $resource->downloads,
                             'created_at' => $resource->created_at ? isoFormat($resource->created_at) : isoFormat(now()),
                             'grade' => [
@@ -89,9 +91,20 @@ class ResourcesController extends Controller
     {
         $resource = $this->getResourceQuery()->uuid($uuid)->firstOrFail();
 
-        $this->incrementViews($resource->id);
+        $view = ResourceView::firstOrNew([
+            'resource_id' => $resource->id,
+            'student_id' => $this->studentId,
+        ]);
 
-        return view('student.tools.resources.details', compact('resource'));
+        $totalViews = ResourceView::where('resource_id', $resource->id)
+            ->sum('views');
+
+        if ($view && $view->is_banned) {
+            return redirect()->route('student.resources.index')
+                ->with('error', trans('admin/resources.accessRevokedBySecurity'));
+        }
+
+        return view('student.tools.resources.details', compact('resource', 'totalViews'));
     }
 
     public function downloadFile($uuid)
@@ -112,33 +125,32 @@ class ResourcesController extends Controller
     public function trackEvent(Request $request, $uuid)
     {
         $resource = $this->getResourceQuery()->uuid($uuid)->first();
-
         if (!$resource) {
             return response()->json(['error' => 'Resource not found'], 404);
         }
 
         $eventType = $request->input('type');
-        $eventData = $request->input('data') ?? [];
+        $eventData = json_decode($request->input('data'), true) ?? [];
         $resourceId = $resource->id;
         $studentId = $this->studentId;
         $banTriggered = false;
 
-        try {
-            DB::beginTransaction();
+        $response = $this->executeTransaction(function () use ($request, $studentId, $resourceId, $eventType, $eventData, &$banTriggered) {
 
-            // 1. Log the detailed event
+            $view = ResourceView::firstOrNew([
+                'resource_id' => $resourceId,
+                'student_id' => $studentId,
+            ]);
+
+            if ($view->is_banned) {
+                return ['success' => true, 'ban_triggered' => true];
+            }
+
             ResourceVideoEvent::create([
                 'resource_id' => $resourceId,
                 'student_id' => $studentId,
                 'event_type' => $eventType,
                 'data' => json_encode($eventData),
-                'timestamp' => $request->input('timestamp', time()),
-            ]);
-
-            // 2. Update the summarized ResourceView record
-            $view = ResourceView::firstOrNew([
-                'resource_id' => $resourceId,
-                'student_id' => $studentId,
             ]);
 
             if (in_array($eventType, ['view', 'play'])) {
@@ -152,51 +164,48 @@ class ResourcesController extends Controller
             }
 
             if ($eventType === 'progress' && isset($eventData['percent']) && isset($eventData['duration_watched'])) {
-                // Only update with a greater value to handle seeking/rewind correctly
                 $view->percent_watched = max($view->percent_watched, (int) $eventData['percent']);
                 $view->duration_watched = max($view->duration_watched, (int) $eventData['duration_watched']);
             }
 
-            // Save the view summary record
-            $view->save();
-
-            // 3. Handle Security Events and Ban Logic
             if (str_starts_with($eventType, 'security_')) {
-                $suspiciousCount = ResourceVideoEvent::where('resource_id', $resourceId)
+                $violationCount = ResourceVideoEvent::where('resource_id', $resourceId)
                     ->where('student_id', $studentId)
                     ->where('event_type', 'like', 'security_%')
-                    ->where('created_at', '>', now()->subMinutes(30)) // Within the 30-minute window
                     ->count();
 
-                // Recommended Ban Threshold: 5 attempts in 30 minutes
-                if ($suspiciousCount >= 5) {
-                    // You need a column on the ResourceView or Student table to mark the ban.
-                    // For this example, we will mark the student as banned from THIS resource.
-                    $view->is_banned = true; // Assumes you add is_banned boolean to resource_views table
-                    $view->save();
+                if ($violationCount >= 5) {
+                    $view->is_banned = true;
                     $banTriggered = true;
                 }
             }
 
-            DB::commit();
+            $view->save();
 
-            // If a view was just created, increment the global view count as well (if using the old logic)
-            if ($eventType === 'view' && !$view->wasRecentlyCreated) {
-                // We will rely on the new detailed tracking and *remove* the old `incrementViews` from the details method later
-            }
+            return ['success' => true, 'ban_triggered' => $banTriggered];
+        });
 
-
-            return response()->json([
-                'success' => true,
-                'ban_triggered' => $banTriggered
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            // Log the error
-            \Log::error("Failed to store resource event: " . $e->getMessage(), ['uuid' => $uuid, 'type' => $eventType]);
-            return response()->json(['error' => 'Server error'], 500);
+        if ($response instanceof \Illuminate\Http\JsonResponse) {
+            return $response;
         }
+
+        return response()->json($response);
+    }
+
+    public function cheatDetector(Request $request, $uuid)
+    {
+        $resource = $this->getResourceQuery()->uuid($uuid)->firstOrFail();
+
+        $view = ResourceView::firstOrNew(['resource_id' => $resource->id, 'student_id' => $this->studentId]);
+
+        if ($view->is_banned) {
+            return response()->json(['error' => trans('toasts.accessRevoked')], 403);
+        }
+
+        $key = "heartbeat:{$this->studentId}:{$resource->id}";
+        Cache::put($key, now(), 120);
+
+        return response()->json(['success' => true]);
     }
 
     # Helpers
@@ -206,17 +215,8 @@ class ResourcesController extends Controller
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
             ->with(['teacher:id,name', 'grade:id,name'])
+            ->withSum('studentViews', 'views')
             ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
-    }
-
-    protected function incrementViews($resourceId)
-    {
-        $cacheKey = "resource_view_{$resourceId}_student_{$this->studentId}";
-
-        if (!Cache::has($cacheKey)) {
-            Resource::where('id', $resourceId)->increment('views');
-            Cache::put($cacheKey, true, now()->addMinutes(1440));
-        }
     }
 
     protected function incrementDownloads($resourceId)

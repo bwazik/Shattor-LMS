@@ -56,6 +56,16 @@ class Resource extends Model
         return $this->belongsTo(Grade::class, 'grade_id');
     }
 
+    public function resourceViews()
+    {
+        return $this->hasMany(ResourceView::class, 'resource_id');
+    }
+
+    public function resourceVideoEvents()
+    {
+        return $this->hasMany(ResourceVideoEvent::class, 'resource_id');
+    }
+
     # Scopes
     public function scopeUuid($query, $uuid)
     {

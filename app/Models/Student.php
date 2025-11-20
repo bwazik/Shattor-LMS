@@ -134,6 +134,16 @@ class Student extends Authenticatable
         return $this->hasMany(OfflineQuizResult::class, 'student_id');
     }
 
+    public function resourceViews()
+    {
+        return $this->hasMany(ResourceView::class, 'student_id');
+    }
+
+    public function resourceVideoEvents()
+    {
+        return $this->hasMany(ResourceVideoEvent::class, 'student_id');
+    }
+
     # Scopes
     public function scopeUuid($query, $uuid)
     {

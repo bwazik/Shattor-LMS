@@ -56,7 +56,10 @@ Route::group(
                     Route::get('/', 'index')->name('index');
                     Route::get('{uuid}', 'details')->name('details');
                     Route::get('{uuid}/download', 'downloadFile')->name('download');
-                    Route::post('{uuid}/track', 'trackEvent')->name('track');
+                    Route::middleware('throttle:20,1')->group(function () {
+                        Route::post('/{uuid}/track', 'trackEvent')->name('track');
+                        Route::post('/{uuid}/cheat-detector', 'cheatDetector')->name('cheatDetector');
+                    });
                 });
             # End Tools
 

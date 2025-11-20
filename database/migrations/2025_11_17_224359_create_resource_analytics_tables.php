@@ -38,7 +38,6 @@ return new class extends Migration {
             $table->string('event_type');
             $table->timestamp('detected_at')->useCurrent();
             $table->json('data');
-            $table->integer('timestamp')->nullable();
             $table->timestamps();
 
             $table->foreign('resource_id')->references('id')->on('resources')
