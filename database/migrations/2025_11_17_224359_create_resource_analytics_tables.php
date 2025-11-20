@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->unique(['resource_id', 'student_id']);
             $table->timestamps();
 
-            $table->foreign('resource_id')->references('id')->on('resources')
+            $table->foreign('resource_id')->references('id')->on('teacher_resources')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
             $table->foreign('student_id')->references('id')->on('students')
@@ -40,7 +40,7 @@ return new class extends Migration {
             $table->json('data');
             $table->timestamps();
 
-            $table->foreign('resource_id')->references('id')->on('resources')
+            $table->foreign('resource_id')->references('id')->on('teacher_resources')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
             $table->foreign('student_id')->references('id')->on('students')
