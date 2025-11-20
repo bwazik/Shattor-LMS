@@ -141,26 +141,40 @@ class ResourcesController extends Controller
                 return ['success' => true, 'ban_triggered' => true];
             }
 
-            ResourceVideoEvent::create([
-                'resource_id' => $resourceId,
-                'student_id' => $studentId,
-                'event_type' => $eventType,
-                'data' => json_encode($eventData),
-            ]);
+            // Only create event for non-progress events or important security events
+            if ($eventType !== 'progress') {
+                ResourceVideoEvent::create([
+                    'resource_id' => $resourceId,
+                    'student_id' => $studentId,
+                    'event_type' => $eventType,
+                    'data' => json_encode($eventData),
+                ]);
+            }
 
             if (in_array($eventType, ['view', 'play'])) {
-                if (!$view->exists) {
+                // Throttle view increment: only if never watched or last watched > 10 mins ago
+                if (!$view->exists || ($view->last_watched_at && $view->last_watched_at->diffInMinutes(now()) > 10)) {
+                    $view->views = ($view->views ?? 0) + 1;
+                }
+                
+                if (!$view->first_watched_at) {
                     $view->first_watched_at = now();
-                    $view->views = 1;
-                } else {
-                    $view->views++;
                 }
                 $view->last_watched_at = now();
             }
 
-            if ($eventType === 'progress' && isset($eventData['percent']) && isset($eventData['duration_watched'])) {
+            if ($eventType === 'progress' && isset($eventData['percent'])) {
                 $view->percent_watched = max($view->percent_watched, (int) $eventData['percent']);
-                $view->duration_watched = max($view->duration_watched, (int) $eventData['duration_watched']);
+                
+                // Add incremental duration if provided, otherwise just update last_watched
+                if (isset($eventData['incremental_duration'])) {
+                     $view->duration_watched = ($view->duration_watched ?? 0) + (int) $eventData['incremental_duration'];
+                } elseif (isset($eventData['duration_watched'])) {
+                     // Fallback for legacy or absolute duration
+                     $view->duration_watched = max($view->duration_watched, (int) $eventData['duration_watched']);
+                }
+                
+                $view->last_watched_at = now();
             }
 
             if (str_starts_with($eventType, 'security_')) {
@@ -209,9 +223,9 @@ class ResourcesController extends Controller
         return Resource::active()
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
+            ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at')
             ->with(['teacher:id,name', 'grade:id,name', 'resourceViews'])
-            ->withSum('resourceViews', 'views')
-            ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
+            ->withSum('resourceViews', 'views');
     }
 
     protected function incrementDownloads($resourceId)

@@ -277,6 +277,8 @@
         let lastSpeed = 1;
         let duration = 0;
         let progressInterval = null;
+        let lastUpdateTimestamp = 0;
+        let playPauseTimeout = null;
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('youtube-player', {
@@ -287,13 +289,33 @@
                 },
                 events: {
                     'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange
+                    'onStateChange': onPlayerStateChange,
+                    'onPlaybackRateChange': onPlaybackRateChange,
+                    'onPlaybackQualityChange': onPlaybackQualityChange
                 }
             });
         }
 
         function onPlayerReady(event) {
             sendEvent('view');
+            lastUpdateTimestamp = Date.now();
+            lastSpeed = player.getPlaybackRate();
+        }
+
+        function onPlaybackRateChange(event) {
+            const newSpeed = event.data;
+            sendEvent('ratechange', {
+                speed: newSpeed
+            });
+            lastSpeed = newSpeed;
+        }
+
+        function onPlaybackQualityChange(event) {
+            const newQuality = event.data;
+            sendEvent('qualitychange', {
+                quality: newQuality
+            });
+            lastQuality = newQuality;
         }
 
         function onPlayerStateChange(event) {
@@ -302,39 +324,35 @@
                 progressInterval = null;
             }
 
+            // Clear any pending pause events if we start playing again quickly (seeking)
+            if (playPauseTimeout) {
+                clearTimeout(playPauseTimeout);
+                playPauseTimeout = null;
+            }
+
             if (event.data == YT.PlayerState.PLAYING) {
                 sendEvent('play');
                 duration = player.getDuration();
+                lastUpdateTimestamp = Date.now();
 
                 progressInterval = setInterval(() => {
                     if (!player || !player.getCurrentTime) return;
 
                     const currentTime = Math.floor(player.getCurrentTime());
                     const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
+                    
+                    // Calculate incremental duration watched adjusted by speed
+                    const now = Date.now();
+                    const timeDiffSeconds = (now - lastUpdateTimestamp) / 1000;
+                    const incrementalDuration = Math.round(timeDiffSeconds * lastSpeed);
+                    lastUpdateTimestamp = now;
 
                     sendEvent('progress', {
                         current_time: currentTime,
                         duration: Math.floor(duration),
                         percent: parseFloat(percent.toFixed(2)),
-                        duration_watched: currentTime
+                        incremental_duration: incrementalDuration
                     });
-
-                    const currentSpeed = player.getPlaybackRate();
-                    const currentQuality = player.getPlaybackQuality();
-
-                    if (currentSpeed !== lastSpeed) {
-                        sendEvent('ratechange', {
-                            speed: currentSpeed
-                        });
-                        lastSpeed = currentSpeed;
-                    }
-
-                    if (currentQuality && currentQuality !== lastQuality) {
-                        sendEvent('qualitychange', {
-                            quality: currentQuality
-                        });
-                        lastQuality = currentQuality;
-                    }
 
                     if (percent >= 95) {
                         sendEvent('completed');
@@ -344,10 +362,12 @@
 
                 }, 30000);
 
-            } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.BUFFERING) {
-                if (event.data == YT.PlayerState.PAUSED) {
+            } else if (event.data == YT.PlayerState.PAUSED) {
+                // Debounce pause event to avoid spamming when seeking
+                playPauseTimeout = setTimeout(() => {
                     sendEvent('pause');
-                }
+                }, 500);
+                
             } else if (event.data == YT.PlayerState.ENDED) {
                 sendEvent('ended');
                 sendEvent('completed');
@@ -360,13 +380,8 @@
                         from: lastTime,
                         to: currentTime
                     });
-
-                    sendEvent('progress', {
-                        current_time: currentTime,
-                        duration: Math.floor(duration),
-                        percent: parseFloat(percent.toFixed(2)),
-                        duration_watched: currentTime
-                    });
+                    
+                    // We don't send progress here to avoid double counting duration
                 }
             }
         }
