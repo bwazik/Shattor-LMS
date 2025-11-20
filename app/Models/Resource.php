@@ -56,7 +56,7 @@ class Resource extends Model
         return $this->belongsTo(Grade::class, 'grade_id');
     }
 
-    public function resourceViews()
+    public function views()
     {
         return $this->hasMany(ResourceView::class, 'resource_id');
     }
@@ -71,7 +71,7 @@ class Resource extends Model
     {
         return $query->where('uuid', $uuid);
     }
-    
+
     public function scopeActive($query)
     {
         return $query->where('is_active', 1);
