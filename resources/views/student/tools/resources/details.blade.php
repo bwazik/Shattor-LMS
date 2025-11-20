@@ -303,6 +303,8 @@
         }
 
         function onPlaybackRateChange(event) {
+            sendProgress();
+
             const newSpeed = event.data;
             sendEvent('ratechange', {
                 speed: newSpeed
@@ -318,13 +320,42 @@
             lastQuality = newQuality;
         }
 
+        function sendProgress() {
+            if (!player || !player.getCurrentTime) return;
+
+            const currentTime = Math.floor(player.getCurrentTime());
+            const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+            const now = Date.now();
+            const timeDiffSeconds = (now - lastUpdateTimestamp) / 1000;
+
+            let incrementalDuration = 0;
+            if (timeDiffSeconds > 0 && timeDiffSeconds < 300) {
+                 incrementalDuration = Math.round(timeDiffSeconds * lastSpeed);
+            }
+
+            lastUpdateTimestamp = now;
+
+            sendEvent('progress', {
+                current_time: currentTime,
+                duration: Math.floor(duration),
+                percent: parseFloat(percent.toFixed(2)),
+                incremental_duration: incrementalDuration
+            });
+
+            if (percent >= 95) {
+                sendEvent('completed');
+            }
+
+            lastTime = currentTime;
+        }
+
         function onPlayerStateChange(event) {
             if (progressInterval) {
                 clearInterval(progressInterval);
                 progressInterval = null;
             }
 
-            // Clear any pending pause events if we start playing again quickly (seeking)
             if (playPauseTimeout) {
                 clearTimeout(playPauseTimeout);
                 playPauseTimeout = null;
@@ -336,52 +367,28 @@
                 lastUpdateTimestamp = Date.now();
 
                 progressInterval = setInterval(() => {
-                    if (!player || !player.getCurrentTime) return;
-
-                    const currentTime = Math.floor(player.getCurrentTime());
-                    const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
-                    
-                    // Calculate incremental duration watched adjusted by speed
-                    const now = Date.now();
-                    const timeDiffSeconds = (now - lastUpdateTimestamp) / 1000;
-                    const incrementalDuration = Math.round(timeDiffSeconds * lastSpeed);
-                    lastUpdateTimestamp = now;
-
-                    sendEvent('progress', {
-                        current_time: currentTime,
-                        duration: Math.floor(duration),
-                        percent: parseFloat(percent.toFixed(2)),
-                        incremental_duration: incrementalDuration
-                    });
-
-                    if (percent >= 95) {
-                        sendEvent('completed');
-                    }
-
-                    lastTime = currentTime;
-
+                    sendProgress();
                 }, 30000);
 
             } else if (event.data == YT.PlayerState.PAUSED) {
-                // Debounce pause event to avoid spamming when seeking
+                sendProgress();
+
                 playPauseTimeout = setTimeout(() => {
                     sendEvent('pause');
                 }, 500);
-                
+
             } else if (event.data == YT.PlayerState.ENDED) {
+                sendProgress();
                 sendEvent('ended');
                 sendEvent('completed');
             } else if (event.data == YT.PlayerState.CUED) {
                 const currentTime = Math.floor(player.getCurrentTime());
-                const percent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
                 if (Math.abs(currentTime - lastTime) > 5) {
                     sendEvent('rewind', {
                         from: lastTime,
                         to: currentTime
                     });
-                    
-                    // We don't send progress here to avoid double counting duration
                 }
             }
         }

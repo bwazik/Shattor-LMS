@@ -141,8 +141,19 @@ class ResourcesController extends Controller
                 return ['success' => true, 'ban_triggered' => true];
             }
 
-            // Only create event for non-progress events or important security events
             if ($eventType !== 'progress') {
+                if ($eventType === 'pause') {
+                    $lastPause = ResourceVideoEvent::where('resource_id', $resourceId)
+                        ->where('student_id', $studentId)
+                        ->where('event_type', 'pause')
+                        ->latest()
+                        ->first();
+
+                    if ($lastPause && $lastPause->created_at->diffInSeconds(now()) < 5) {
+                        return ['success' => true, 'ban_triggered' => false];
+                    }
+                }
+
                 ResourceVideoEvent::create([
                     'resource_id' => $resourceId,
                     'student_id' => $studentId,
@@ -152,11 +163,10 @@ class ResourcesController extends Controller
             }
 
             if (in_array($eventType, ['view', 'play'])) {
-                // Throttle view increment: only if never watched or last watched > 10 mins ago
                 if (!$view->exists || ($view->last_watched_at && $view->last_watched_at->diffInMinutes(now()) > 10)) {
                     $view->views = ($view->views ?? 0) + 1;
                 }
-                
+
                 if (!$view->first_watched_at) {
                     $view->first_watched_at = now();
                 }
@@ -165,15 +175,13 @@ class ResourcesController extends Controller
 
             if ($eventType === 'progress' && isset($eventData['percent'])) {
                 $view->percent_watched = max($view->percent_watched, (int) $eventData['percent']);
-                
-                // Add incremental duration if provided, otherwise just update last_watched
+
                 if (isset($eventData['incremental_duration'])) {
-                     $view->duration_watched = ($view->duration_watched ?? 0) + (int) $eventData['incremental_duration'];
+                    $view->duration_watched = ($view->duration_watched ?? 0) + (int) $eventData['incremental_duration'];
                 } elseif (isset($eventData['duration_watched'])) {
-                     // Fallback for legacy or absolute duration
-                     $view->duration_watched = max($view->duration_watched, (int) $eventData['duration_watched']);
+                    $view->duration_watched = max($view->duration_watched, (int) $eventData['duration_watched']);
                 }
-                
+
                 $view->last_watched_at = now();
             }
 
