@@ -49,7 +49,6 @@ class ResourcesController extends Controller
         }
 
         $resources = $query->paginate(6);
-
         if ($request->expectsJson()) {
             return response()->json([
                 'resources' => [
@@ -63,7 +62,7 @@ class ResourcesController extends Controller
                             'file_name' => $resource->file_name,
                             'file_size' => $resource->file_size,
                             'video_url' => $resource->video_url,
-                            'views' => $resource->views_sum_views ?? 0,
+                            'views' => $resource->resource_views_sum_views ?? 0,
                             'downloads' => $resource->downloads,
                             'created_at' => $resource->created_at ? isoFormat($resource->created_at) : isoFormat(now()),
                             'grade' => [
@@ -213,8 +212,8 @@ class ResourcesController extends Controller
         return Resource::active()
             ->where('grade_id', $this->studentGradeId)
             ->whereIn('teacher_id', $this->teacherIds)
-            ->with(['teacher:id,name', 'grade:id,name'])
-            ->withSum('views', 'views')
+            ->with(['teacher:id,name', 'grade:id,name', 'resourceViews'])
+            ->withSum('resourceViews', 'views')
             ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
     }
 

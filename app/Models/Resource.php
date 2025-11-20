@@ -56,7 +56,7 @@ class Resource extends Model
         return $this->belongsTo(Grade::class, 'grade_id');
     }
 
-    public function views()
+    public function resourceViews()
     {
         return $this->hasMany(ResourceView::class, 'resource_id');
     }
