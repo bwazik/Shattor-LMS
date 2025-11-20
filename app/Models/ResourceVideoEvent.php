@@ -23,6 +23,7 @@ class ResourceVideoEvent extends Model
 
     protected $casts = [
         'data' => 'array',
+        'detected_at' => 'datetime',
     ];
 
     # Relationships
