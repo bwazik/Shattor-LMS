@@ -330,14 +330,12 @@
 
             const now = Date.now();
             const timeDiffSeconds = (now - lastUpdateTimestamp) / 1000;
-            
+
             let incrementalDuration = 0;
             if (timeDiffSeconds > 0 && timeDiffSeconds < 300) {
                  incrementalDuration = Math.round(timeDiffSeconds * lastSpeed);
             }
-            
-            console.log('TimeDiff:', timeDiffSeconds, 'Speed:', lastSpeed, 'Inc:', incrementalDuration);
-            
+
             lastUpdateTimestamp = now;
 
             sendEvent('progress', {
@@ -406,8 +404,6 @@
         });
 
         function sendEvent(type, data = {}) {
-            console.log(type, data);
-
             if (type === 'ratechange' && (data.speed > 5 || data.speed < 0)) {
                 sendEvent('security_rate_manipulation', {
                     speed: data.speed,

@@ -142,15 +142,26 @@ class ResourcesController extends Controller
             }
 
             if ($eventType !== 'progress') {
-                if ($eventType === 'pause') {
-                    $lastPause = ResourceVideoEvent::where('resource_id', $resourceId)
+                $shouldCreateEvent = true;
+
+                // DEBUG: Log play events
+                if ($eventType === 'play') {
+                    \Log::info('PLAY EVENT RECEIVED', [
+                        'resource_id' => $resourceId,
+                        'student_id' => $studentId,
+                        'event_data' => $eventData
+                    ]);
+                }
+
+                if (in_array($eventType, ['play', 'pause'])) {
+                    $lastEvent = ResourceVideoEvent::where('resource_id', $resourceId)
                         ->where('student_id', $studentId)
-                        ->where('event_type', 'pause')
+                        ->where('event_type', $eventType)
                         ->latest()
                         ->first();
 
-                    if ($lastPause && $lastPause->created_at->diffInSeconds(now()) < 5) {
-                        return ['success' => true, 'ban_triggered' => false];
+                    if ($lastEvent && $lastEvent->created_at->diffInSeconds(now()) < 5) {
+                        goto update_view_stats;
                     }
                 }
 
@@ -161,6 +172,8 @@ class ResourcesController extends Controller
                     'data' => json_encode($eventData),
                 ]);
             }
+
+            update_view_stats:
 
             if (in_array($eventType, ['view', 'play'])) {
                 if (!$view->exists || ($view->last_watched_at && $view->last_watched_at->diffInMinutes(now()) > 10)) {
