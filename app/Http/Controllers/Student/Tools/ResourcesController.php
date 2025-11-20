@@ -49,7 +49,7 @@ class ResourcesController extends Controller
         }
 
         $resources = $query->paginate(6);
-
+        dd($resources);
         if ($request->expectsJson()) {
             return response()->json([
                 'resources' => [
