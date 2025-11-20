@@ -6,7 +6,6 @@ use App\Models\Resource;
 use App\Models\ResourceView;
 use Illuminate\Http\Request;
 use App\Models\ResourceVideoEvent;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Traits\DatabaseTransactionTrait;
