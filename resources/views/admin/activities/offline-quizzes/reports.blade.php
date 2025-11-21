@@ -160,7 +160,7 @@
                                 </div>
                                 <div>
                                     <div>
-                                        <a target="_blank" href="{{ route('teacher.students.profile.index', $student['id']) }}"
+                                        <a target="_blank" href="{{ route('admin.students.profile.index', $student['id']) }}"
                                             class="h6 text-truncate">
                                             <p class="mb-0 fw-medium">{{ $student['name'] }}</p>
                                         </a>

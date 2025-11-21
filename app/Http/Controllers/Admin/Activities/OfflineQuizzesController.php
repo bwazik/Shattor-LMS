@@ -222,6 +222,7 @@ class OfflineQuizzesController extends Controller
                 ->map(function ($item) {
                     return [
                         'id' => $item->student->id ?? 'N/A',
+                        'uuid' => $item->student->uuid ?? 'N/A',
                         'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
                         'profile_pic' => $item->student->profile_pic,
