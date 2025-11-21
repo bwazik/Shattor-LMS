@@ -31,9 +31,9 @@ class ResourcesController extends Controller
     public function index(Request $request)
     {
         $query = Resource::with(['teacher', 'grade'])
-            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum')
-            ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
-        dd($query->paginate(6));
+            ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at')
+            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum');
+
         $query->when($request->grade_id, fn($q) => $q->where('grade_id', $request->grade_id))
             ->when($request->teacher_id, fn($q) => $q->where('teacher_id', $request->teacher_id))
             ->when($request->hide_inactive, fn($q) => $q->where('is_active', true))
