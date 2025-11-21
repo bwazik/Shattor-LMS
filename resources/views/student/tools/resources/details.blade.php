@@ -205,7 +205,7 @@
                 showAlert(
                     "{{ trans('main.warning') }}",
                     "{{ trans('admin/resources.detectionMessage') }}",
-                    "error",
+                    "warning",
                     "{{ trans('admin/resources.detectionButtonText') }}"
                 );
             }
@@ -431,10 +431,10 @@
                 success: function(response) {
                     if (response.ban_triggered) {
                         showAlert(
-                            "{{ trans('main.error') }}",
-                            "{{ trans('toasts.tooManyViolations') }}",
-                            "error",
-                            "{{ trans('main.submit') }}"
+                            "{{ trans('main.warning') }}",
+                            "{{ trans('admin/resources.detectionMessage') }}",
+                            "warning",
+                            "{{ trans('admin/resources.detectionButtonText') }}"
                         );
                         setTimeout(() => {
                             window.location.href = '{{ route('student.resources.index') }}';
