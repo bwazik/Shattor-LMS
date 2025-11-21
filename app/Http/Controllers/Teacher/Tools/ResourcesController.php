@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Teacher\Tools;
 
+use Carbon\Carbon;
 use App\Models\Grade;
 use App\Models\Student;
 use App\Models\Resource;
@@ -10,10 +11,10 @@ use Illuminate\Http\Request;
 use App\Services\PlanLimitService;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
+use App\Traits\ServiceResponseTrait;
 use App\Services\Admin\FileUploadService;
 use App\Services\Teacher\Tools\ResourceService;
 use App\Http\Requests\Admin\Tools\ResourcesRequest;
-use App\Traits\ServiceResponseTrait;
 
 class ResourcesController extends Controller
 {
@@ -320,7 +321,7 @@ class ResourcesController extends Controller
                 ->addColumn('views', fn($row) => $row->views_count)
                 ->addColumn('duration', fn($row) => gmdate("H:i:s", $row->duration_watched))
                 ->addColumn('percentage', fn($row) => $row->percent_watched . '%')
-                ->addColumn('last_watched', fn($row) => $row->last_watched_at ? \Carbon\Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
+                ->addColumn('last_watched', fn($row) => $row->last_watched_at ? Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
                 ->addColumn('link', fn($row) => formatSpanUrl(route('teacher.resources.review', ['uuid' => $uuid, 'studentUuid' => $row->uuid]), trans('main.details'), 'info', false))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
                 ->rawColumns(['details', 'link'])

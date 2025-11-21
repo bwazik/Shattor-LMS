@@ -47,4 +47,5 @@ return [
     'firstViewed' => 'وقت أول مشاهدة',
     'lastViewed' => 'وقت آخر مشاهدة',
     'completion' => 'الإكمال',
+    'banned' => 'محظور',
 ];

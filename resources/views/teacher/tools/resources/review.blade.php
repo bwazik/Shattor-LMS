@@ -3,7 +3,7 @@
 @section('page-css')
 @endsection
 
-@section('title', pageTitle(trans('admin/resources.review') . ' - ' . $resource->title))
+@section('title', pageTitle(trans('main.details') . ' - ' . $resource->title))
 
 @section('content')
     <div class="row g-6">
@@ -82,17 +82,17 @@
                                                 <div class="avatar" data-bs-toggle="tooltip"
                                                     data-bs-original-title="{{ trans('main.status') }}">
                                                     <div
-                                                        class="avatar-initial rounded @if ($view->percent_watched >= 100) bg-label-success @else bg-label-warning @endif">
+                                                        class="avatar-initial rounded @if ($view->is_banned) bg-label-danger @else bg-label-success @endif">
                                                         <i
-                                                            class="icon-base ri @if ($view->percent_watched >= 100) ri-checkbox-circle-line @else ri-time-line @endif icon-24px"></i>
+                                                            class="icon-base ri @if ($view->is_banned) ri-prohibited-line @else ri-checkbox-circle-line @endif icon-24px"></i>
                                                     </div>
                                                 </div>
                                                 <div class="card-info">
                                                     <h5 class="mb-0">
-                                                        @if ($view->percent_watched >= 100)
-                                                            {{ trans('admin/quizzes.completed') }}
+                                                        @if ($view->is_banned)
+                                                            {{ trans('admin/resources.banned') }}
                                                         @else
-                                                            {{ trans('admin/quizzes.inProgress') }}
+                                                            {{ trans('main.allowed') }}
                                                         @endif
                                                     </h5>
                                                     <p class="mb-0">{{ trans('main.status') }}</p>
@@ -139,9 +139,12 @@
                                                             <span class="badge bg-label-primary">{{ ucfirst($event->event_type) }}</span>
                                                         </td>
                                                         <td>
-                                                            @if($event->data)
+                                                            @php
+                                                                $eventData = json_decode($event->data, true);
+                                                            @endphp
+                                                            @if(!empty($eventData))
                                                                 <small>
-                                                                @foreach(json_decode($event->data, true) ?? [] as $key => $value)
+                                                                @foreach($eventData as $key => $value)
                                                                     <strong>{{ ucfirst($key) }}:</strong> {{ $value }}<br>
                                                                 @endforeach
                                                                 </small>

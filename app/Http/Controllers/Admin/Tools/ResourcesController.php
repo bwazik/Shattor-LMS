@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Tools;
 
+use Carbon\Carbon;
 use App\Models\Grade;
+use App\Models\Student;
 use App\Models\Teacher;
 use App\Models\Resource;
-use App\Models\Student;
 use App\Models\ResourceView;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
@@ -304,7 +305,7 @@ class ResourcesController extends Controller
                 ->addColumn('views', fn($row) => $row->views_count)
                 ->addColumn('duration', fn($row) => gmdate("H:i:s", $row->duration_watched))
                 ->addColumn('percentage', fn($row) => $row->percent_watched . '%')
-                ->addColumn('last_watched', fn($row) => $row->last_watched_at ? \Carbon\Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
+                ->addColumn('last_watched', fn($row) => $row->last_watched_at ? Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
                 ->addColumn('link', fn($row) => formatSpanUrl(route('admin.resources.review', ['id' => $id, 'studentId' => $row->id]), trans('main.details'), 'info', false))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
                 ->rawColumns(['details', 'link'])

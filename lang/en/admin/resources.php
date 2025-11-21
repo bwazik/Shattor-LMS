@@ -47,4 +47,5 @@ return [
     'firstViewed' => 'First Viewed',
     'lastViewed' => 'Last Viewed',
     'completion' => 'Completion',
+    'banned' => 'Banned',
 ];

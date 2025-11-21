@@ -43,7 +43,7 @@
                                     </div>
                                     <div class="card-info">
                                         <div class="d-flex align-items-center">
-                                            <h5 class="mb-0 me-2">{{ $data['averagePercentage'] }}</h5>
+                                            <h5 class="mb-0 me-2">{{ $data['averagePercentage'] }}%</h5>
                                         </div>
                                         <p class="mb-0">{{ trans('admin/quizzes.averagePercentage') }}</p>
                                     </div>

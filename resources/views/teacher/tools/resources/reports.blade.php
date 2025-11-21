@@ -168,7 +168,7 @@
                 <div class="px-5 py-4 border border-start-0 border-end-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-heading text-uppercase">{{ trans('admin/students.students') }}</small>
-                        <small class="text-heading text-uppercase">{{ trans('main.totalDuration') }}</small>
+                        <small class="text-heading text-uppercase">{{ trans('main.duration') }}</small>
                     </div>
                 </div>
                 <div class="card-body pt-5">
