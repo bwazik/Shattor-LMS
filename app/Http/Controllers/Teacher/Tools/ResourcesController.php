@@ -35,6 +35,7 @@ class ResourcesController extends Controller
     public function index(Request $request)
     {
         $query = Resource::with(['grade', 'teacher'])
+            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum')
             ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at')
             ->where('teacher_id', $this->teacherId);
 
@@ -67,7 +68,7 @@ class ResourcesController extends Controller
                             'file_name' => $resource->file_name,
                             'file_size' => $resource->file_size,
                             'video_url' => $resource->video_url,
-                            'views' => $resource->views,
+                            'views' => $resource->resource_views_sum_views ?? 0,
                             'downloads' => $resource->downloads,
                             'is_active' => $resource->is_active,
                             'created_at' => $resource->created_at ? isoFormat($resource->created_at) : isoFormat(now()),
@@ -136,6 +137,7 @@ class ResourcesController extends Controller
             ->select('uuid', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at')
             ->uuid($uuid)
             ->where('teacher_id', $this->teacherId)
+            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum')
             ->firstOrFail();
 
         return view('teacher.tools.resources.details', compact('resource'));
@@ -212,23 +214,30 @@ class ResourcesController extends Controller
 
         $resource->resourceViews->each(function ($view) use (&$completionDistribution) {
             $percentage = $view->percent_watched;
-            if ($percentage <= 20) $completionDistribution['0-20%']++;
-            elseif ($percentage <= 40) $completionDistribution['21-40%']++;
-            elseif ($percentage <= 60) $completionDistribution['41-60%']++;
-            elseif ($percentage <= 80) $completionDistribution['61-80%']++;
-            else $completionDistribution['81-100%']++;
+            if ($percentage <= 20)
+                $completionDistribution['0-20%']++;
+            elseif ($percentage <= 40)
+                $completionDistribution['21-40%']++;
+            elseif ($percentage <= 60)
+                $completionDistribution['41-60%']++;
+            elseif ($percentage <= 80)
+                $completionDistribution['61-80%']++;
+            else
+                $completionDistribution['81-100%']++;
         });
 
         $completionRanges = array_keys($completionDistribution);
 
         // Top Students
         $topStudents = Student::whereHas('resourceViews', function ($q) use ($resource) {
-                $q->where('resource_id', $resource->id);
-            })
+            $q->where('resource_id', $resource->id);
+        })
             ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
-            ->with(['resourceViews' => function ($q) use ($resource) {
-                $q->where('resource_id', $resource->id);
-            }])
+            ->with([
+                'resourceViews' => function ($q) use ($resource) {
+                    $q->where('resource_id', $resource->id);
+                }
+            ])
             ->get()
             ->map(function ($student) {
                 $view = $student->resourceViews->first();

@@ -10,7 +10,6 @@ use App\Models\Resource;
 use App\Models\ResourceView;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Services\Admin\FileUploadService;
 use App\Services\Admin\Tools\ResourceService;
@@ -32,14 +31,15 @@ class ResourcesController extends Controller
     public function index(Request $request)
     {
         $query = Resource::with(['teacher', 'grade'])
+            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum')
             ->select('id', 'uuid', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at');
 
         $query->when($request->grade_id, fn($q) => $q->where('grade_id', $request->grade_id))
             ->when($request->teacher_id, fn($q) => $q->where('teacher_id', $request->teacher_id))
             ->when($request->hide_inactive, fn($q) => $q->where('is_active', true))
-            ->when($request->search, fn($q) => $q->where(function($q) use ($request) {
+            ->when($request->search, fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
-                ->orWhere('description', 'like', '%' . $request->search . '%');
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             }));
 
         if ($request->sort) {
@@ -64,7 +64,7 @@ class ResourcesController extends Controller
                             'file_name' => $resource->file_name,
                             'file_size' => $resource->file_size,
                             'video_url' => $resource->video_url,
-                            'views' => $resource->views,
+                            'views' => $resource->resource_views_sum_views ?? 0,
                             'downloads' => $resource->downloads,
                             'is_active' => $resource->is_active,
                             'created_at' => $resource->created_at ? isoFormat($resource->created_at) : isoFormat(now()),
@@ -131,6 +131,7 @@ class ResourcesController extends Controller
     {
         $resource = Resource::with(['teacher', 'grade'])
             ->select('id', 'teacher_id', 'grade_id', 'title', 'description', 'file_path', 'file_name', 'file_size', 'video_url', 'views', 'downloads', 'is_active', 'created_at')
+            ->withAggregate('resourceViews as resource_views_sum_views', 'views', 'sum')
             ->findOrFail($id);
 
         return view('admin.tools.resources.details', compact('resource'));
@@ -206,22 +207,29 @@ class ResourcesController extends Controller
 
         $resource->resourceViews->each(function ($view) use (&$completionDistribution) {
             $percentage = $view->percent_watched;
-            if ($percentage <= 20) $completionDistribution['0-20%']++;
-            elseif ($percentage <= 40) $completionDistribution['21-40%']++;
-            elseif ($percentage <= 60) $completionDistribution['41-60%']++;
-            elseif ($percentage <= 80) $completionDistribution['61-80%']++;
-            else $completionDistribution['81-100%']++;
+            if ($percentage <= 20)
+                $completionDistribution['0-20%']++;
+            elseif ($percentage <= 40)
+                $completionDistribution['21-40%']++;
+            elseif ($percentage <= 60)
+                $completionDistribution['41-60%']++;
+            elseif ($percentage <= 80)
+                $completionDistribution['61-80%']++;
+            else
+                $completionDistribution['81-100%']++;
         });
 
         $completionRanges = array_keys($completionDistribution);
 
         // Top Students
         $topStudents = Student::whereHas('resourceViews', function ($q) use ($id) {
-                $q->where('resource_id', $id);
-            })
-            ->with(['resourceViews' => function ($q) use ($id) {
-                $q->where('resource_id', $id);
-            }])
+            $q->where('resource_id', $id);
+        })
+            ->with([
+                'resourceViews' => function ($q) use ($id) {
+                    $q->where('resource_id', $id);
+                }
+            ])
             ->get()
             ->map(function ($student) {
                 $view = $student->resourceViews->first();

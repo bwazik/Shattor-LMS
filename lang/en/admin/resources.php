@@ -48,4 +48,27 @@ return [
     'lastViewed' => 'Last Viewed',
     'completion' => 'Completion',
     'banned' => 'Banned',
+    'detectionMessage' => 'Suspicious activity detected! This action is not allowed.',
+    'detectionButtonText' => 'I Understand',
+    'accessRevokedBySecurity' => 'Access to this resource has been revoked due to security violations.',
+    'security_error_rate' => 'Invalid playback rate detected!',
+    'no_files_uploaded' => 'No files uploaded',
+
+    # Event Types
+    'events' => [
+        'view' => 'View',
+        'play' => 'Play',
+        'pause' => 'Pause',
+        'fullscreen_enter' => 'Fullscreen Enter',
+        'fullscreen_exit' => 'Fullscreen Exit',
+        'qualitychange' => 'Quality Change',
+        'ratechange' => 'Rate Change',
+        'security_dev_tools' => 'Security: Dev Tools',
+        'security_copy' => 'Security: Copy',
+        'security_paste' => 'Security: Paste',
+        'security_context_menu' => 'Security: Context Menu',
+        'security_screenshot' => 'Security: Screenshot',
+        'security_tampering' => 'Security: Tampering',
+        'security_rate_manipulation' => 'Security: Rate Manipulation',
+    ],
 ];

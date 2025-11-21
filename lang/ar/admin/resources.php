@@ -48,4 +48,26 @@ return [
     'lastViewed' => 'وقت آخر مشاهدة',
     'completion' => 'الإكمال',
     'banned' => 'محظور',
+    'detectionMessage' => 'تم اكتشاف نشاط مشبوه! هذا الإجراء غير مسموح به.',
+    'detectionButtonText' => 'فهمت',
+    'accessRevokedBySecurity' => 'تم إلغاء الوصول إلى هذا المورد بسبب انتهاكات أمنية.',
+    'security_error_rate' => 'تم اكتشاف معدل تشغيل غير صالح!',
+
+    # Event Types
+    'events' => [
+        'view' => 'مشاهدة',
+        'play' => 'تشغيل',
+        'pause' => 'إيقاف مؤقت',
+        'fullscreen_enter' => 'دخول وضع ملء الشاشة',
+        'fullscreen_exit' => 'خروج من وضع ملء الشاشة',
+        'qualitychange' => 'تغيير الجودة',
+        'ratechange' => 'تغيير السرعة',
+        'security_dev_tools' => 'أمان: أدوات المطور',
+        'security_copy' => 'أمان: نسخ',
+        'security_paste' => 'أمان: لصق',
+        'security_context_menu' => 'أمان: قائمة السياق',
+        'security_screenshot' => 'أمان: لقطة شاشة',
+        'security_tampering' => 'أمان: تلاعب',
+        'security_rate_manipulation' => 'أمان: تلاعب بالسرعة',
+    ],
 ];

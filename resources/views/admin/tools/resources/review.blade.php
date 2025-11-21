@@ -134,9 +134,26 @@
                                             </thead>
                                             <tbody class="table-border-bottom-0">
                                                 @foreach ($events as $event)
+                                                    @php
+                                                        $badgeColor = match(true) {
+                                                            $event->event_type === 'view' => 'bg-label-info',
+                                                            $event->event_type === 'play' => 'bg-label-success',
+                                                            $event->event_type === 'pause' => 'bg-label-warning',
+                                                            $event->event_type === 'fullscreen_enter' => 'bg-label-primary',
+                                                            $event->event_type === 'fullscreen_exit' => 'bg-label-secondary',
+                                                            $event->event_type === 'qualitychange' => 'bg-label-info',
+                                                            $event->event_type === 'ratechange' => 'bg-label-dark',
+                                                            str_starts_with($event->event_type, 'security_') => 'bg-label-danger',
+                                                            default => 'bg-label-primary',
+                                                        };
+                                                        $eventName = trans('admin/resources.events.' . $event->event_type, [], 'en');
+                                                        if ($eventName === 'admin/resources.events.' . $event->event_type) {
+                                                            $eventName = ucfirst(str_replace('_', ' ', $event->event_type));
+                                                        }
+                                                    @endphp
                                                     <tr>
                                                         <td>
-                                                            <span class="badge bg-label-primary">{{ ucfirst($event->event_type) }}</span>
+                                                            <span class="badge {{ $badgeColor }}">{{ $eventName }}</span>
                                                         </td>
                                                         <td>
                                                             @php

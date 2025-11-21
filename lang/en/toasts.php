@@ -99,4 +99,5 @@ return [
     'invalidPin' => 'The code you entered is incorrect, please try again.',
     'invalidCurrentSecurityCode' => 'Current Security Code is invalid. Please try again.',
     'securityCodeUpdated' => 'Security Code is updated successfully',
+    'accessRevoked' => 'The resource has been locked due to multiple violations. Follow the rules and do not attempt to cheat next time.',
 ];
