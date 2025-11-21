@@ -53,7 +53,7 @@
                                     </p>
                                     <p class="text-nowrap mb-3">
                                         <i class="ri-eye-line ri-20px me-2"></i>{{ trans('main.views') }}:
-                                        {{ $resource->resource_views_sum_views }}
+                                        {{ $resource->resource_views_sum_views ?? 0 }}
                                     </p>
                                 </div>
                             </div>

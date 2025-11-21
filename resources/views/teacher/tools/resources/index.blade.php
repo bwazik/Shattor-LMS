@@ -193,7 +193,7 @@
                                             </div>
                                             <div class="me-3 text-muted" data-bs-toggle="tooltip" title="{{ trans('main.views') }}">
                                                 <i class="ri-eye-line ri-24px"></i>
-                                                <span class="fw-medium">{{ $resource->resource_views_sum_views }}</span>
+                                                <span class="fw-medium">{{ $resource->resource_views_sum_views ?? 0 }}</span>
                                             </div>
                                         </div>
                                     </div>
