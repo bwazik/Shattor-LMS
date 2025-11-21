@@ -150,6 +150,13 @@
 
 @section('page-js')
     <script>
+        @if(session('error'))
+            toastr.error("{{ session('error') }}");
+        @endif
+        @if(session('success'))
+            toastr.success("{{ session('success') }}");
+        @endif
+
         function updateResources(page = 1) {
             const searchForm = $('#search-form');
             const filterForm = $('#filter-form');
