@@ -96,7 +96,7 @@ class ResourcesController extends Controller
 
         if ($view && $view->is_banned) {
             return redirect()->route('student.resources.index')
-                ->with('error', trans('admin/resources.accessRevokedBySecurity'));
+                ->with('error', trans('toasts.accessRevokedBySecurity'));
         }
 
         return view('student.tools.resources.details', compact('resource'));

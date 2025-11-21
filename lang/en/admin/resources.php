@@ -49,10 +49,8 @@ return [
     'completion' => 'Completion',
     'banned' => 'Banned',
     'detectionMessage' => 'Suspicious activity detected! This action is not allowed.',
-    'detectionButtonText' => 'I Understand',
-    'accessRevokedBySecurity' => 'Access to this resource has been revoked due to security violations.',
-    'security_error_rate' => 'Invalid playback rate detected!',
-    'no_files_uploaded' => 'No files uploaded',
+    'detectionButtonText' => 'I will not do it again',
+    'securityErrorRate' => 'Invalid playback rate detected!',
 
     # Event Types
     'events' => [

@@ -48,10 +48,9 @@ return [
     'lastViewed' => 'وقت آخر مشاهدة',
     'completion' => 'الإكمال',
     'banned' => 'محظور',
-    'detectionMessage' => 'تم اكتشاف نشاط مشبوه! هذا الإجراء غير مسموح به.',
-    'detectionButtonText' => 'فهمت',
-    'accessRevokedBySecurity' => 'تم إلغاء الوصول إلى هذا المورد بسبب انتهاكات أمنية.',
-    'security_error_rate' => 'تم اكتشاف معدل تشغيل غير صالح!',
+    'detectionMessage' => 'تم اكتشاف نشاط مشبوه! الإجراء دا مش مسموح به.',
+    'detectionButtonText' => 'مش هكررها',
+    'securityErrorRate' => 'تم اكتشاف معدل تشغيل غير صالح!',
 
     # Event Types
     'events' => [

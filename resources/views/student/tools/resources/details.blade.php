@@ -409,7 +409,7 @@
                     speed: data.speed,
                     message: 'impossible_rate_detected'
                 });
-                toastr.error("{{ trans('admin/resources.security_error_rate') }}");
+                toastr.error("{{ trans('admin/resources.securityErrorRate') }}");
                 return;
             }
 
