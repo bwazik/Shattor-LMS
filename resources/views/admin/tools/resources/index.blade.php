@@ -130,6 +130,7 @@
                                                 <i class="ri-more-2-line ri-20px"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="financeApp_{{ $resource->id }}">
+                                                <a target="_blank" href="{{ route('admin.resources.reports', $resource->id) }}" class="dropdown-item waves-effect">{{ trans('admin/resources.reports') }}</a>
                                                 <a target="_blank" href="{{ route('admin.resources.details', $resource->id) }}" class="dropdown-item waves-effect">{{ trans('main.details') }}</a>
                                                 <a href="javascript:;" class="dropdown-item waves-effect" tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#edit-modal"
                                                     id="edit-button"
@@ -375,6 +376,7 @@
                                                 <i class="ri-more-2-line ri-20px"></i>
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="financeApp_${resource.id}">
+                                                <a target="_blank" href="${detailsUrl.replace('details', 'reports')}" class="dropdown-item waves-effect">{{ trans('admin/resources.reports') }}</a>
                                                 <a target="_blank" href="${detailsUrl}" class="dropdown-item waves-effect">{{ trans('main.details') }}</a>
                                                 <a href="javascript:;" class="dropdown-item waves-effect" tabindex="0" type="button" data-bs-toggle="offcanvas" data-bs-target="#edit-modal"
                                                     id="edit-button"

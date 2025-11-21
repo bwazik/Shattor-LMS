@@ -182,6 +182,10 @@ Route::group(
                         Route::post('update', 'update')->name('update');
                         Route::post('delete', 'delete')->name('delete');
                     });
+                    Route::get('{uuid}/reports', 'reports')->name('reports');
+                    Route::get('{uuid}/students/{studentUuid}/review', 'review')->name('review');
+                    Route::get('{uuid}/students-viewed', 'studentsViewed')->name('studentsViewed');
+                    Route::get('{uuid}/students-not-viewed', 'studentsNotViewed')->name('studentsNotViewed');
                 });
             # End Tools
 

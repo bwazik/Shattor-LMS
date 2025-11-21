@@ -288,6 +288,10 @@ Route::group(
                     Route::post('update', 'update')->name('update');
                     Route::post('delete', 'delete')->name('delete');
                 });
+                Route::get('{id}/reports', 'reports')->name('reports');
+                Route::get('{id}/students/{studentId}/review', 'review')->name('review');
+                Route::get('{id}/students-viewed', 'studentsViewed')->name('studentsViewed');
+                Route::get('{id}/students-not-viewed', 'studentsNotViewed')->name('studentsNotViewed');
             });
             # End Teacher Tools
 

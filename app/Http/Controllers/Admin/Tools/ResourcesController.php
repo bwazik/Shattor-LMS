@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin\Tools;
 use App\Models\Grade;
 use App\Models\Teacher;
 use App\Models\Resource;
+use App\Models\Student;
+use App\Models\ResourceView;
 use Illuminate\Http\Request;
 use App\Traits\ValidatesExistence;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Services\Admin\FileUploadService;
 use App\Services\Admin\Tools\ResourceService;
@@ -169,5 +172,117 @@ class ResourcesController extends Controller
         }
 
         return response()->json(['error' => $result['message']], 500);
+    }
+
+    public function reports(Request $request, $id)
+    {
+        $resource = Resource::with(['grade:id,name', 'teacher:id,name'])
+            ->withCount(['resourceViews'])
+            ->findOrFail($id);
+
+        // Total students eligible for the resource
+        $totalStudents = Student::where('grade_id', $resource->grade_id)
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $resource->teacher_id))
+            ->count();
+
+        // Students who actually viewed the resource
+        $viewedResource = $resource->resource_views_count;
+        $didntViewResource = $totalStudents - $viewedResource;
+
+        // Averages
+        $averageViews = number_format($resource->resourceViews()->avg('views') ?? 0, 2);
+        $averageDuration = number_format($resource->resourceViews()->avg('duration_watched') ?? 0, 2);
+        $averagePercentage = number_format($resource->resourceViews()->avg('percent_watched') ?? 0, 2);
+
+        // Prepare final data
+        $data = [
+            'totalStudents' => $totalStudents,
+            'viewedResource' => $viewedResource,
+            'didntViewResource' => $didntViewResource,
+            'viewedPercentage' => $totalStudents > 0 ? round(($viewedResource / $totalStudents) * 100, 1) : 0,
+            'didntViewPercentage' => $totalStudents > 0 ? round(($didntViewResource / $totalStudents) * 100, 1) : 0,
+            'averageViews' => $averageViews,
+            'averageDuration' => $averageDuration,
+            'averagePercentage' => $averagePercentage,
+        ];
+
+        return view('admin.tools.resources.reports', compact('resource', 'data'));
+    }
+
+    public function review($id, $studentId)
+    {
+        $resource = Resource::findOrFail($id);
+        $student = Student::select('id', 'name', 'profile_pic', 'phone')->findOrFail($studentId);
+
+        $view = ResourceView::where('resource_id', $id)
+            ->where('student_id', $studentId)
+            ->firstOrFail();
+
+        $events = $resource->resourceVideoEvents()
+            ->where('student_id', $studentId)
+            ->orderBy('detected_at', 'desc')
+            ->get();
+
+        return view('admin.tools.resources.review', compact('resource', 'student', 'view', 'events'));
+    }
+    
+    public function studentsViewed(Request $request, $id)
+    {
+        $resource = Resource::select('id', 'teacher_id')->findOrFail($id);
+
+        $studentsViewedQuery = Student::query()
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $resource->teacher_id))
+            ->whereHas('resourceViews', fn($q) => $q->where('resource_id', $id))
+            ->select('id', 'name', 'phone', 'profile_pic')
+            ->addSelect([
+                'views_count' => ResourceView::select('views')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $id)
+                    ->limit(1),
+                'duration_watched' => ResourceView::select('duration_watched')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $id)
+                    ->limit(1),
+                'percent_watched' => ResourceView::select('percent_watched')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $id)
+                    ->limit(1),
+                'last_watched_at' => ResourceView::select('last_watched_at')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $id)
+                    ->limit(1),
+            ]);
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($studentsViewedQuery)
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
+                ->addColumn('views', fn($row) => $row->views_count)
+                ->addColumn('duration', fn($row) => gmdate("H:i:s", $row->duration_watched))
+                ->addColumn('percentage', fn($row) => $row->percent_watched . '%')
+                ->addColumn('last_watched', fn($row) => $row->last_watched_at ? \Carbon\Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
+                ->addColumn('link', fn($row) => formatSpanUrl(route('admin.resources.review', ['id' => $id, 'studentId' => $row->id]), trans('admin/resources.review'), 'info', false))
+                ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
+                ->rawColumns(['details', 'link'])
+                ->make(true);
+        }
+    }
+
+    public function studentsNotViewed(Request $request, $id)
+    {
+        $resource = Resource::select('id', 'teacher_id', 'grade_id')->findOrFail($id);
+
+        $studentsNotViewedQuery = Student::query()
+            ->where('grade_id', $resource->grade_id)
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $resource->teacher_id))
+            ->whereDoesntHave('resourceViews', fn($q) => $q->where('resource_id', $id))
+            ->select('id', 'name', 'phone', 'profile_pic');
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($studentsNotViewedQuery)
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'admin.students.profile.index', $row->id))
+                ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
+                ->rawColumns(['details'])
+                ->make(true);
+        }
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Teacher\Tools;
 
 use App\Models\Grade;
+use App\Models\Student;
 use App\Models\Resource;
+use App\Models\ResourceView;
 use Illuminate\Http\Request;
 use App\Services\PlanLimitService;
 use App\Traits\ValidatesExistence;
@@ -37,9 +39,9 @@ class ResourcesController extends Controller
 
         $query->when($request->grade_id, fn($q) => $q->where('grade_id', $request->grade_id))
             ->when($request->hide_inactive, fn($q) => $q->where('is_active', true))
-            ->when($request->search, fn($q) => $q->where(function($q) use ($request) {
+            ->when($request->search, fn($q) => $q->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
-                ->orWhere('description', 'like', '%' . $request->search . '%');
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
             }));
 
         if ($request->sort) {
@@ -174,5 +176,131 @@ class ResourcesController extends Controller
         $result = $this->fileUploadService->deleteFile('resource', $request->id);
 
         return $this->conrtollerJsonResponse($result);
+    }
+
+    public function reports(Request $request, $uuid)
+    {
+        $resource = Resource::with(['grade:id,name'])
+            ->withCount(['resourceViews'])
+            ->uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        // Total students eligible for the resource
+        $totalStudents = Student::where('grade_id', $resource->grade_id)
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->count();
+
+        // Students who actually viewed the resource
+        $viewedResource = $resource->resource_views_count;
+        $didntViewResource = $totalStudents - $viewedResource;
+
+        // Averages
+        $averageViews = number_format($resource->resourceViews()->avg('views') ?? 0, 2);
+        $averageDuration = number_format($resource->resourceViews()->avg('duration_watched') ?? 0, 2);
+        $averagePercentage = number_format($resource->resourceViews()->avg('percent_watched') ?? 0, 2);
+
+        // Prepare final data
+        $data = [
+            'totalStudents' => $totalStudents,
+            'viewedResource' => $viewedResource,
+            'didntViewResource' => $didntViewResource,
+            'viewedPercentage' => $totalStudents > 0 ? round(($viewedResource / $totalStudents) * 100, 1) : 0,
+            'didntViewPercentage' => $totalStudents > 0 ? round(($didntViewResource / $totalStudents) * 100, 1) : 0,
+            'averageViews' => $averageViews,
+            'averageDuration' => $averageDuration,
+            'averagePercentage' => $averagePercentage,
+        ];
+
+        return view('teacher.tools.resources.reports', compact('resource', 'data'));
+    }
+
+    public function review($uuid, $studentUuid)
+    {
+        $resource = Resource::uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $student = Student::select('id', 'uuid', 'name', 'profile_pic', 'phone')
+            ->uuid($studentUuid)
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->firstOrFail();
+
+        $view = ResourceView::where('resource_id', $resource->id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
+
+        $events = $resource->resourceVideoEvents()
+            ->where('student_id', $student->id)
+            ->orderBy('detected_at', 'desc')
+            ->get();
+
+        return view('teacher.tools.resources.review', compact('resource', 'student', 'view', 'events'));
+    }
+
+    public function studentsViewed(Request $request, $uuid)
+    {
+        $resource = Resource::select('id', 'teacher_id')
+            ->uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $studentsViewedQuery = Student::query()
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->whereHas('resourceViews', fn($q) => $q->where('resource_id', $resource->id))
+            ->select('id', 'uuid', 'name', 'phone', 'profile_pic')
+            ->addSelect([
+                'views_count' => ResourceView::select('views')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $resource->id)
+                    ->limit(1),
+                'duration_watched' => ResourceView::select('duration_watched')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $resource->id)
+                    ->limit(1),
+                'percent_watched' => ResourceView::select('percent_watched')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $resource->id)
+                    ->limit(1),
+                'last_watched_at' => ResourceView::select('last_watched_at')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $resource->id)
+                    ->limit(1),
+            ]);
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($studentsViewedQuery)
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
+                ->addColumn('views', fn($row) => $row->views_count)
+                ->addColumn('duration', fn($row) => gmdate("H:i:s", $row->duration_watched))
+                ->addColumn('percentage', fn($row) => $row->percent_watched . '%')
+                ->addColumn('last_watched', fn($row) => $row->last_watched_at ? \Carbon\Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
+                ->addColumn('link', fn($row) => formatSpanUrl(route('teacher.resources.review', ['uuid' => $uuid, 'studentUuid' => $row->uuid]), trans('admin/resources.review'), 'info', false))
+                ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
+                ->rawColumns(['details', 'link'])
+                ->make(true);
+        }
+    }
+
+    public function studentsNotViewed(Request $request, $uuid)
+    {
+        $resource = Resource::select('id', 'teacher_id', 'grade_id')
+            ->uuid($uuid)
+            ->where('teacher_id', $this->teacherId)
+            ->firstOrFail();
+
+        $studentsNotViewedQuery = Student::query()
+            ->where('grade_id', $resource->grade_id)
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+            ->whereDoesntHave('resourceViews', fn($q) => $q->where('resource_id', $resource->id))
+            ->select('id', 'uuid', 'name', 'phone', 'profile_pic');
+
+        if ($request->ajax()) {
+            return datatables()->eloquent($studentsNotViewedQuery)
+                ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->phone, 'teacher.students.profile.index', $row->uuid))
+                ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
+                ->rawColumns(['details'])
+                ->make(true);
+        }
     }
 }
