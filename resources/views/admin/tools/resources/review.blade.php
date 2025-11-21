@@ -138,11 +138,11 @@
                                                         $badgeColor = match(true) {
                                                             in_array($event->event_type, ['view', 'play', 'pause']) => 'bg-label-success',
                                                             in_array($event->event_type, ['fullscreen_enter', 'fullscreen_exit']) => 'bg-label-primary',
-                                                            in_array($event->event_type, ['qualitychange', 'ratechange']) => 'bg-label-info',
+                                                            in_array($event->event_type, ['qualitychange', 'ratechange']) => 'bg-label-warning',
                                                             str_starts_with($event->event_type, 'security_') => 'bg-label-danger',
                                                             default => 'bg-label-secondary',
                                                         };
-                                                        $eventName = trans('admin/resources.events.' . $event->event_type, [], 'en');
+                                                        $eventName = trans('admin/resources.events.' . $event->event_type);
                                                         if ($eventName === 'admin/resources.events.' . $event->event_type) {
                                                             $eventName = ucfirst(str_replace('_', ' ', $event->event_type));
                                                         }
