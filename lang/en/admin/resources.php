@@ -46,6 +46,5 @@ return [
     'event' => 'Event',
     'firstViewed' => 'First Viewed',
     'lastViewed' => 'Last Viewed',
-    'totalDuration' => 'Total Duration',
     'completion' => 'Completion',
 ];

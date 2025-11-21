@@ -241,7 +241,7 @@ class ResourcesController extends Controller
                 ];
             })
             ->sortByDesc('duration_watched')
-            ->take(5);
+            ->take(10);
 
         // Prepare final data
         $data = [
@@ -321,7 +321,7 @@ class ResourcesController extends Controller
                 ->addColumn('duration', fn($row) => gmdate("H:i:s", $row->duration_watched))
                 ->addColumn('percentage', fn($row) => $row->percent_watched . '%')
                 ->addColumn('last_watched', fn($row) => $row->last_watched_at ? \Carbon\Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
-                ->addColumn('link', fn($row) => formatSpanUrl(route('teacher.resources.review', ['uuid' => $uuid, 'studentUuid' => $row->uuid]), trans('admin/resources.review'), 'info', false))
+                ->addColumn('link', fn($row) => formatSpanUrl(route('teacher.resources.review', ['uuid' => $uuid, 'studentUuid' => $row->uuid]), trans('main.details'), 'info', false))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
                 ->rawColumns(['details', 'link'])
                 ->make(true);

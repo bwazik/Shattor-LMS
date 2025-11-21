@@ -46,6 +46,5 @@ return [
     'event' => 'الحدث',
     'firstViewed' => 'وقت أول مشاهدة',
     'lastViewed' => 'وقت آخر مشاهدة',
-    'totalDuration' => 'المدة الإجمالية',
     'completion' => 'الإكمال',
 ];

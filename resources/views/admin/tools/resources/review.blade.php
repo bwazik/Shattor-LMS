@@ -1,16 +1,6 @@
 @extends('layouts.admin.master')
 
 @section('page-css')
-    <style>
-        .timeline-event-icon {
-            position: absolute;
-            left: -8px;
-            top: 0;
-            background-color: #fff;
-            border-radius: 50%;
-            padding: 2px;
-        }
-    </style>
 @endsection
 
 @section('title', pageTitle(trans('admin/resources.review') . ' - ' . $resource->title))
@@ -48,42 +38,42 @@
                                         <div class="col-xl-3 col-md-6 col-sm-6">
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="avatar" data-bs-toggle="tooltip"
-                                                    data-bs-original-title="{{ trans('admin/resources.views') }}">
+                                                    data-bs-original-title="{{ trans('main.views') }}">
                                                     <div class="avatar-initial bg-label-primary rounded">
                                                         <i class="icon-base ri ri-eye-line icon-24px"></i>
                                                     </div>
                                                 </div>
                                                 <div class="card-info">
                                                     <h5 class="mb-0">{{ $view->views }}</h5>
-                                                    <p class="mb-0">{{ trans('admin/resources.views') }}</p>
+                                                    <p class="mb-0">{{ trans('main.views') }}</p>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-xl-3 col-md-6 col-sm-6">
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="avatar" data-bs-toggle="tooltip"
-                                                    data-bs-original-title="{{ trans('admin/resources.duration') }}">
+                                                    data-bs-original-title="{{ trans('main.duration') }}">
                                                     <div class="avatar-initial bg-label-info rounded">
                                                         <i class="icon-base ri ri-time-line icon-24px"></i>
                                                     </div>
                                                 </div>
                                                 <div class="card-info">
                                                     <h5 class="mb-0">{{ gmdate("H:i:s", $view->duration_watched) }}</h5>
-                                                    <p class="mb-0">{{ trans('admin/resources.duration') }}</p>
+                                                    <p class="mb-0">{{ trans('main.duration') }}</p>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-xl-3 col-md-6 col-sm-6">
                                             <div class="d-flex align-items-center gap-3">
                                                 <div class="avatar" data-bs-toggle="tooltip"
-                                                    data-bs-original-title="{{ trans('admin/resources.percentage') }}">
+                                                    data-bs-original-title="{{ trans('main.percentage') }}">
                                                     <div class="avatar-initial bg-label-success rounded">
                                                         <i class="icon-base ri ri-pie-chart-line icon-24px"></i>
                                                     </div>
                                                 </div>
                                                 <div class="card-info">
                                                     <h5 class="mb-0">{{ $view->percent_watched }}%</h5>
-                                                    <p class="mb-0">{{ trans('admin/resources.percentage') }}</p>
+                                                    <p class="mb-0">{{ trans('main.percentage') }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -138,7 +128,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>{{ trans('admin/resources.event') }}</th>
-                                                    <th>{{ trans('admin/resources.details') }}</th>
+                                                    <th>{{ trans('main.details') }}</th>
                                                     <th>{{ trans('admin/quizzes.detectedAt') }}</th>
                                                 </tr>
                                             </thead>
@@ -191,7 +181,7 @@
                                         <span class="timeline-point timeline-point-warning"></span>
                                         <div class="timeline-event">
                                             <div class="timeline-header mb-3">
-                                                <h6 class="mb-0">{{ trans('admin/resources.totalDuration') }}</h6>
+                                                <h6 class="mb-0">{{ trans('main.duration') }}</h6>
                                             </div>
                                             <p class="mb-2">
                                                 {{ gmdate("H:i:s", $view->duration_watched) }}
