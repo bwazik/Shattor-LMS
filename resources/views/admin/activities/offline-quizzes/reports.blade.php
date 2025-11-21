@@ -7,6 +7,7 @@
 @section('title', pageTitle(trans('main.reportsOf', ['dependency' => trans('admin/offlineQuizzes.offlineQuizzes')])))
 
 @section('content')
+    <h4 class="mb-5">{{ $offlineQuiz->teacher->name }} - {{ $offlineQuiz->name }} - {{ $offlineQuiz->grade->name }}</h4>
     <!-- Student Stats & Score Distribution -->
     <div class="row g-6 mb-6 align-items-stretch">
         <!-- Student Stats -->
@@ -160,7 +161,8 @@
                                 </div>
                                 <div>
                                     <div>
-                                        <a target="_blank" href="{{ route('admin.students.profile.index', $student['id']) }}"
+                                        <a target="_blank"
+                                            href="{{ route('admin.students.profile.index', $student['id']) }}"
                                             class="h6 text-truncate">
                                             <p class="mb-0 fw-medium">{{ $student['name'] }}</p>
                                         </a>
@@ -196,7 +198,7 @@
     <script src="{{ asset('assets/vendor/libs/apex-charts/apexcharts.js') }}"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const chartColors = {
                 column: {
                     series1: '#72e128',
@@ -221,45 +223,46 @@
             initializeDataTable('#students-taken-quiz-datatable',
                 "{{ route('admin.offline-quizzes.studentsTakenOfflineQuiz', $offlineQuiz->id) }}", [0, 1, 2],
                 [{
-                    data: "",
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'rank',
-                    name: 'rank',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'details',
-                    name: 'details'
-                },
-                {
-                    data: 'score',
-                    name: 'score',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'percentage',
-                    name: 'percentage',
-                    orderable: false,
-                    searchable: false
-                }
+                        data: "",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'rank',
+                        name: 'rank',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'details',
+                        name: 'details'
+                    },
+                    {
+                        data: 'score',
+                        name: 'score',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'percentage',
+                        name: 'percentage',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
             );
             initializeDataTable('#students-not-taken-quiz-datatable',
-                "{{ route('admin.offline-quizzes.studentsNotTakenOfflineQuiz', $offlineQuiz->id) }}", [0, 1, 2],
+                "{{ route('admin.offline-quizzes.studentsNotTakenOfflineQuiz', $offlineQuiz->id) }}", [0, 1,
+                2],
                 [{
-                    data: "",
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'details',
-                    name: 'details'
-                },
+                        data: "",
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'details',
+                        name: 'details'
+                    },
                 ],
             );
 
@@ -294,7 +297,7 @@
                     },
                     colors: config.colors.info,
                     series: [{
-                        name: '{{ trans("account.studentsCount") }}',
+                        name: '{{ trans('account.studentsCount') }}',
                         data: Object.values(@json($data['scoreDistribution']))
                     }],
                     xaxis: {
@@ -331,7 +334,8 @@
                 };
 
             if (typeof scoreDistributionChartE !== undefined && scoreDistributionChartE !== null) {
-                const scoreDistributionChart = new ApexCharts(scoreDistributionChartE, scoreDistributionChartConfig);
+                const scoreDistributionChart = new ApexCharts(scoreDistributionChartE,
+                scoreDistributionChartConfig);
                 scoreDistributionChart.render();
             }
         });

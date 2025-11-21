@@ -154,8 +154,9 @@ class OfflineQuizzesController extends Controller
 
     public function reports(Request $request, $uuid)
     {
-        $offlineQuiz = OfflineQuiz::withCount(['groups', 'offlineQuizResults'])
-            ->uuid($uuid)
+        $offlineQuiz = OfflineQuiz::uuid($uuid)
+            ->with(['grade:id,name'])
+            ->withCount(['groups', 'offlineQuizResults'])
             ->where('teacher_id', $this->teacherId)
             ->firstOrFail();
 

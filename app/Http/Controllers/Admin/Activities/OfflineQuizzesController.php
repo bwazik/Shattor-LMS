@@ -124,7 +124,8 @@ class OfflineQuizzesController extends Controller
 
     public function reports(Request $request, $id)
     {
-        $offlineQuiz = OfflineQuiz::withCount(['groups', 'offlineQuizResults'])
+        $offlineQuiz = OfflineQuiz::with(['grade:id,name', 'teacher:id,name'])
+            ->withCount(['groups', 'offlineQuizResults'])
             ->findOrFail($id);
 
         $groupIds = $offlineQuiz->groups()->pluck('groups.id');
@@ -214,7 +215,7 @@ class OfflineQuizzesController extends Controller
         // Top 10 students by quiz score
         $topStudents = Cache::remember("top_students_offline_{$offlineQuiz->id}", 600, function () use ($offlineQuiz) {
             return OfflineQuizResult::where('offline_quiz_id', $offlineQuiz->id)
-                ->with(['student' => fn($q) => $q->select('id', 'name', 'profile_pic', 'phone')])
+                ->with(['student' => fn($q) => $q->select('id', 'uuid', 'name', 'profile_pic', 'phone')])
                 ->select('student_id', 'total_score')
                 ->orderBy('total_score', 'desc')
                 ->take(10)

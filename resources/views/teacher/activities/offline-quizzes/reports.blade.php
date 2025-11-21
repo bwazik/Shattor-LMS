@@ -7,6 +7,7 @@
 @section('title', pageTitle(trans('main.reportsOf', ['dependency' => trans('admin/offlineQuizzes.offlineQuizzes')])))
 
 @section('content')
+    <h4 class="mb-5">{{ $offlineQuiz->name }} - {{ $offlineQuiz->grade->name }}</h4>
     <!-- Student Stats & Score Distribution -->
     <div class="row g-6 mb-6 align-items-stretch">
         <!-- Student Stats -->
