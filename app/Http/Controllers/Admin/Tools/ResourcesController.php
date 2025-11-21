@@ -194,6 +194,48 @@ class ResourcesController extends Controller
         $averageDuration = number_format($resource->resourceViews()->avg('duration_watched') ?? 0, 2);
         $averagePercentage = number_format($resource->resourceViews()->avg('percent_watched') ?? 0, 2);
 
+        // Completion Distribution
+        $completionDistribution = [
+            '0-20%' => 0,
+            '21-40%' => 0,
+            '41-60%' => 0,
+            '61-80%' => 0,
+            '81-100%' => 0,
+        ];
+
+        $resource->resourceViews->each(function ($view) use (&$completionDistribution) {
+            $percentage = $view->percent_watched;
+            if ($percentage <= 20) $completionDistribution['0-20%']++;
+            elseif ($percentage <= 40) $completionDistribution['21-40%']++;
+            elseif ($percentage <= 60) $completionDistribution['41-60%']++;
+            elseif ($percentage <= 80) $completionDistribution['61-80%']++;
+            else $completionDistribution['81-100%']++;
+        });
+
+        $completionRanges = array_keys($completionDistribution);
+
+        // Top Students
+        $topStudents = Student::whereHas('resourceViews', function ($q) use ($id) {
+                $q->where('resource_id', $id);
+            })
+            ->with(['resourceViews' => function ($q) use ($id) {
+                $q->where('resource_id', $id);
+            }])
+            ->get()
+            ->map(function ($student) {
+                $view = $student->resourceViews->first();
+                return [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'profile_pic' => $student->profile_pic,
+                    'phone' => $student->phone,
+                    'percent_watched' => $view->percent_watched,
+                    'duration_watched' => $view->duration_watched,
+                ];
+            })
+            ->sortByDesc('percent_watched')
+            ->take(5);
+
         // Prepare final data
         $data = [
             'totalStudents' => $totalStudents,
@@ -204,6 +246,9 @@ class ResourcesController extends Controller
             'averageViews' => $averageViews,
             'averageDuration' => $averageDuration,
             'averagePercentage' => $averagePercentage,
+            'completionDistribution' => $completionDistribution,
+            'completionRanges' => $completionRanges,
+            'topStudents' => $topStudents,
         ];
 
         return view('admin.tools.resources.reports', compact('resource', 'data'));
