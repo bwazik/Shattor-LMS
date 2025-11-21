@@ -168,7 +168,7 @@
                 <div class="px-5 py-4 border border-start-0 border-end-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="text-heading text-uppercase">{{ trans('admin/students.students') }}</small>
-                        <small class="text-heading text-uppercase">{{ trans('admin/resources.percentage') }}</small>
+                        <small class="text-heading text-uppercase">{{ trans('admin/resources.totalDuration') }}</small>
                     </div>
                 </div>
                 <div class="card-body pt-5">
@@ -190,7 +190,7 @@
                                 </div>
                             </div>
                             <div class="text-end">
-                                <h6 class="mb-0">{{ $student['percent_watched'] }}%</h6>
+                                <h6 class="mb-0">{{ gmdate("H:i:s", $student['duration_watched']) }}</h6>
                             </div>
                         </div>
                     @endforeach

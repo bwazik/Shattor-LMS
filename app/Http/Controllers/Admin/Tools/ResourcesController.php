@@ -233,7 +233,7 @@ class ResourcesController extends Controller
                     'duration_watched' => $view->duration_watched,
                 ];
             })
-            ->sortByDesc('percent_watched')
+            ->sortByDesc('duration_watched')
             ->take(5);
 
         // Prepare final data
