@@ -10,10 +10,12 @@ use App\Models\Lesson;
 use App\Models\Invoice;
 use App\Models\Student;
 use App\Models\Assignment;
+use App\Models\OfflineQuiz;
 use App\Models\Compensatory;
 use Illuminate\Http\Request;
 use App\Models\StudentResult;
 use App\Services\SessionService;
+use App\Models\OfflineQuizResult;
 use App\Traits\ValidatesExistence;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -327,6 +329,78 @@ class StudentsProfileController extends Controller
             3 => '<span class="badge rounded-pill bg-label-danger text-capitalize">' . trans('admin/quizzes.failed') . '</span>',
             default => '<span class="badge rounded-pill bg-label-warning text-capitalized">N/A</span>',
         };
+    }
+
+    public function offlineQuizzes(Request $request, $id)
+    {
+        $student = $this->getStudent($id);
+        $stats = $this->getOfflineQuizStats($student);
+
+        $offlineQuizzesQuery = OfflineQuiz::query()
+            ->with([
+                'offlineQuizResults' => fn($query) => $query->where('student_id', $student->id)
+                    ->select('offline_quiz_results.student_id', 'offline_quiz_results.offline_quiz_id', 'offline_quiz_results.total_score', 'offline_quiz_results.percentage')
+            ])
+            ->select('id', 'uuid', 'name', 'conducted_at')
+            ->where('grade_id', $student->grade_id)
+            ->whereHas('groups', function ($query) use ($student) {
+                $query->whereIn('groups.id', function ($subquery) use ($student) {
+                    $subquery->select('group_id')
+                        ->from('student_group')
+                        ->where('student_id', $student->id)
+                        ->whereColumn('student_group.created_at', '<=', 'offline_quizzes.conducted_at')
+                        ->where(function ($q) {
+                            $q->whereNull('student_group.ended_at')
+                                ->orWhereColumn('student_group.ended_at', '>=', 'offline_quizzes.conducted_at');
+                        });
+                });
+            })
+            ->orderBy('conducted_at', 'desc');
+
+        if ($request->ajax()) {
+            if ($request->input('table') === 'offline-quizzes') {
+                return datatables()->eloquent($offlineQuizzesQuery)
+                    ->addIndexColumn()
+                    ->editColumn('name', fn($row) => $row->name)
+                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) : 'N/A')
+                    ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 2) : 'N/A')
+                    ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlieQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
+                    ->make(true);
+            }
+        }
+
+        return view('admin.users.students.profile.offline-quizzes', compact('student', 'stats'));
+    }
+
+    private function getOfflineQuizStats($student)
+    {
+        $offlineQuizzesQuery = OfflineQuiz::where('grade_id', $student->grade_id)
+            ->whereHas('groups', function ($query) use ($student) {
+                $query->whereIn('groups.id', function ($subquery) use ($student) {
+                    $subquery->select('group_id')
+                        ->from('student_group')
+                        ->where('student_id', $student->id)
+                        ->whereColumn('student_group.created_at', '<=', 'offline_quizzes.conducted_at')
+                        ->where(function ($q) {
+                            $q->whereNull('student_group.ended_at')
+                                ->orWhereColumn('student_group.ended_at', '>=', 'offline_quizzes.conducted_at');
+                        });
+                });
+            });
+        $totalQuizzes = $offlineQuizzesQuery->count();
+        $offlineQuizResults = OfflineQuizResult::where('student_id', $student->id)
+            ->whereIn('offline_quiz_id', $offlineQuizzesQuery->pluck('id'))
+            ->selectRaw('AVG(total_score) as avg_score, AVG(percentage) as avg_percentage, MAX(total_score) as top_score, COUNT(*) as taken_count, COUNT(total_score) as passed_count')
+            ->first();
+
+        return [
+            'avgScore' => $offlineQuizResults->taken_count > 0 ? number_format($offlineQuizResults->avg_score, 2) : 'N/A',
+            'avgPercentage' => $offlineQuizResults->taken_count > 0 ? number_format($offlineQuizResults->avg_percentage, 1) : 'N/A',
+            'completionRate' => $totalQuizzes > 0 ? round(($offlineQuizResults->taken_count / $totalQuizzes) * 100, 1) : 0,
+            'totalQuizzes' => $totalQuizzes,
+            'passedQuizzes' => $offlineQuizResults->passed_count,
+            'topScore' => $offlineQuizResults->taken_count > 0 ? number_format($offlineQuizResults->top_score, 2) : 'N/A',
+        ];
     }
 
     public function assignments(Request $request, $id)

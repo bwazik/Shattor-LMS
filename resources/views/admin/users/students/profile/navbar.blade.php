@@ -18,6 +18,11 @@
                             class="ri-brain-line me-2"></i>{{ trans('admin/quizzes.quizzes') }}</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ isActiveRoute('admin.students.profile.offline-quizzes') ? 'active' : '' }}"
+                        href="{{ route('admin.students.profile.offline-quizzes', $student->id) }}"><i
+                            class="ri-brain-line me-2"></i>{{ trans('admin/offlineQuizzes.offlineQuizzes') }}</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ isActiveRoute('admin.students.profile.assignments') ? 'active' : '' }}"
                         href="{{ route('admin.students.profile.assignments', $student->id) }}"><i
                             class="ri-file-copy-2-line me-2"></i>{{ trans('admin/assignments.assignments') }}</a>

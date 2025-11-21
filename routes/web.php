@@ -91,7 +91,7 @@ Route::group(
                 Route::get('teachers/{teacher}/students', 'getTeacherStudents')->name('teachers.students');
             });
 
-        # Start Platform Managment
+            # Start Platform Managment
             # Stages
             Route::prefix('stages')->controller(StagesController::class)->name('stages.')->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -133,9 +133,9 @@ Route::group(
                     Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                 });
             });
-        # End Platform Managment
+            # End Platform Managment
 
-        # Start Users Managment
+            # Start Users Managment
             # Teachers
             Route::prefix('teachers')->name('teachers.')->group(function () {
                 Route::controller(TeachersController::class)->group(function () {
@@ -203,12 +203,13 @@ Route::group(
                         Route::post('restore-selected', 'restoreSelected')->name('restoreSelected');
                     });
                 });
-                Route::controller(StudentsProfileController::class)->group(function() {
-                    Route::prefix('{id}')->name('profile.')->group(function() {
+                Route::controller(StudentsProfileController::class)->group(function () {
+                    Route::prefix('{id}')->name('profile.')->group(function () {
                         Route::get('profile', 'profile')->name('index');
                         Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
                         Route::get('attendance', 'attendance')->name('attendance');
                         Route::get('quizzes', 'quizzes')->name('quizzes');
+                        Route::get('offline-quizzes', 'offlineQuizzes')->name('offline-quizzes');
                         Route::get('assignments', 'assignments')->name('assignments');
                         Route::get('fees', 'fees')->name('fees');
                         Route::get('security', 'security')->name('security');
@@ -237,9 +238,9 @@ Route::group(
                     Route::get('/details/{id}', 'index')->name('details');
                 });
             });
-        # End Users Managment
+            # End Users Managment
 
-        # Start Teacher Tools
+            # Start Teacher Tools
             # Groups
             Route::prefix('groups')->controller(GroupsController::class)->name('groups.')->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -288,9 +289,9 @@ Route::group(
                     Route::post('delete', 'delete')->name('delete');
                 });
             });
-        # End Teacher Tools
+            # End Teacher Tools
 
-        # Start Activities
+            # Start Activities
             # Compensatories
             Route::prefix('compensatories')->controller(CompensatoriesController::class)->name('compensatories.')->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -406,10 +407,10 @@ Route::group(
                 Route::get('submissions/{fileId}/download', 'downloadSubmission')->name('submissions.download');
                 Route::get('submissions/{fileId}/view', 'viewSubmission')->name('submissions.view');
             });
-        # End Activities
+            # End Activities
 
 
-        # Start Finance Managment
+            # Start Finance Managment
             Route::prefix('fees')->controller(FeesController::class)->name('fees.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::middleware('throttle:10,1')->group(function () {
@@ -497,9 +498,9 @@ Route::group(
                     Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
                 });
             });
-        # End Finance Managment
+            # End Finance Managment
 
-        # Start Misc
+            # Start Misc
             Route::prefix('whatsapp-messages')->controller(WhatsappMessagesController::class)->name('whatsapp-messages.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::middleware('throttle:10,1')->group(function () {
@@ -538,7 +539,7 @@ Route::group(
                     Route::post('delete-content', 'deleteContent')->name('deleteContent');
                 });
             });
-        # End Misc
+            # End Misc
         });
     }
 );
