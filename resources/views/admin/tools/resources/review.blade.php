@@ -136,15 +136,11 @@
                                                 @foreach ($events as $event)
                                                     @php
                                                         $badgeColor = match(true) {
-                                                            $event->event_type === 'view' => 'bg-label-info',
-                                                            $event->event_type === 'play' => 'bg-label-success',
-                                                            $event->event_type === 'pause' => 'bg-label-warning',
-                                                            $event->event_type === 'fullscreen_enter' => 'bg-label-primary',
-                                                            $event->event_type === 'fullscreen_exit' => 'bg-label-secondary',
-                                                            $event->event_type === 'qualitychange' => 'bg-label-info',
-                                                            $event->event_type === 'ratechange' => 'bg-label-dark',
+                                                            in_array($event->event_type, ['view', 'play', 'pause']) => 'bg-label-success',
+                                                            in_array($event->event_type, ['fullscreen_enter', 'fullscreen_exit']) => 'bg-label-primary',
+                                                            in_array($event->event_type, ['qualitychange', 'ratechange']) => 'bg-label-info',
                                                             str_starts_with($event->event_type, 'security_') => 'bg-label-danger',
-                                                            default => 'bg-label-primary',
+                                                            default => 'bg-label-secondary',
                                                         };
                                                         $eventName = trans('admin/resources.events.' . $event->event_type, [], 'en');
                                                         if ($eventName === 'admin/resources.events.' . $event->event_type) {
