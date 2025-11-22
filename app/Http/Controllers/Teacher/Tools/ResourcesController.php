@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\Resource;
 use App\Models\ResourceView;
 use Illuminate\Http\Request;
+use App\Models\ResourceVideoEvent;
 use App\Services\PlanLimitService;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;

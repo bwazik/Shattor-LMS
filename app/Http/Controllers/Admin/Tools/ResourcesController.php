@@ -9,6 +9,7 @@ use App\Models\Teacher;
 use App\Models\Resource;
 use App\Models\ResourceView;
 use Illuminate\Http\Request;
+use App\Models\ResourceVideoEvent;
 use App\Traits\ValidatesExistence;
 use App\Http\Controllers\Controller;
 use App\Services\Admin\FileUploadService;
