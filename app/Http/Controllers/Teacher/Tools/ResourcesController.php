@@ -322,6 +322,10 @@ class ResourcesController extends Controller
                     ->whereColumn('student_id', 'students.id')
                     ->where('resource_id', $resource->id)
                     ->limit(1),
+                'security_events_count' => ResourceVideoEvent::selectRaw('COUNT(*)')
+                    ->whereColumn('student_id', 'students.id')
+                    ->where('resource_id', $resource->id)
+                    ->where('event_type', 'like', 'security_%'),
             ]);
 
         if ($request->ajax()) {
@@ -331,9 +335,10 @@ class ResourcesController extends Controller
                 ->addColumn('duration', fn($row) => gmdate("H:i:s", $row->duration_watched))
                 ->addColumn('percentage', fn($row) => $row->percent_watched . '%')
                 ->addColumn('last_watched', fn($row) => $row->last_watched_at ? Carbon::parse($row->last_watched_at)->diffForHumans() : 'N/A')
+                ->addColumn('security_events', fn($row) => '<span class="badge bg-label-' . ($row->security_events_count > 0 ? 'danger' : 'success') . '">' . $row->security_events_count . '</span>')
                 ->addColumn('link', fn($row) => formatSpanUrl(route('teacher.resources.review', ['uuid' => $uuid, 'studentUuid' => $row->uuid]), trans('main.details'), 'info', false))
                 ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'phone'))
-                ->rawColumns(['details', 'link'])
+                ->rawColumns(['details', 'security_events', 'link'])
                 ->make(true);
         }
     }

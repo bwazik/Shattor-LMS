@@ -51,6 +51,7 @@ return [
     'detectionMessage' => 'Suspicious activity detected! This action is not allowed.',
     'detectionButtonText' => 'I will not do it again',
     'securityErrorRate' => 'Invalid playback rate detected!',
+    'securityEvents' => 'Security Events',
 
     # Event Types
     'events' => [

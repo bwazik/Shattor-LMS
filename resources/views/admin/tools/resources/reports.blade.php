@@ -154,6 +154,7 @@
                 <th>{{ trans('main.duration') }}</th>
                 <th>{{ trans('main.percentage') }}</th>
                 <th>{{ trans('admin/resources.lastWatched') }}</th>
+                <th>{{ trans('admin/resources.securityEvents') }}</th>
                 <th>{{ trans('main.link') }}</th>
             </x-datatable>
         </div>
@@ -270,6 +271,12 @@
                 {
                     data: 'last_watched',
                     name: 'last_watched',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'security_events',
+                    name: 'security_events',
                     orderable: false,
                     searchable: false
                 },

@@ -51,6 +51,7 @@ return [
     'detectionMessage' => 'تم اكتشاف نشاط مشبوه! الإجراء دا مش مسموح به.',
     'detectionButtonText' => 'مش هكررها',
     'securityErrorRate' => 'تم اكتشاف معدل تشغيل غير صالح!',
+    'securityEvents' => 'الأحداث الأمنية',
 
     # Event Types
     'events' => [
