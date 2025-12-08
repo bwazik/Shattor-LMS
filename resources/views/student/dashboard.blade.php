@@ -7,7 +7,7 @@
 @section('title', pageTitle('layouts/sidebar.dashboard'))
 
 @section('content')
-    <div class="row g-6">
+    <div class="row mb-12 g-6">
         <div class="col-md-12 col-lg-12">
             <div class="card">
                 <div class="d-flex align-items-end row">
@@ -41,8 +41,9 @@
                 <div class="row g-0">
                     <div class="col-md-4">
                         <img class="card-img card-img-left"
+                            height="100" width="100"
                             src="https://yt3.googleusercontent.com/UzsuQ96fmzYdKm5ApDh7NLrWJ_z7tH8ohsMlZLolDyBzdE9LKG_iSQVzGxuZluCIH6Sg5oiSGQ=s160-c-k-c0x00ffffff-no-rj"
-                            alt="Card image">
+                            alt="youtube logo">
                     </div>
                     <div class="col-md-8">
                         <div class="card-body">

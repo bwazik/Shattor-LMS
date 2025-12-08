@@ -31,10 +31,10 @@ if (config('app.env') === 'production') {
         ->everyThirtyMinutes()
         ->timezone('Africa/Cairo');
 
-    Schedule::command('attendance:send-absence-notifications')
-        ->dailyAt('21:00')
-        ->timezone('Africa/Cairo')
-        ->when(function () {
-            return now('Africa/Cairo')->dayOfWeek !== 5;
-        });
+    // Schedule::command('attendance:send-absence-notifications')
+    //     ->dailyAt('21:00')
+    //     ->timezone('Africa/Cairo')
+    //     ->when(function () {
+    //         return now('Africa/Cairo')->dayOfWeek !== 5;
+    //     });
 }
