@@ -39,15 +39,15 @@
         <div class="col-md-12 col-lg-12">
             <div class="card">
                 <div class="row g-0">
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <img class="card-img card-img-left"
-                            height="100" width="100"
+                            style="height: 100%;"
                             src="https://yt3.googleusercontent.com/UzsuQ96fmzYdKm5ApDh7NLrWJ_z7tH8ohsMlZLolDyBzdE9LKG_iSQVzGxuZluCIH6Sg5oiSGQ=s160-c-k-c0x00ffffff-no-rj"
                             alt="youtube logo">
                     </div>
-                    <div class="col-md-8">
+                    <div class="col-md-10">
                         <div class="card-body">
-                            <h5 class="card-title">فيزيكس ببساطة</h5>
+                            <h5 class="card-title">قناة فيزيكس ببساطة</h5>
                             <p class="card-text">لو عايز تفهم الفيزياء بطريقة بسيطة وسهلة، تابع فيديوهاتها على اليوتيوب، أو
                                 احجز معاها حصص برايفت أونلاين / أوفلاين.</p>
                             <a href="https://www.youtube.com/@Physics.in.few.minutes"
