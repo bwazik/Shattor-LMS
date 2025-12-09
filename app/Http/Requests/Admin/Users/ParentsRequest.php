@@ -42,6 +42,11 @@ class ParentsRequest extends FormRequest
     public function messages()
     {
         return [
+            'username.unique' => 'اسم المستخدم ده مستخدم قبل كده، جرّب تختار اسم تاني.',
+            'email.unique' => 'الإيميل ده مسجّل بالفعل، من فضلك استخدم إيميل مختلف.',
+            'phone.unique' => 'الرقم ده موجود قبل كده، لازم تدخل رقم جديد.',
+            'phone.numeric' => 'من فضلك دخل أرقام بس في خانة التليفون.',
+            'phone.regex' => 'رقم التليفون لازم يبدأ بـ 01 ويتكون من 11 رقم.',
         ];
     }
 }
