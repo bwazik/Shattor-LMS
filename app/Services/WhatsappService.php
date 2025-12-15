@@ -60,7 +60,7 @@ class WhatsappService
             ]);
 
             // Calculate delay with proper sequencing
-            $delayGap = $isUrgent ? random_int(30, 60) : random_int(150, 300);
+            $delayGap = $isUrgent ? random_int(15, 30) : random_int(30, 60);
 
             // SEPARATE queues for urgent vs non-urgent
             $lastScheduledKey = $isUrgent
