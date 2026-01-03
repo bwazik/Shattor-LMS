@@ -170,6 +170,7 @@
                 <th>{{ trans('main.student') }}</th>
                 <th style="width: 80px;">{{ trans('main.type') }}</th>
                 <th>{{ trans('main.description') }}</th>
+                <th style="width: 100px;">{{ trans('admin/attendance.manualScan') }}</th>
                 <th>{{ trans('main.actions') }}</th>
             </x-datatable>
         </div>
@@ -188,7 +189,7 @@
 @section('page-js')
     @include('teacher.activities.attendance.js')
     <script>
-        initializeDataTable('#datatable', "{{ route('teacher.lessons.attendances', $lesson->uuid) }}", [2, 5],
+        initializeDataTable('#datatable', "{{ route('teacher.lessons.attendances', $lesson->uuid) }}", [2, 6],
             [{
                     data: "",
                     orderable: false,
@@ -216,6 +217,7 @@
                     orderable: false,
                     searchable: false
                 },
+                { data: 'scan_button', name: 'scan_button', orderable: false, searchable: false },
                 {
                     data: 'actions',
                     name: 'actions',
@@ -228,5 +230,85 @@
         initializeSelect2('students-form', 'grade_id', '{{ $lesson->group->grade_id }}', true);
         initializeSelect2('students-form', 'group_id', '{{ $lesson->group->uuid }}', true);
         initializeSelect2('students-form', 'lesson_id', '{{ $lesson->uuid }}', true);
+
+        $(document).on('click', '.manual-scan-btn', function () {
+            const button = $(this);
+            const studentUuid = button.data('student-uuid');
+            const studentName = button.data('student-name');
+
+            if (!studentUuid) {
+                toastr.error('{{ trans("admin/attendance.invalidStudent") }}');
+                return;
+            }
+
+            // Get values from form (same as QR scanner)
+            const gradeId = $('#grade_id').val();
+            const groupId = $('#group_id').val();
+            const lessonId = $('#lesson_id').val();
+
+            if (!gradeId || !groupId || !lessonId) {
+                toastr.error('Please select a grade, group, and lesson');
+                return;
+            }
+
+            // Prevent double-click
+            if (button.prop('disabled')) return;
+            button.prop('disabled', true)
+                .html('<span class="spinner-border spinner-border-sm"></span>');
+
+            const successSound = new Audio('{{ asset('assets/sounds/attendance-success-sound.mp3') }}');
+            const errorSound = new Audio('{{ asset('assets/sounds/attendance-error-sound.mp3') }}');
+
+            $.ajax({
+                url: '{{ route("teacher.attendance.scan") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    uuid: studentUuid,
+                    grade_id: gradeId,
+                    group_id: groupId,
+                    lesson_id: lessonId
+                },
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(response.success);
+                        successSound.play().catch(() => {});
+                        
+                        // Update status buttons to Present (status 1)
+                        const statusContainer = button.closest('tr').find('.status-container');
+                        statusContainer.find('.status-btn').removeClass('active')
+                            .css({ color: '', opacity: '0.5' });
+                        statusContainer.find('.status-btn[data-status="1"]').addClass('active')
+                            .css({ color: 'white', opacity: '1' });
+
+                        // Optionally disable button after successful scan
+                        button.prop('disabled', true)
+                            .removeClass('btn-outline-primary')
+                            .addClass('btn-success')
+                            .html('<i class="ri-check-line"></i>');
+                    } else {
+                        toastr.error(response.error || 'Unknown error');
+                        errorSound.play().catch(() => {});
+                    }
+                },
+                error: function (xhr) {
+                    let message = 'An error occurred';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        message = xhr.responseJSON.error;
+                    } else if (xhr.status === 429) {
+                        message = 'Too many requests';
+                    }
+                    toastr.error(message);
+                    errorSound.play().catch(() => {});
+                },
+                complete: function () {
+                    // Only re-enable if not already marked as success
+                    if (!button.hasClass('btn-success')) {
+                        button.prop('disabled', false)
+                            .html('<i class="ri-qr-scan-2-line"></i>');
+                    }
+                }
+            });
+        });
     </script>
 @endsection

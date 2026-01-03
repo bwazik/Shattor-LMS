@@ -8,6 +8,49 @@
 
 @section('content')
     @include('admin.finance.invoices.statistics')
+    <form action="{{ route('teacher.invoices.index') }}" method="GET" class="card-header mb-4">
+        <div class="row align-items-end g-3 mb-3">
+            <div class="col-md-6">
+                <label class="form-label">{{ trans('main.month') }}</label>
+                <select name="month" class="form-select">
+                    <option value="">{{ trans('main.all_months') }}</option>
+                    @php
+                        $arabicMonths = [
+                            1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل',
+                            5 => 'مايو', 6 => 'يونيو', 7 => 'يوليو', 8 => 'أغسطس',
+                            9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'
+                        ];
+                    @endphp
+                    @foreach($arabicMonths as $num => $name)
+                        <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>
+                            {{ $num }} - {{ $name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">{{ trans('main.status') }}</label>
+                <select name="status" class="form-select">
+                    <option value="">{{ trans('main.all_status') }}</option>
+                    <option value="2" {{ request('status') == '2' ? 'selected' : '' }}>{{ trans('main.paid') }}</option>
+                    <option value="3" {{ request('status') == '3' ? 'selected' : '' }}>{{ trans('main.unpaid') }}</option>
+                </select>
+            </div>
+        </div>
+        <div class="row align-items-end g-3">
+            <div class="col-12 mb-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="ri-filter-3-line"></i> {{ trans('main.filter') }}
+                </button>
+            </div>   
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="ri-filter-3-line"></i> {{ trans('main.showAllInvoices') }} (مصاريف الشهر الي احنا فيه هي بس الي بتظهر , لو عايز تظهر مصاريف الشهور كلها اضغط هنا)
+                </button>
+            </div>   
+        </div> 
+    </form>
     <!-- DataTable with Buttons -->
     <x-datatable datatableTitle="{{ trans('main.datatableTitle', ['item' => trans('admin/invoices.invoices')]) }}"
         dataToggle="offcanvas" hrefButton="{{ trans('main.addItem', ['item' => trans('admin/invoices.invoice')]) }}"
@@ -109,8 +152,16 @@
     </script>
 
     <script>
-        initializeDataTable('#datatable', "{{ route('teacher.invoices.index') }}", [2, 3, 4, 5, 6, 7],
-            [{
+        const queryParams = window.location.search;
+    
+        const dataUrl = "{{ route('teacher.invoices.index') }}" + (queryParams ? queryParams : "");
+
+        initializeDataTable(
+            '#datatable', 
+            dataUrl,
+            [2, 3, 4, 5, 6, 7], 
+            [
+                {
                     data: "",
                     orderable: false,
                     searchable: false
@@ -153,7 +204,7 @@
                     orderable: false,
                     searchable: false
                 }
-            ],
+            ]
         );
 
         // Setup Payment modal

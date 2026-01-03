@@ -157,7 +157,7 @@ class LessonsController extends Controller
         }
 
         $originalAttendancesQuery = Student::query()
-            ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
+            ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('student_group', 'students.id', '=', 'student_group.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -176,7 +176,7 @@ class LessonsController extends Controller
             });
 
         $compensatoryAttendancesQuery = Student::query()
-            ->select('students.id', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
+            ->select('students.id', 'students.uuid', 'students.name', 'students.phone', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('compensatories', 'students.id', '=', 'compensatories.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -210,12 +210,33 @@ class LessonsController extends Controller
                 ->editColumn('name', fn($row) => $row->name)
                 ->addColumn('type', fn($row) => $this->attendanceService->getStudentTypeLabel($row->is_compensatory))
                 ->addColumn('note', fn($row) => $this->attendanceService->generateNoteCell($row))
+                ->addColumn('scan_button', fn($row) => $this->generateManualScanCell($row))
                 ->addColumn('actions', fn($row) => $this->attendanceService->generateActionsCell($row))
-                ->rawColumns(['selectbox', 'type', 'note', 'actions'])
+                ->rawColumns(['selectbox', 'type', 'note', 'scan_button', 'actions'])
                 ->make(true);
         }
 
         return view('teacher.tools.lessons.attendances', compact('lesson'));
+    }
+
+    public function generateManualScanCell($student): string
+    {
+        $uuid = $student->uuid ?? '';
+        if (!$uuid) {
+            return '<span class="text-muted">—</span>';
+        }
+
+        return sprintf(
+            '<button type="button" class="btn btn-outline-success btn-sm manual-scan-btn" 
+                    data-student-uuid="%s" 
+                    data-student-name="%s"
+                    title="%s">
+                <i class="ri-qr-scan-2-line"></i>
+            </button>',
+            $uuid,
+            htmlspecialchars($student->name, ENT_QUOTES),
+            trans('admin/attendance.manualScan')
+        );
     }
 
     public function reports(Request $request, $uuid)

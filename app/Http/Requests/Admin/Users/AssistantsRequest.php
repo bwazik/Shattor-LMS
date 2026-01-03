@@ -23,7 +23,7 @@ class AssistantsRequest extends FormRequest
             'password' => $isUpdate ? 'nullable|min:8|max:50' : 'required|min:8|max:50',
             'name_ar' => 'required|min:3|max:100',
             'name_en' => 'required|min:3|max:100',
-            'phone' => ['required', 'numeric', 'regex:/^(01)[0-9]{9}$/', "unique:assistants,phone,{$this->id},{$assistantKey}"],
+            'phone' => ['required', 'numeric', 'regex:/^(010|011|012|015)\d{8}$/', "unique:assistants,phone,{$this->id},{$assistantKey}"],
             'email' => ['nullable','email','max:100',new UniqueFieldAcrossModels('email', $this->id)],
             'is_active' => 'nullable|boolean',
         ];

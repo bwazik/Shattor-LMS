@@ -35,7 +35,7 @@ class CleanupInactiveStudents extends Command
         // ============================================
         // EXCLUDE SPECIFIC GRADES (Comment/Uncomment as needed)
         // ============================================
-        $excludedGrades = [5]; // Add grade IDs to exclude
+        $excludedGrades = []; // Add grade IDs to exclude
         // $excludedGrades = []; // Uncomment this line to include all grades
         // ============================================
 

@@ -30,6 +30,8 @@ class InvoicesController extends Controller
 
     public function index(Request $request)
     {
+        $selectedMonth = $request->get('month', now()->format('m'));
+
         $invoicesQuery = Invoice::query()
             ->fee()
             ->with(['student', 'fee'])
@@ -38,6 +40,26 @@ class InvoicesController extends Controller
             ->select('id', 'uuid', 'type', 'student_id', 'student_fee_id', 'fee_id', 'amount', 'date', 'due_date', 'status')
             ->whereHas('student', fn($query) => $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId)))
             ->whereHas('fee', fn($query) => $query->where('teacher_id', $this->teacherId));
+
+        if ($selectedMonth) {
+            $month = sprintf('%02d', $selectedMonth);
+                
+            $invoicesQuery->whereHas('fee', function($q) use ($month) {
+                $q->whereMonth('created_at', $month)
+                ->where(function ($q) {
+                    $q->whereYear('created_at', now()->year)
+                        ->orWhereYear('created_at', now()->subYear()->year);
+                    });            
+                });        
+            }
+
+        if ($request->filled('status')) {
+            if ($request->status == '3') { 
+                $invoicesQuery->whereIn('status', [1, 3]);
+            } else {
+                $invoicesQuery->where('status', $request->status);
+            }
+        }
 
         $pageStatistics = [
             'clients' => Student::whereHas('teachers', fn($q) => $q->where('teacher_id', $this->teacherId))->distinct('id')->count('id'),

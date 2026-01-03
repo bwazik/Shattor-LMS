@@ -80,6 +80,19 @@ class StudentsController extends Controller
         return view('teacher.users.students.index', compact('pageStatistics', 'grades', 'parents', 'groups'));
     }
 
+    public function archived(Request $request)
+    {
+        $studentsQuery = Student::query()->onlyTrashed()
+            ->select('id', 'uuid', 'username', 'name', 'phone', 'email', 'grade_id', 'profile_pic')
+            ->whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId));
+
+        if ($request->ajax()) {
+            return $this->studentService->getArchivedStudentsForDatatable($studentsQuery);
+        }
+
+        return view('teacher.users.students.archive.index');
+    }
+
     public function insert(StudentsRequest $request)
     {
         if (!$this->planLimitService->canPerformAction('students')) {
@@ -112,6 +125,16 @@ class StudentsController extends Controller
         return $this->conrtollerJsonResponse($result, "students:teacher:{$this->teacherId}:stats");
     }
 
+    public function restore(Request $request)
+    {
+        $id = Student::withTrashed()->uuid($request->id)->value('id');
+        $request->merge(['id' => $id]);
+
+        $result = $this->studentService->restoreStudent($request->id);
+
+        return $this->conrtollerJsonResponse($result, "students:teacher:{$this->teacherId}:stats");
+    }
+
     public function deleteSelected(Request $request)
     {
         $ids = Student::whereIn('uuid', $request->ids ?? [])->pluck('id')->toArray();
@@ -120,6 +143,16 @@ class StudentsController extends Controller
         $this->validateExistence($request, 'students');
 
         $result = $this->studentService->deleteSelectedStudents($request->ids);
+
+        return $this->conrtollerJsonResponse($result, "students:teacher:{$this->teacherId}:stats");
+    }
+
+    public function restoreSelected(Request $request)
+    {
+        $ids = Student::withTrashed()->whereIn('uuid', $request->ids ?? [])->pluck('id')->toArray();
+        !empty($ids) ? $request->merge(['ids' => $ids]) : null;
+
+        $result = $this->studentService->restoreSelectedStudents($request->ids);
 
         return $this->conrtollerJsonResponse($result, "students:teacher:{$this->teacherId}:stats");
     }

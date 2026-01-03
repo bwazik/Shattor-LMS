@@ -3,6 +3,7 @@
 namespace App\Services\Teacher\Finance;
 use App\Models\Wallet;
 use App\Models\Invoice;
+use App\Models\Fee;
 use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Transaction;
@@ -209,6 +210,29 @@ class InvoiceService
 
     public function payInvoice($id, array $request)
     {
+        $invoice = Invoice::with(['fee'])
+            ->whereIn('status', [1, 3])
+            ->findOrFail($id);
+
+        $previousInvoicesCheck = $this->hasUnpaidPreviousMonthlyInvoice($invoice);
+
+        if ($previousInvoicesCheck !== false) {
+            if ($previousInvoicesCheck['type'] === 'single') {
+                return $this->errorResponse(
+                    trans('toasts.mustPayPreviousMonthFirst', [
+                        'fee' => $previousInvoicesCheck['fee_name'],
+                    ])
+                );
+            }
+
+            return $this->errorResponse(
+                trans('toasts.mustPayMultiplePreviousMonths', [
+                    'count' => $previousInvoicesCheck['count'],
+                    'first_fee' => $previousInvoicesCheck['first_fee_name'],
+                ])
+            );
+        }
+
         return $this->executeTransaction(function () use ($id, $request)
         {
             $invoice = Invoice::with([
@@ -403,7 +427,55 @@ class InvoiceService
             return $this->successResponse(trans('main.canceledE', ['item' => trans('admin/invoices.invoice')]));
         });
     }
+    
+    private function hasUnpaidPreviousMonthlyInvoice(Invoice $invoice): array|bool
+    {
+        $oldInvoices = $this->getUnpaidPreviousMonthlyInvoices($invoice);
 
+        if ($oldInvoices->isEmpty()) {
+            return false;
+        }
+
+        // لو أكتر من شهر
+        if ($oldInvoices->count() > 1) {
+            return [
+                'type' => 'multiple',
+                'count' => $oldInvoices->count(),
+                'first_fee_name' => $oldInvoices->first()->fee
+                    ? $oldInvoices->first()->fee->name
+                    : trans('main.unknown'),
+            ];
+        }
+
+        // شهر واحد
+        $invoice = $oldInvoices->first();
+
+        return [
+            'type' => 'single',
+            'fee_name' => $invoice->fee
+                ? $invoice->fee->name
+                : trans('main.unknown'),
+        ];
+    }
+
+    private function getUnpaidPreviousMonthlyInvoices(Invoice $invoice)
+    {
+        return Invoice::query()
+            ->where('student_id', $invoice->student_id)
+            ->where('type', 2) // fee invoice
+            ->whereIn('status', [1, 3]) // pending, overdue
+            ->whereHas('fee', function ($q) use ($invoice) {
+                $q->where('teacher_id', $invoice->fee->teacher_id)
+                ->where('created_at', '<', $invoice->fee->created_at);
+            })
+            ->with('fee')
+            ->orderBy(
+                Fee::select('created_at')
+                    ->whereColumn('fees.id', 'invoices.fee_id')
+            )
+            ->get();
+    }
+    
     public function checkDependenciesForSingleDeletion($invoice)
     {
         return $this->checkForSingleDependencies($invoice, $this->relationships, $this->transModelKey);

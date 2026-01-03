@@ -196,7 +196,13 @@ return [
     'scientific' => 'Scientific',
     'literary' => 'Literary',
     'applies_to_all_specializations' => 'Applies to all specializations',
-
+    'month' => 'Month',
+    'all_months' => 'All Months',
+    'all_status' => 'All Status',
+    'filter' => 'Filter',
+    'unpaid' => 'Unpaid',
+    'showAllInvoices' => 'Show All Invoices',
+    
     # Modals
     'items' => 'Items Count',
     'editItem' => 'Edit :item',

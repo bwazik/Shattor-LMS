@@ -100,4 +100,6 @@ return [
     'invalidCurrentSecurityCode' => 'Current Security Code is invalid. Please try again.',
     'securityCodeUpdated' => 'Security Code is updated successfully',
     'accessRevoked' => 'The resource has been locked due to multiple violations. Follow the rules and do not attempt to cheat next time.',
+    'mustPayPreviousMonthFirst' => 'يجب سداد :fee أولاً قبل سداد هذا الشهر',
+    'mustPayMultiplePreviousMonths' => 'يوجد :count شهور غير مسددة، يجب البدء بسداد :first_fee أولاً',
 ];

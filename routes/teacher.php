@@ -205,11 +205,14 @@ Route::group(
                 Route::prefix('students')->name('students.')->group(function () {
                     Route::controller(StudentsController::class)->group(function () {
                         Route::get('/', 'index')->name('index');
+                        Route::get('/archived', 'archived')->name('archived');
                         Route::middleware('throttle:10,1')->group(function () {
                             Route::post('insert', 'insert')->name('insert');
                             Route::post('update', 'update')->name('update');
                             Route::post('delete', 'delete')->name('delete');
+                            Route::post('restore', 'restore')->name('restore');
                             Route::post('delete-selected', 'deleteSelected')->name('deleteSelected');
+                            Route::post('restore-selected', 'restoreSelected')->name('restoreSelected');
                         });
                     });
                     Route::controller(StudentsProfileController::class)->group(function () {

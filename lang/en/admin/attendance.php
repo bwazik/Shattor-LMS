@@ -32,4 +32,5 @@ return [
     'noFeeInvoice' => 'No invoice has been issued yet for :fees for :name.',
     'feesPaid' => ':name has already paid the :fees.',
     'feesUnpaid' => ':name still has pending :fees.',
+    'manualScan' => 'Manual Scan',
 ];

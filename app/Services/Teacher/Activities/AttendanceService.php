@@ -37,7 +37,7 @@ class AttendanceService
             return $validationResult;
 
         $originalStudentsQuery = Student::query()
-            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
+            ->select('students.id', 'students.uuid', 'students.name', 'attendances.status', 'attendances.note', DB::raw('0 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('student_group', 'students.id', '=', 'student_group.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -53,7 +53,7 @@ class AttendanceService
             ->whereRaw('student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= ?', [$lesson->date]);
 
         $compensatoryStudentsQuery = Student::query()
-            ->select('students.id', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
+            ->select('students.id', 'students.uuid', 'students.name', 'attendances.status', 'attendances.note', DB::raw('1 as is_compensatory'))
             ->join('student_teacher', 'students.id', '=', 'student_teacher.student_id')
             ->join('compensatories', 'students.id', '=', 'compensatories.student_id')
             ->leftJoin('attendances', function ($join) use ($lesson) {
@@ -74,8 +74,9 @@ class AttendanceService
             ->editColumn('name', fn($row) => $row->name)
             ->addColumn('type', fn($row) => $this->getStudentTypeLabel($row->is_compensatory))
             ->addColumn('note', fn($row) => $this->generateNoteCell($row))
+            ->addColumn('scan_button', fn($row) => $this->generateManualScanCell($row))
             ->addColumn('actions', fn($row) => $this->generateActionsCell($row))
-            ->rawColumns(['selectbox', 'type', 'note', 'actions'])
+            ->rawColumns(['selectbox', 'type', 'note', 'scan_button', 'actions'])
             ->make(true);
     }
 
@@ -127,6 +128,26 @@ class AttendanceService
             trans('main.description'),
             $student->id,
             $student->note ?? ''
+        );
+    }
+
+    public function generateManualScanCell($student): string
+    {
+        $uuid = $student->uuid ?? '';
+        if (!$uuid) {
+            return '<span class="text-muted">—</span>';
+        }
+
+        return sprintf(
+            '<button type="button" class="btn btn-outline-success btn-sm manual-scan-btn" 
+                    data-student-uuid="%s" 
+                    data-student-name="%s"
+                    title="%s">
+                <i class="ri-qr-scan-2-line"></i>
+            </button>',
+            $uuid,
+            htmlspecialchars($student->name, ENT_QUOTES),
+            trans('admin/attendance.manualScan')
         );
     }
 

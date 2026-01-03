@@ -32,4 +32,5 @@ return [
     'noFeeInvoice' => 'لسه مفيش فاتورة طلعت لـ :fees لـ :name.',
     'feesPaid' => ':name دفع :fees.',
     'feesUnpaid' => ':name لسه مدفعش :fees.',
+    'manualScan' => 'سكانر يدوي',
 ];

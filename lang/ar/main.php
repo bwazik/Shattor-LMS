@@ -198,6 +198,12 @@ return [
     'scientific' => 'علمي',
     'literary' => 'أدبي',
     'applies_to_all_specializations' => 'تطبيق نفس المصاريف علي علمي وأدبي',
+    'month' => 'الشهر',
+    'all_months' => 'كل الشهور',
+    'all_status' => 'كل الحالات',
+    'filter' => 'تصفية',
+    'unpaid' => 'غير مدفوعة',
+    'showAllInvoices' => 'عرض كل الفواتير',
 
     # Modals
     'items' => 'عدد العناصر',

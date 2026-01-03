@@ -101,5 +101,7 @@ return [
     'invalidCurrentSecurityCode' => 'الكود السري الحالي مش صح. حاول مرة تانية.',
     'securityCodeUpdated' => 'تم تحديث الكود السري بنجاح.',
     'accessRevoked' => 'الفيديو اتقفل، مش هعرف اساعدك. إلتزم بالقواعد ومتحاولش تغش المرة الجاية.',
+    'mustPayPreviousMonthFirst' => 'يجب سداد :fee أولاً قبل سداد هذا الشهر',
+    'mustPayMultiplePreviousMonths' => 'يوجد :count شهور غير مسددة، يجب البدء بسداد :first_fee أولاً',
 ];
 

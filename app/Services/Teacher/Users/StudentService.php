@@ -33,7 +33,7 @@ class StudentService
             ->editColumn('grade_id', fn($row) => formatRelation($row->grade_id, $row->grade, 'name'))
             ->editColumn('parent_id', fn($row) => formatRelation($row->parent_id, $row->parent, 'name'))
             ->editColumn('is_active', fn($row) => formatActiveStatus($row->is_active))
-            ->addColumn('actions', fn($row) => $this->generateActionButtons($row))
+            ->addColumn('actions', fn($row) => $this->generateUnarchivedActionButtons($row))
             ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'name'))
             ->filterColumn('grade_id', fn($query, $keyword) => filterByRelation($query, 'grade', 'name', $keyword))
             ->filterColumn('parent_id', fn($query, $keyword) => filterByRelation($query, 'parent', 'name', $keyword))
@@ -42,7 +42,7 @@ class StudentService
             ->make(true);
     }
 
-    private function generateActionButtons($row)
+    private function generateUnarchivedActionButtons($row)
     {
         $groupIds = $row->groups->pluck('uuid')->toArray();
         $groups = implode(',', $groupIds);
@@ -88,6 +88,40 @@ class StudentService
                 'data-specialization="' . $row->specialization . '">' .
                 '<i class="ri-edit-box-line ri-20px"></i>' .
             '</button>';
+    }
+
+    public function getArchivedStudentsForDatatable($studentsQuery)
+    {
+        return datatables()->eloquent($studentsQuery)
+            ->addIndexColumn()
+            ->addColumn('selectbox', fn($row) => generateSelectbox($row->uuid))
+            ->addColumn('details', fn($row) => generateDetailsColumn($row->name, $row->profile_pic, 'storage/profiles/students', $row->email, 'teacher.students.profile.index', $row->uuid))
+            ->addColumn('actions', fn($row) => $this->generateArchivedActionButtons($row))
+            ->filterColumn('details', fn($query, $keyword) => filterDetailsColumn($query, $keyword, 'name'))
+            ->rawColumns(['selectbox', 'details', 'actions'])
+            ->make(true);
+    }
+
+    private function generateArchivedActionButtons($row)
+    {
+        return
+            '<div class="d-inline-block">' .
+                '<a href="javascript:;" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown">' .
+                    '<i class="ri-more-2-line"></i>' .
+                '</a>' .
+                '<ul class="dropdown-menu dropdown-menu-end m-0">' .
+                    '<li>' .
+                        '<a href="javascript:;" class="dropdown-item" ' .
+                            'id="restore-button" ' .
+                            'data-id="' . $row->uuid . '" ' .
+                            'data-name_ar="' . $row->getTranslation('name', 'ar') . '" ' .
+                            'data-name_en="' . $row->getTranslation('name', 'en') . '" ' .
+                            'data-bs-target="#restore-modal" data-bs-toggle="modal" data-bs-dismiss="modal">' .
+                            trans('main.restore') .
+                        '</a>' .
+                    '</li>' .
+                '</ul>' .
+            '</div>';
     }
 
     public function insertStudent(array $request)
@@ -191,6 +225,17 @@ class StudentService
         }, trans('toasts.ownershipError'));
     }
 
+    public function restoreStudent($id): array
+    {
+        return $this->executeTransaction(function () use ($id)
+        {
+            Student::whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+                ->onlyTrashed()->findOrFail($id)->restore();
+
+            return $this->successResponse(trans('main.restored', ['item' => trans('admin/students.student')]));
+        });
+    }
+
     public function deleteSelectedStudents($ids)
     {
         if ($validationResult = $this->validateSelectedItems((array) $ids))
@@ -203,5 +248,19 @@ class StudentService
 
             return $this->successResponse(trans('main.deletedSelected', ['item' => trans('admin/students.student')]));
         }, trans('toasts.ownershipError'));
+    }
+
+    public function restoreSelectedStudents($ids)
+    {
+        if ($validationResult = $this->validateSelectedItems((array) $ids))
+            return $validationResult;
+
+        return $this->executeTransaction(function () use ($ids)
+        {
+            Student::whereHas('teachers', fn($query) => $query->where('teacher_id', $this->teacherId))
+                ->onlyTrashed()->whereIn('id', $ids)->restore();
+
+            return $this->successResponse(trans('main.restoredSelected', ['item' => trans('admin/students.student')]));
+        });
     }
 }

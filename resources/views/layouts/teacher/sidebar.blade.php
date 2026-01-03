@@ -81,11 +81,24 @@
                 <div>{{ trans('layouts/sidebar.assistants') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute('teacher.students.index') ? 'active' : '' }}">
-            <a href="{{ route('teacher.students.index') }}" class="menu-link">
+        <li
+            class="menu-item {{ isActiveRoute(['teacher.students.index', 'teacher.students.archived']) ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle waves-effect">
                 <i class="menu-icon tf-icons ri-graduation-cap-line"></i>
                 <div>{{ trans('layouts/sidebar.students') }}</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ isActiveRoute('teacher.students.index') ? 'active' : '' }}">
+                    <a href="{{ route('teacher.students.index') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.studentsManagment') }}</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ isActiveRoute('teacher.students.archived') ? 'active' : '' }}">
+                    <a href="{{ route('teacher.students.archived') }}" class="menu-link">
+                        <div>{{ trans('layouts/sidebar.archived') }}</div>
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="menu-item {{ isActiveRoute('teacher.parents.index') ? 'active' : '' }}">
             <a href="{{ route('teacher.parents.index') }}" class="menu-link">
