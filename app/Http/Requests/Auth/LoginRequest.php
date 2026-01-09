@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use App\Services\WhatsappService;
@@ -29,6 +30,13 @@ class LoginRequest extends FormRequest
 
     public function rules(): array
     {
+        if ($this->route('guard') === 'parent') {
+            return [
+                'student_phone' => ['required', 'numeric', 'regex:/^(010|011|012|015)\d{8}$/'],
+                'parent_phone' => ['required', 'numeric', 'regex:/^(010|011|012|015)\d{8}$/'],
+            ];
+        }
+
         return [
             'username' => ['required', 'string', 'max:50'],
             'password' => ['required', 'string'],
@@ -39,27 +47,56 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (!Auth::guard($guard)->attempt($this->only('username', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        if ($guard === 'parent') {
+            $student = Student::where('phone', $this->input('student_phone'))->first();
 
-            Log::warning('Failed login attempt', [
-                'username' => $this->input('username'),
-                'guard' => $guard,
-                'ip' => request()->ip(),
-            ]);
+            if (! $student || ! $student->parent || $student->parent->phone !== $this->input('parent_phone')) {
+                RateLimiter::hit($this->throttleKey());
 
-            Carbon::setLocale('ar');
-            $this->whatsappService->sendMessage('01098617164', 'failed_login_attempt', [
-                'username' => $this->input('username'),
-                'guard' => $guard,
-                'ip' => request()->ip(),
-                'date' => now()->translatedFormat('l j F Y'),
-                'time' => now()->translatedFormat('h:i A'),
-            ], true);
+                Log::warning('Failed parent login attempt', [
+                    'student_phone' => $this->input('student_phone'),
+                    'parent_phone' => $this->input('parent_phone'),
+                    'ip' => request()->ip(),
+                ]);
 
-            throw ValidationException::withMessages([
-                'username' => trans('auth.failed'),
-            ]);
+                Carbon::setLocale('ar');
+                $this->whatsappService->sendMessage('01098617164', 'failed_login_attempt', [
+                    'username' => 'Parent of: ' . $this->input('student_phone'),
+                    'guard' => $guard,
+                    'ip' => request()->ip(),
+                    'date' => now()->translatedFormat('l j F Y'),
+                    'time' => now()->translatedFormat('h:i A'),
+                ], true);
+
+                throw ValidationException::withMessages([
+                    'student_phone' => trans('auth.failed'),
+                ]);
+            }
+
+            Auth::guard($guard)->login($student->parent);
+        } else {
+            if (!Auth::guard($guard)->attempt($this->only('username', 'password'), $this->boolean('remember'))) {
+                RateLimiter::hit($this->throttleKey());
+
+                Log::warning('Failed login attempt', [
+                    'username' => $this->input('username'),
+                    'guard' => $guard,
+                    'ip' => request()->ip(),
+                ]);
+
+                Carbon::setLocale('ar');
+                $this->whatsappService->sendMessage('01098617164', 'failed_login_attempt', [
+                    'username' => $this->input('username'),
+                    'guard' => $guard,
+                    'ip' => request()->ip(),
+                    'date' => now()->translatedFormat('l j F Y'),
+                    'time' => now()->translatedFormat('h:i A'),
+                ], true);
+
+                throw ValidationException::withMessages([
+                    'username' => trans('auth.failed'),
+                ]);
+            }
         }
 
         // Check and manage devices for non-web guards
@@ -258,7 +295,8 @@ class LoginRequest extends FormRequest
 
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('username')) . '|' . $this->ip());
+        $key = $this->has('student_phone') ? $this->input('student_phone') : $this->input('username');
+        return Str::transliterate(Str::lower($key) . '|' . $this->ip());
     }
 
     private function getOrCreateDeviceId(): string

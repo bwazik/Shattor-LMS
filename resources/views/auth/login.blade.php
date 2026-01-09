@@ -36,32 +36,53 @@
     </div>
     <form id="loginForm" class="mb-5" method="POST" action="{{ route('login', $guard) }}">
         @csrf
-        <div class="form-floating form-floating-outline mb-5">
-            <input type="text" class="form-control @error('username') is-invalid @enderror" id="username"
-                name="username" placeholder="{{ trans('layouts/login.placeholders.username') }}" autofocus
-                required />
-            <label for="username">{{ trans('layouts/login.username') }}</label>
-            @error('username')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-        </div>
-        <div class="mb-5">
-            <div class="form-password-toggle">
-                <div class="input-group input-group-merge">
-                    <div class="form-floating form-floating-outline">
-                        <input type="password" id="password" class="form-control @error('password') is-invalid @enderror"
-                            name="password"
-                            placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                            aria-describedby="password" required />
-                        <label for="password">{{ trans('layouts/login.password') }}</label>
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+        @if ($guard === 'parent')
+            <div class="form-floating form-floating-outline mb-5">
+                <input type="text" class="form-control @error('student_phone') is-invalid @enderror" id="student_phone"
+                    name="student_phone" placeholder="رقم هاتف الطالب" autofocus required
+                    value="{{ old('student_phone') }}" />
+                <label for="student_phone">رقم هاتف الطالب</label>
+                @error('student_phone')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="form-floating form-floating-outline mb-5">
+                <input type="text" class="form-control @error('parent_phone') is-invalid @enderror" id="parent_phone"
+                    name="parent_phone" placeholder="رقم هاتف ولي الأمر" required />
+                <label for="parent_phone">رقم هاتف ولي الأمر</label>
+                @error('parent_phone')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        @else
+            <div class="form-floating form-floating-outline mb-5">
+                <input type="text" class="form-control @error('username') is-invalid @enderror" id="username"
+                    name="username" placeholder="{{ trans('layouts/login.placeholders.username') }}" autofocus
+                    required />
+                <label for="username">{{ trans('layouts/login.username') }}</label>
+                @error('username')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="mb-5">
+                <div class="form-password-toggle">
+                    <div class="input-group input-group-merge">
+                        <div class="form-floating form-floating-outline">
+                            <input type="password" id="password" class="form-control @error('password') is-invalid @enderror"
+                                name="password"
+                                placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                                aria-describedby="password" required />
+                            <label for="password">{{ trans('layouts/login.password') }}</label>
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <span class="input-group-text cursor-pointer"><i class="ri-eye-off-line"></i></span>
                     </div>
-                    <span class="input-group-text cursor-pointer"><i class="ri-eye-off-line"></i></span>
                 </div>
             </div>
-        </div>
+        @endif
         <div class="mb-5 d-flex justify-content-between mt-5">
             <div class="form-check mt-2">
                 <input class="form-check-input" type="checkbox" id="remember" name="remember" />
