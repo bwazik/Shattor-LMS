@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Cache;
 
 class HelpCenterController extends Controller
 {
-    protected $studentId;
+    protected $parentId;
 
     public function __construct()
     {
-        $this->studentId = auth()->guard('student')->user()->id;
+        $this->parentId = auth()->guard('parent')->user()->id;
     }
 
     public function index()
@@ -61,7 +61,7 @@ class HelpCenterController extends Controller
 
     protected function incrementViews($articleId)
     {
-        $cacheKey = "article_view_{$articleId}_parent_{$this->studentId}";
+        $cacheKey = "article_view_{$articleId}_parent_{$this->parentId}";
 
         if (!Cache::has($cacheKey)) {
             Article::where('id', $articleId)->increment('views');
