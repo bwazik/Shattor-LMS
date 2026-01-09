@@ -84,11 +84,14 @@
         </div>
     </div>
 
-    <x-datatable id="lessons-datatable" cardClasses="mb-6" datatableTitle="{{ trans('admin/lessons.lessons') }}">
+    <x-datatable id="lessonsDatatable" cardClasses="mb-6" datatableTitle="{{ trans('admin/lessons.lessons') }}">
         <th></th>
         <th>#</th>
-        <th>{{ trans('main.title') }}</th>
-        <th>{{ trans('main.status') }}</th>
+        <th width="30%">{{ trans('main.title') }}</th>
+        @if(isset($isParent) && $isParent)
+            <th>{{ trans('admin/teachers.teacher') }}</th>
+        @endif
+        <th>{{ trans('admin/attendance.status') }}</th>
         <th>{{ trans('admin/compensatories.makeup_lesson') }}</th>
         <th>{{ trans('main.description') }}</th>
         <th>{{ trans('main.created_at') }}</th>
@@ -107,53 +110,28 @@
 
 @section('profile-js')
     <script>
-        initializeDataTable('#lessons-datatable',
-            "{{ route('teacher.students.profile.attendance', $student->uuid) }}?table=lessons", [1, 2, 3, 4, 5, 6],
-            [{
-                    data: "",
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'title',
-                    name: 'title'
-                },
-                {
-                    data: 'attendance_status',
-                    name: 'attendance_status',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'makeup_status',
-                    name: 'makeup_status',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'attendance_note',
-                    name: 'attendance_note',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'attendance_created_at',
-                    name: 'attendance_created_at',
-                    orderable: false,
-                    searchable: false
-                }
-            ],
+        var lessonsColumns = [
+            { data: "", orderable: false, searchable: false },
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'title', name: 'title' },
+        ];
+        @if(isset($isParent) && $isParent)
+            lessonsColumns.push({ data: 'teacher_name', name: 'group.teacher.name' });
+        @endif
+        lessonsColumns.push(
+            { data: 'attendance_status', name: 'attendance_status' },
+            { data: 'makeup_status', name: 'makeup_status' },
+            { data: 'attendance_note', name: 'attendance_note' },
+            { data: 'attendance_created_at', name: 'attendance_created_at' },
         );
 
-        initializeDataTable('#compensatories-datatable',
-            "{{ route('teacher.students.profile.attendance', $student->uuid) }}", [1, 2, 3, 4, 5],
-            [{
+        initializeDataTable('#lessonsDatatable', "{{ route( ($isParent ?? false) ? 'parent.students.profile.attendance' : 'teacher.students.profile.attendance', $student->uuid) }}", [1, 2],
+            lessonsColumns,
+            { table: 'lessons' }
+        );
+
+        initializeDataTable('#compensatoriesDatatable', "{{ route( ($isParent ?? false) ? 'parent.students.profile.attendance' : 'teacher.students.profile.attendance', $student->uuid) }}", [1, 2],
+            [
                     data: "",
                     orderable: false,
                     searchable: false

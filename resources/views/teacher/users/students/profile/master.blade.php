@@ -1,4 +1,4 @@
-@extends('layouts.teacher.master')
+@extends($layout ?? 'layouts.teacher.master')
 
 @section('page-css')
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/pages/page-profile.css') }}" />

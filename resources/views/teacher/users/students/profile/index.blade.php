@@ -88,17 +88,26 @@
         <th></th>
         <th>#</th>
         <th width="80%">{{ trans('main.name') }}</th>
+        @if(isset($isParent) && $isParent)
+            <th>{{ trans('admin/teachers.teacher') }}</th>
+        @endif
     </x-datatable>
 @endsection
 
 @section('profile-js')
     <script>
-        initializeDataTable('#datatable', "{{ route('teacher.students.profile.index', $student->uuid) }}", [1, 2],
-            [
-                { data: "", orderable: false, searchable: false },
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                { data: 'name', name: 'name' },
-            ],
+        var columns = [
+            { data: "", orderable: false, searchable: false },
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'name', name: 'name' },
+        ];
+
+        @if(isset($isParent) && $isParent)
+            columns.push({ data: 'teacher_name', name: 'teacher_name' });
+        @endif
+
+        initializeDataTable('#datatable', "{{ route( ($isParent ?? false) ? 'parent.students.profile.index' : 'teacher.students.profile.index', $student->uuid) }}", [1, 2],
+            columns,
         );
     </script>
 @endsection
