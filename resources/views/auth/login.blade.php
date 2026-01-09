@@ -8,7 +8,11 @@
 
 @section('content')
     <h4 class="mb-2">{{ trans('layouts/login.welcome') }}</h4>
-    <p class="mb-5">{{ trans('layouts/login.sign_in_prompt') }}</p>
+    @if($guard === 'parent')
+        <p class="mb-5">سجل دخول للمنصة عشان تتابع حضور وغياب ودرجات ومستوي ابنك! </p>
+    @else
+        <p class="mb-5">{{ trans('layouts/login.sign_in_prompt') }}</p>
+    @endif
     <div class="text-center mb-4">
         @switch($guard)
             @case('teacher')

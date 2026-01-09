@@ -278,7 +278,10 @@ class InvoiceService
             if ($netPaid >= $invoice->amount) {
                 $invoice->update(['status' => 2]);
 
-                if ($invoice->student->parent) {
+                $feeName = $invoice->fee->getTranslation('name', 'ar');
+                $isOctOrNov = str_contains($feeName, '(10)') || str_contains($feeName, '(11)');
+
+                if ($invoice->student->parent && !$isOctOrNov) {
                     $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
                         [
                             'student_name' => $invoice->student->getTranslation('name', 'ar'),
