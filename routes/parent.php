@@ -8,6 +8,9 @@ use App\Http\Controllers\Parent\Misc\FaqsController;
 use App\Http\Controllers\Parent\Misc\HelpCenterController;
 
 
+use App\Http\Controllers\Parent\DashboardController;
+use App\Http\Controllers\Parent\StudentProfileController;
+
 Route::group(
     [
         'prefix' => LaravelLocalization::setLocale() . '/parent',
@@ -17,9 +20,19 @@ Route::group(
 
         Route::name('parent.')->group(function () {
 
-            Route::get('/dashboard', function () {
-                return view('parent.dashboard');
-            })->name('dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+            # Students Profile
+            Route::controller(StudentProfileController::class)->prefix('students/{uuid}')->name('students.profile.')->group(function () {
+                Route::get('profile', 'profile')->name('index');
+                Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic')->middleware('throttle:5,1');
+                Route::get('attendance', 'attendance')->name('attendance');
+                Route::get('quizzes', 'quizzes')->name('quizzes');
+                Route::get('offline-quizzes', 'offlineQuizzes')->name('offline-quizzes');
+                Route::get('assignments', 'assignments')->name('assignments');
+                Route::get('fees', 'fees')->name('fees');
+                Route::get('security', 'security')->name('security');
+            });
 
             # Account
             Route::prefix('account')->controller(AccountController::class)->name('account.')->group(function () {
