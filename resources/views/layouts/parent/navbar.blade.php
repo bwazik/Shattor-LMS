@@ -148,7 +148,7 @@
                             <i class="ri-settings-4-line ri-22px me-3"></i><span class="align-middle">{{ trans('layouts/navbar.settings') }}</span>
                         </a>
                     </li>
-                    <li>
+                    {{-- <li>
                         <a class="dropdown-item" href="{{ route('teacher.billing.index') }}">
                             <span class="d-flex align-items-center align-middle">
                                 <i class="flex-shrink-0 ri-file-text-line ri-22px me-3"></i>
@@ -158,9 +158,9 @@
                     </li>
                     <li>
                         <div class="dropdown-divider"></div>
-                    </li>
+                    </li>  --}}
                     <li>
-                        <a class="dropdown-item" href="{{ route('student.faqs.index') }}">
+                        <a class="dropdown-item" href="{{ route('parent.faqs.index') }}">
                             <i class="ri-question-line ri-22px me-3"></i><span class="align-middle">{{ trans('layouts/navbar.faq') }}</span>
                         </a>
                     </li>

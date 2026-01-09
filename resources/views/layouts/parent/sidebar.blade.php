@@ -1,6 +1,6 @@
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo">
-        <a href="{{ route('student.dashboard') }}" class="app-brand-link">
+        <a href="{{ route('parent.dashboard') }}" class="app-brand-link">
             <span class="app-brand-logo demo">
                 <img width="50" height="50" src="{{ asset('assets/img/brand/navbar.png') }}" alt="Shattor">
             </span>
@@ -24,8 +24,8 @@
 
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
-        <li class="menu-item {{ isActiveRoute('student.dashboard') ? 'active' : '' }}">
-            <a href="{{ route('student.dashboard') }}" class="menu-link">
+        <li class="menu-item {{ isActiveRoute('parent.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('parent.dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-home-smile-line"></i>
                 <div>{{ trans('layouts/sidebar.dashboard') }}</div>
             </a>
@@ -35,14 +35,14 @@
         <li class="menu-header mt-5">
             <span class="menu-header-text">{{ trans('layouts/sidebar.misc') }}</span>
         </li>
-        <li class="menu-item {{ isActiveRoute('student.faqs.index') ? 'active' : '' }}">
-            <a href="{{ route('student.faqs.index') }}" class="menu-link">
+        <li class="menu-item {{ isActiveRoute('parent.faqs.index') ? 'active' : '' }}">
+            <a href="{{ route('parent.faqs.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-question-line"></i>
                 <div>{{ trans('layouts/sidebar.faqs') }}</div>
             </a>
         </li>
-        <li class="menu-item {{ isActiveRoute('student.help-center.index') ? 'active' : '' }}">
-            <a href="{{ route('student.help-center.index') }}" class="menu-link">
+        <li class="menu-item {{ isActiveRoute('parent.help-center.index') ? 'active' : '' }}">
+            <a href="{{ route('parent.help-center.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons ri-customer-service-2-line"></i>
                 <div>{{ trans('layouts/sidebar.helpCenter') }}</div>
             </a>

@@ -69,7 +69,7 @@ class LoginRequest extends FormRequest
                 ], true);
 
                 throw ValidationException::withMessages([
-                    'student_phone' => trans('auth.failed'),
+                    'student_phone' => trans('auth.parent_failed'),
                 ]);
             }
 

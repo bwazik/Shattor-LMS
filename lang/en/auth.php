@@ -8,4 +8,5 @@ return [
     'throttle' => 'Too many login attempts. Please try again in :minutes minutes and :seconds seconds.',
     'tooManyDevices' => 'You have exceeded the number of allowed devices. Please contact support to clear a device or add another.',
     'deviceAlreadyUsed' => 'This device is already tied to another account.',
+    'parent_failed' => 'The student phone or parent phone number is incorrect.',
 ];
