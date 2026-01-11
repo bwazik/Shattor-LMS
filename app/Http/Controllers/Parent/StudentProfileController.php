@@ -282,7 +282,7 @@ class StudentProfileController extends Controller
                 'offlineQuizResults' => fn($query) => $query->where('student_id', $student->id)
                     ->select('offline_quiz_results.student_id', 'offline_quiz_results.offline_quiz_id', 'offline_quiz_results.total_score', 'offline_quiz_results.percentage')
             ])
-            ->select('id', 'uuid', 'name', 'conducted_at', 'teacher_id')
+            ->select('id', 'uuid', 'name', 'score', 'conducted_at', 'teacher_id')
             ->where('grade_id', $student->grade_id)
             ->whereHas('groups', function ($query) use ($student) {
                 $query->whereIn('groups.id', function ($subquery) use ($student) {
@@ -304,7 +304,7 @@ class StudentProfileController extends Controller
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
                     ->addColumn('teacher_name', fn($row) => $row->teacher->name ?? 'N/A')
-                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) . ' / ' . $row->score : 'N/A')
+                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) . ' / ' . $row->score  : 'N/A')
                     ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 0) . '%' : 'N/A')
                     ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlieQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
                     ->make(true);
