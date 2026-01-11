@@ -108,8 +108,10 @@
 
 @section('profile-js')
     <script>
-        initializeDataTable('#lessonsDatatable', "{{ route('parent.students.profile.attendance', $student->uuid) }}", [1,
-                2],
+        initializeDataTable('#lessonsDatatable',
+            "{{ route('parent.students.profile.attendance', $student->uuid) }}?table=lessons", [1,
+                2
+            ],
             [{
                     data: "",
                     orderable: false,
@@ -141,9 +143,7 @@
                     data: 'attendance_note',
                     name: 'attendance_note'
                 },
-            ], {
-                table: 'lessons'
-            }
+            ]
         );
 
         initializeDataTable('#compensatoriesDatatable',
@@ -183,7 +183,7 @@
                     orderable: false,
                     searchable: false
                 },
-            ],
+            ]
         );
     </script>
 @endsection
