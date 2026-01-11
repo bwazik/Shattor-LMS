@@ -171,11 +171,11 @@ class StudentProfileController extends Controller
                 return datatables()->eloquent($lessonsQuery)
                     ->addIndexColumn()
                     ->editColumn('title', fn($row) => $row->title)
-                    ->addColumn('teacher_name', fn($row) => $row->group->teacher->name ?? 'N/A')
+                    ->addColumn('teacher_name', fn($row) => $row->group->teacher->name ?? '-')
                     ->addColumn('attendance_status', fn($row) => $this->formatAttendanceStatus($row->attendances->first()))
                     ->addColumn('makeup_status', fn($row) => $this->formatMakeupStatus($row, $student->id))
-                    ->addColumn('attendance_note', fn($row) => $row->attendances->first()->note ?? 'N/A')
-                    ->addColumn('attendance_created_at', fn($row) => $row->attendances->first() ? isoFormat($row->attendances->first()->created_at) : 'N/A')
+                    ->addColumn('attendance_note', fn($row) => $row->attendances->first()->note ?? '-')
+                    ->addColumn('attendance_created_at', fn($row) => $row->attendances->first() ? isoFormat($row->attendances->first()->created_at) : '-')
                     ->rawColumns(['attendance_status', 'makeup_status'])
                     ->make(true);
             }
@@ -227,15 +227,15 @@ class StudentProfileController extends Controller
 
         switch ($status) {
             case 1:
-                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.present') . '" class="badge rounded-pill bg-label-success text-capitalize">' . trans('admin/attendance.p') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="حاضر" class="badge rounded-pill bg-label-success text-capitalize">حاضر</span>';
             case 2:
-                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.absent') . '" class="badge rounded-pill bg-label-danger text-capitalize">' . trans('admin/attendance.a') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="غائب" class="badge rounded-pill bg-label-danger text-capitalize">غائب</span>';
             case 3:
-                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.late') . '" class="badge rounded-pill bg-label-warning text-capitalize">' . trans('admin/attendance.l') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="متأخر" class="badge rounded-pill bg-label-warning text-capitalize">متأخر</span>';
             case 4:
-                return '<span data-bs-toggle="tooltip" title="' . trans('admin/attendance.compensatory') . '" class="badge rounded-pill bg-label-info text-capitalize">' . trans('admin/attendance.c') . '</span>';
+                return '<span data-bs-toggle="tooltip" title="تعويض" class="badge rounded-pill bg-label-info text-capitalize">تعويض</span>';
             default:
-                return '<span class="badge rounded-pill bg-label-secondary text-capitalize">-</span>';
+                return '<span class="badge rounded-pill bg-label-secondary text-capitalize">لم يسجل</span>';
         }
     }
 
