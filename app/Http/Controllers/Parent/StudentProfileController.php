@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Models\Fee;
-use App\Models\Quiz;
 use App\Models\Group;
 use App\Models\Lesson;
 use App\Models\Invoice;
@@ -25,15 +24,18 @@ class StudentProfileController extends Controller
 {
     use ValidatesExistence, ServiceResponseTrait;
 
-    protected $parentId;
     protected $profilePicService;
     protected $sessionService;
 
     public function __construct(FileUploadService $profilePicService, SessionService $sessionService)
     {
-        $this->parentId = auth()->guard('parent')->user()->id;
         $this->profilePicService = $profilePicService;
         $this->sessionService = $sessionService;
+    }
+
+    private function getParentId()
+    {
+        return auth()->guard('parent')->id();
     }
 
     private function getStudent($uuid)
@@ -46,7 +48,7 @@ class StudentProfileController extends Controller
                     ->select('groups.id', 'groups.name', 'student_group.created_at', 'student_group.ended_at'),
             ])
             ->select('students.id', 'students.uuid', 'students.username', 'students.name', 'students.phone', 'students.email', 'students.birth_date', 'students.gender', 'students.specialization', 'students.grade_id', 'students.specialization', 'students.parent_id', 'students.is_active', 'students.profile_pic', 'students.balance', 'students.created_at')
-            ->where('parent_id', $this->parentId)
+            ->where('parent_id', $this->getParentId())
             ->uuid($uuid)
             ->firstOrFail();
     }
@@ -79,14 +81,16 @@ class StudentProfileController extends Controller
 
     private function getProfileStats($student)
     {
-        $lessonsQuery = Lesson::whereHas('group.students', function ($query) use ($student) {
-                $query->where('students.id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
-            })
+        $lessonsQuery = Lesson::query()
+            ->join('groups', 'lessons.group_id', '=', 'groups.id')
+            ->join('student_group', 'groups.id', '=', 'student_group.group_id')
+            ->where('student_group.student_id', $student->id)
+            ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+            ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))')
             ->where('lessons.date', '<=', now()->toDateString());
-        $totalLessons = $lessonsQuery->count();
-        $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->count();
+
+        $totalLessons = $lessonsQuery->clone()->distinct('lessons.id')->count('lessons.id');
+        $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->distinct('lessons.id')->count('lessons.id');
         $attendanceRate = $totalLessons > 0 ? round(($attendedLessons / $totalLessons) * 100, 1) : 0;
 
         $offlineQuizzesQuery = OfflineQuiz::where('grade_id', $student->grade_id)
@@ -143,19 +147,20 @@ class StudentProfileController extends Controller
         $stats = $this->getAttendanceStats($student);
 
         $lessonsQuery = Lesson::query()
+            ->join('groups', 'lessons.group_id', '=', 'groups.id')
+            ->join('student_group', 'groups.id', '=', 'student_group.group_id')
             ->with([
                 'group' => fn($query) => $query->select('id', 'name', 'teacher_id')->with('teacher:id,name'),
                 'attendances' => fn($query) => $query->where('student_id', $student->id)
                     ->select('attendances.student_id', 'attendances.lesson_id', 'attendances.status', 'attendances.is_compensatory', 'attendances.note', 'attendances.created_at')
             ])
-            ->select('id', 'uuid', 'title', 'group_id', 'date')
-            ->whereHas('group.students', function ($query) use ($student) {
-                $query->where('students.id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
-            })
+            ->select('lessons.id', 'lessons.uuid', 'lessons.title', 'lessons.group_id', 'lessons.date')
+            ->where('student_group.student_id', $student->id)
+            ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+            ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))')
             ->where('lessons.date', '<=', now()->toDateString())
-            ->orderBy('lessons.date', 'desc');
+            ->orderBy('lessons.date', 'desc')
+            ->distinct();
 
         $compensatoriesQuery = Compensatory::query()->with(['originalLesson:id,title,group_id', 'makeupLesson:id,title,group_id'])
             ->select('id', 'uuid', 'student_id', 'original_lesson_id', 'makeup_lesson_id', 'reason', 'status')
@@ -193,17 +198,18 @@ class StudentProfileController extends Controller
 
     private function getAttendanceStats($student)
     {
-        $lessonsQuery = Lesson::whereHas('group.students', function ($query) use ($student) {
-                $query->where('students.id', $student->id)
-                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
-                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
-            })
+        $lessonsQuery = Lesson::query()
+            ->join('groups', 'lessons.group_id', '=', 'groups.id')
+            ->join('student_group', 'groups.id', '=', 'student_group.group_id')
+            ->where('student_group.student_id', $student->id)
+            ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+            ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))')
             ->where('lessons.date', '<=', now()->toDateString());
 
-        $totalLessons = $lessonsQuery->count();
-        $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->count();
-        $absentLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->where('status', 2))->count();
-        $lateLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->where('status', 3))->count();
+        $totalLessons = $lessonsQuery->clone()->distinct('lessons.id')->count('lessons.id');
+        $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->distinct('lessons.id')->count('lessons.id');
+        $absentLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->where('status', 2))->distinct('lessons.id')->count('lessons.id');
+        $lateLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->where('status', 3))->distinct('lessons.id')->count('lessons.id');
         $compensatoryLessons = Compensatory::where('student_id', $student->id)->where('status', 2)->count();
 
         return [
@@ -383,10 +389,11 @@ class StudentProfileController extends Controller
     {
         $student = $this->getStudent($uuid);
 
-        // For parents, we show all fees.
+        // Filter fees to only those from teachers the student is assigned to
+        $studentTeacherIds = $student->teachers->pluck('id');
         $relationshipDate = $student->created_at->startOfMonth();
 
-        $stats = $this->getFeeStats($student, $relationshipDate);
+        $stats = $this->getFeeStats($student, $relationshipDate, $studentTeacherIds);
 
         $feesQuery = Fee::query()
             ->with([
@@ -400,6 +407,7 @@ class StudentProfileController extends Controller
             ])
             ->select('fees.id', 'fees.uuid', 'fees.name', 'fees.grade_id', 'fees.specialization', 'fees.created_at')
             ->where('grade_id', $student->grade_id)
+            ->whereIn('teacher_id', $studentTeacherIds)
             ->where('created_at', '>=', $relationshipDate)
             ->where(function ($query) use ($student) {
                 $query->whereNull('fees.specialization')
@@ -427,9 +435,10 @@ class StudentProfileController extends Controller
         ]);
     }
 
-    private function getFeeStats($student, $relationshipDate)
+    private function getFeeStats($student, $relationshipDate, $studentTeacherIds)
     {
         $feesQuery = Fee::where('grade_id', $student->grade_id)
+            ->whereIn('teacher_id', $studentTeacherIds)
             ->where('created_at', '>=', $relationshipDate)
             ->where(function ($query) use ($student) {
                 $query->whereNull('specialization')

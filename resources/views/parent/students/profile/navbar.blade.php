@@ -5,7 +5,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ isActiveRoute('parent.students.profile.index') ? 'active' : '' }}"
                         href="{{ route('parent.students.profile.index', $student->uuid) }}"><i
-                            class="ri-user-3-line me-2"></i>{{ trans('main.profile') }}</a>
+                            class="ri-user-3-line me-2"></i>الإحصائيات</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ isActiveRoute('parent.students.profile.attendance') ? 'active' : '' }}"
