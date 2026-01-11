@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class SendParentsAnnouncement extends Command
 {
-    protected $signature = 'whatsapp:send-parents-announcement 
+    protected $signature = 'whatsapp:send-parents-announcement
                             {--dry-run : Preview who would receive the message}
                             {--teacher= : Send only to parents of students under specific teacher}
                             {--limit= : Limit number of messages to send (for testing)}';
@@ -53,12 +53,14 @@ class SendParentsAnnouncement extends Command
 
         // Get parents query
         $parentsQuery = MyParent::whereNull('deleted_at')
-            ->with(['students' => function($query) use ($teacherId) {
-                $query->whereNull('deleted_at'); // Only active students
-                if ($teacherId) {
-                    $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $teacherId));
+            ->with([
+                'students' => function ($query) use ($teacherId) {
+                    $query->whereNull('deleted_at'); // Only active students
+                    if ($teacherId) {
+                        $query->whereHas('teachers', fn($q) => $q->where('teacher_id', $teacherId));
+                    }
                 }
-            }]);
+            ]);
 
         if ($limit) {
             $parentsQuery->limit($limit);
