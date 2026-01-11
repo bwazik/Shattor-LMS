@@ -88,9 +88,7 @@
         <th></th>
         <th>#</th>
         <th width="80%">{{ trans('main.name') }}</th>
-        @if(isset($isParent) && $isParent)
-            <th>{{ trans('admin/teachers.teacher') }}</th>
-        @endif
+        <th>{{ trans('admin/teachers.teacher') }}</th>
     </x-datatable>
 @endsection
 
@@ -102,9 +100,7 @@
             { data: 'name', name: 'name' },
         ];
 
-        @if(isset($isParent) && $isParent)
-            columns.push({ data: 'teacher_name', name: 'teacher_name' });
-        @endif
+        columns.push({ data: 'teacher_name', name: 'teacher_name' });
 
         initializeDataTable('#datatable', "{{ route('parent.students.profile.index', $student->uuid) }}", [1, 2],
             columns,

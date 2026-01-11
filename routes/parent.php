@@ -24,14 +24,10 @@ Route::group(
 
             # Students Profile
             Route::controller(StudentProfileController::class)->prefix('students/{uuid}')->name('students.profile.')->group(function () {
-                Route::post('update-profile-pic', 'updateProfilePic')->name('updateProfilePic');
                 Route::get('profile', 'profile')->name('index');
                 Route::get('attendance', 'attendance')->name('attendance');
-                Route::get('quizzes', 'quizzes')->name('quizzes');
                 Route::get('offline-quizzes', 'offlineQuizzes')->name('offline-quizzes');
-                Route::get('assignments', 'assignments')->name('assignments');
                 Route::get('fees', 'fees')->name('fees');
-                Route::get('security', 'security')->name('security');
             });
 
             # Account

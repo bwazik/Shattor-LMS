@@ -88,9 +88,7 @@
         <th></th>
         <th>#</th>
         <th width="30%">{{ trans('main.title') }}</th>
-        @if(isset($isParent) && $isParent)
-            <th>{{ trans('admin/teachers.teacher') }}</th>
-        @endif
+        <th>{{ trans('admin/teachers.teacher') }}</th>
         <th>{{ trans('admin/attendance.status') }}</th>
         <th>{{ trans('admin/compensatories.makeup_lesson') }}</th>
         <th>{{ trans('main.description') }}</th>
@@ -115,9 +113,7 @@
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'title', name: 'title' },
         ];
-        @if(isset($isParent) && $isParent)
-            lessonsColumns.push({ data: 'teacher_name', name: 'group.teacher.name' });
-        @endif
+        lessonsColumns.push({ data: 'teacher_name', name: 'group.teacher.name' });
         lessonsColumns.push(
             { data: 'attendance_status', name: 'attendance_status' },
             { data: 'makeup_status', name: 'makeup_status' },

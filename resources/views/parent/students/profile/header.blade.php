@@ -9,34 +9,6 @@
                     <img src="{{ $student->profile_pic ? asset('storage/profiles/students/' . $student->profile_pic) : asset('assets/img/avatars/default.jpg') }}"
                         alt="avatar" class="d-block h-auto ms-0 ms-sm-5 rounded-4 user-profile-img"
                         id="uploadedAvatar" />
-                    <form id="update-profile-form"
-                        action="{{ route('parent.students.profile.updateProfilePic', $student->uuid) }}"
-                        method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <button type="button" class="btn btn-icon btn-primary rounded-circle profile-action-btn"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="ri-camera-line ri-24px"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-start profile-dropdown">
-                            <li>
-                                <label for="upload" class="dropdown-item">
-                                    <i class="ri-upload-2-line me-2"></i>{{ trans('main.upload') }}
-                                    <input type="file" id="upload" name="profile" class="account-file-input"
-                                        hidden accept="image/png,image/jpeg,image/jpg" />
-                                </label>
-                            </li>
-                            <li>
-                                <button type="submit" class="dropdown-item">
-                                    <i class="ri-file-check-line me-2"></i>{{ trans('main.submit') }}
-                                </button>
-                            </li>
-                            <li>
-                                <button type="button" class="dropdown-item account-image-reset">
-                                    <i class="ri-refresh-line me-2"></i>{{ trans('main.reset') }}
-                                </button>
-                            </li>
-                        </ul>
-                    </form>
                 </div>
                 <div class="flex-grow-1 mt-4 mt-sm-12">
                     <div

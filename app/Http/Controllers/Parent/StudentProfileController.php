@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Parent;
 
-use Carbon\Carbon;
 use App\Models\Fee;
 use App\Models\Quiz;
 use App\Models\Group;
@@ -17,11 +16,9 @@ use App\Models\StudentResult;
 use App\Services\SessionService;
 use App\Models\OfflineQuizResult;
 use App\Traits\ValidatesExistence;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\AssignmentSubmission;
 use App\Traits\ServiceResponseTrait;
-use App\Http\Requests\ProfilePicRequest;
 use App\Services\Admin\FileUploadService;
 
 class StudentProfileController extends Controller
@@ -77,8 +74,6 @@ class StudentProfileController extends Controller
         return view('parent.students.profile.index', [
             'student' => $student,
             'stats' => $stats,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
         ]);
     }
 
@@ -133,17 +128,6 @@ class StudentProfileController extends Controller
         ];
     }
 
-    public function updateProfilePic(ProfilePicRequest $request, $uuid)
-    {
-        $student = Student::where('parent_id', $this->parentId)
-            ->uuid($uuid)
-            ->firstOrFail(['id']);
-
-        $result = $this->profilePicService->updateProfilePic($request, Student::class, $student->id, 'students');
-
-        return $this->conrtollerJsonResponse($result);
-    }
-
     public function attendance(Request $request, $uuid)
     {
         $student = $this->getStudent($uuid);
@@ -195,8 +179,6 @@ class StudentProfileController extends Controller
         return view('parent.students.profile.attendance', [
             'student' => $student,
             'stats' => $stats,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
         ]);
     }
 
@@ -274,81 +256,6 @@ class StudentProfileController extends Controller
         }
     }
 
-    public function quizzes(Request $request, $uuid)
-    {
-        $student = $this->getStudent($uuid);
-        $stats = $this->getQuizStats($student);
-
-        $quizzesQuery = Quiz::query()
-            ->with([
-                'teacher:id,name',
-                'studentResults' => fn($query) => $query->where('student_id', $student->id)
-                    ->select('student_results.student_id', 'student_results.quiz_id', 'student_results.total_score', 'student_results.percentage', 'student_results.status')
-            ])
-            ->select('id', 'uuid', 'name', 'start_time', 'end_time', 'teacher_id')
-            ->where('grade_id', $student->grade_id)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')))
-            ->orderBy('start_time', 'desc');
-
-        if ($request->ajax()) {
-            if ($request->input('table') === 'quizzes') {
-                return datatables()->eloquent($quizzesQuery)
-                    ->addIndexColumn()
-                    ->editColumn('name', fn($row) => $row->name)
-                    ->addColumn('teacher_name', fn($row) => $row->teacher->name ?? 'N/A')
-                    ->addColumn('score', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->total_score, 2) : 'N/A')
-                    ->addColumn('percentage', fn($row) => $row->studentResults->first() ? number_format($row->studentResults->first()->percentage, 2) : 'N/A')
-                    ->addColumn('status', fn($row) => $this->formatQuizStatus($row->studentResults->first() ? $row->studentResults->first()->status : null))
-                    ->addColumn('rank', fn($row) => $row->studentResults->first() ? $this->getRank('quiz', $row->id, $row->studentResults->first()->total_score) : 'N/A')
-                    ->addColumn('link', fn($row) => $row->studentResults->first() ? $this->getReviewLink('quiz', $row->uuid, $student->uuid, $row->studentResults->first()) : 'N/A')
-                    ->rawColumns(['status', 'link'])
-                    ->make(true);
-            }
-        }
-
-        return view('parent.students.profile.quizzes', [
-            'student' => $student,
-            'stats' => $stats,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
-        ]);
-    }
-
-    private function getQuizStats($student)
-    {
-        $quizzesQuery = Quiz::where('grade_id', $student->grade_id)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')));
-
-        $totalQuizzes = $quizzesQuery->count();
-        $quizResults = StudentResult::where('student_id', $student->id)
-            ->whereIn('quiz_id', $quizzesQuery->pluck('id'))
-            ->selectRaw('AVG(total_score) as avg_score, AVG(percentage) as avg_percentage, MAX(total_score) as top_score, COUNT(*) as taken_count, SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as passed_count')
-            ->first();
-
-        return [
-            'avgScore' => $quizResults->taken_count > 0 ? number_format($quizResults->avg_score, 2) : 'N/A',
-            'avgPercentage' => $quizResults->taken_count > 0 ? number_format($quizResults->avg_percentage, 1) : 'N/A',
-            'completionRate' => $totalQuizzes > 0 ? round(($quizResults->taken_count / $totalQuizzes) * 100, 1) : 0,
-            'totalQuizzes' => $totalQuizzes,
-            'passedQuizzes' => $quizResults->passed_count,
-            'topScore' => $quizResults->taken_count > 0 ? number_format($quizResults->top_score, 2) : 'N/A',
-        ];
-    }
-
-    private function formatQuizStatus($status): string
-    {
-        return match ($status) {
-            1 => '<span class="badge rounded-pill bg-label-warning text-capitalize">' . trans('admin/quizzes.inProgress') . '</span>',
-            2 => '<span class="badge rounded-pill bg-label-success text-capitalize">' . trans('admin/quizzes.completed') . '</span>',
-            3 => '<span class="badge rounded-pill bg-label-danger text-capitalize">' . trans('admin/quizzes.failed') . '</span>',
-            default => '<span class="badge rounded-pill bg-label-warning text-capitalized">N/A</span>',
-        };
-    }
-
     public function offlineQuizzes(Request $request, $uuid)
     {
         $student = $this->getStudent($uuid);
@@ -392,8 +299,6 @@ class StudentProfileController extends Controller
         return view('parent.students.profile.offline-quizzes', [
             'student' => $student,
             'stats' => $stats,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
         ]);
     }
 
@@ -426,99 +331,6 @@ class StudentProfileController extends Controller
             'passedQuizzes' => $offlineQuizResults->passed_count,
             'topScore' => $offlineQuizResults->taken_count > 0 ? number_format($offlineQuizResults->top_score, 2) : 'N/A',
         ];
-    }
-
-    public function assignments(Request $request, $uuid)
-    {
-        $student = $this->getStudent($uuid);
-        $stats = $this->getAssignmentStats($student);
-
-        $assignmentsQuery = Assignment::query()
-            ->with([
-                'teacher:id,name',
-                'assignmentSubmissions' => fn($query) => $query->where('student_id', $student->id)
-                    ->select('assignment_submissions.student_id', 'assignment_submissions.assignment_id', 'assignment_submissions.score', 'assignment_submissions.feedback', 'assignment_submissions.created_at')
-            ])
-            ->select('id', 'uuid', 'title', 'deadline', 'score as max_score', 'created_at', 'teacher_id')
-            ->where('grade_id', $student->grade_id)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')))
-
-            ->orderBy('deadline', 'desc');
-
-        if ($request->ajax()) {
-            if ($request->input('table') === 'assignments') {
-                return datatables()->eloquent($assignmentsQuery)
-                    ->addIndexColumn()
-                    ->editColumn('title', fn($row) => $row->title)
-                    ->addColumn('teacher_name', fn($row) => $row->teacher->name ?? 'N/A')
-                    ->addColumn('rank', fn($row) => $row->assignmentSubmissions->first() ? $this->getRank('assignment', $row->id, $row->assignmentSubmissions->first()->score) : 'N/A')
-                    ->addColumn('score', fn($row) => $row->assignmentSubmissions->first() && !is_null($row->assignmentSubmissions->first()->score) ? number_format($row->assignmentSubmissions->first()->score, 2) : 'N/A')
-                    ->addColumn('status', fn($row) => $this->formatSubmissionStatus($row->assignmentSubmissions->first()))
-                    ->addColumn('link', fn($row) => $this->getReviewLink('assignment', $row->uuid, $student->uuid, $row->assignmentSubmissions->first()))
-                    ->rawColumns(['status', 'link'])
-                    ->make(true);
-            }
-        }
-
-        return view('parent.students.profile.assignments', [
-            'student' => $student,
-            'stats' => $stats,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
-        ]);
-    }
-
-    private function getAssignmentStats($student)
-    {
-        $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(assignments.deadline)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > assignments.created_at')));
-
-        $totalAssignments = $assignmentsQuery->count();
-        $submissionResults = AssignmentSubmission::where('student_id', $student->id)
-            ->whereIn('assignment_id', $assignmentsQuery->pluck('id'))
-            ->whereNotNull('assignment_submissions.score')
-            ->join('assignments', 'assignment_submissions.assignment_id', '=', 'assignments.id')
-            ->selectRaw('AVG(assignment_submissions.score) as avg_score, MAX(assignment_submissions.score) as top_score, COUNT(*) as submitted_count, AVG(assignment_submissions.score / assignments.score * 100) as avg_percentage')
-            ->first();
-
-        return [
-            'avgScore' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_score, 2) : 'N/A',
-            'avgPercentage' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->avg_percentage, 1) : 'N/A',
-            'submissionRate' => $totalAssignments > 0 ? round(($submissionResults->submitted_count / $totalAssignments) * 100, 1) : 0,
-            'totalAssignments' => $totalAssignments,
-            'submittedCount' => $submissionResults->submitted_count,
-            'topScore' => $submissionResults->submitted_count > 0 ? number_format($submissionResults->top_score, 2) : 'N/A',
-        ];
-    }
-
-    private function formatSubmissionStatus($submission): string
-    {
-        return $submission
-            ? '<span class="badge rounded-pill bg-label-success text-capitalize">' . trans('main.submitted') . '</span>'
-            : '<span class="badge rounded-pill bg-label-secondary text-capitalize">' . trans('main.notSubmitted') . '</span>';
-    }
-
-    private function getReviewLink($model, $uuid, $studentUuid, $submission = null)
-    {
-        if (!$submission) {
-            return '<span class="badge rounded-pill bg-label-secondary text-capitalize">N/A</span>';
-        }
-
-        // For Parents, we probably can't see the full review if it's a teacher route?
-        // Wait, the link points to 'teacher.quizzes.review'. Parent does not have access to teacher routes!
-        // We need to return N/A or a disabled link for now as per "read only".
-        // Or if we can reuse the view, we need a parent route for review.
-        // The instruction says "Parent access is read-only".
-        // Seeing the answers is "read-only".
-        // But creating a new route for review is out of scope for "step 1/2"?
-        // "Implement Parent access to the existing Student Profile."
-        // I'll return N/A for the link to avoid broken routes.
-
-        return '<span class="badge rounded-pill bg-label-secondary text-capitalize">View Only</span>';
     }
 
     private function getRank($model, $id, $score)
@@ -603,8 +415,6 @@ class StudentProfileController extends Controller
         return view('parent.students.profile.fees', [
             'student' => $student,
             'stats' => $stats,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
         ]);
     }
 
@@ -653,21 +463,5 @@ class StudentProfileController extends Controller
             4 => trans('main.wallet'),
             default => '-'
         };
-    }
-
-    public function security(Request $request, $uuid)
-    {
-        $student = $this->getStudent($uuid);
-
-        $sessions = $this->sessionService->getUserSessions('student', $student->id);
-        $devices = $this->sessionService->getUserDevices('student', $student->id);
-
-        return view('parent.students.profile.security', [
-            'student' => $student,
-            'sessions' => $sessions,
-            'devices' => $devices,
-            'layout' => 'layouts.parent.master',
-            'isParent' => true
-        ]);
     }
 }
