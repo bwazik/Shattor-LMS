@@ -89,15 +89,24 @@ class StudentProfileController extends Controller
         $attendedLessons = $lessonsQuery->clone()->whereHas('attendances', fn($query) => $query->where('student_id', $student->id)->whereIn('status', [1, 3]))->count();
         $attendanceRate = $totalLessons > 0 ? round(($attendedLessons / $totalLessons) * 100, 1) : 0;
 
-        $quizzesQuery = Quiz::where('grade_id', $student->grade_id)
-            ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
-                ->whereRaw('DATE(student_group.created_at) <= DATE(quizzes.end_time)')
-                ->whereRaw('student_group.ended_at IS NULL OR student_group.ended_at > quizzes.start_time')));
-        $quizResults = StudentResult::where('student_id', $student->id)
-            ->whereIn('quiz_id', $quizzesQuery->pluck('id'))
+        $offlineQuizzesQuery = OfflineQuiz::where('grade_id', $student->grade_id)
+            ->whereHas('groups', function ($query) use ($student) {
+                $query->whereIn('groups.id', function ($subquery) use ($student) {
+                    $subquery->select('group_id')
+                        ->from('student_group')
+                        ->where('student_id', $student->id)
+                        ->whereColumn('student_group.created_at', '<=', 'offline_quizzes.conducted_at')
+                        ->where(function ($q) {
+                            $q->whereNull('student_group.ended_at')
+                                ->orWhereColumn('student_group.ended_at', '>=', 'offline_quizzes.conducted_at');
+                        });
+                });
+            });
+        $offlineQuizResults = OfflineQuizResult::where('student_id', $student->id)
+            ->whereIn('offline_quiz_id', $offlineQuizzesQuery->pluck('id'))
             ->selectRaw('AVG(percentage) as avg_percentage, COUNT(*) as taken_count')
             ->first();
-        $avgQuizPercentage = $quizResults->taken_count > 0 ? number_format($quizResults->avg_percentage, 1) : 'N/A';
+        $avgQuizPercentage = $offlineQuizResults->taken_count > 0 ? number_format($offlineQuizResults->avg_percentage, 1) : 'N/A';
 
         $assignmentsQuery = Assignment::where('grade_id', $student->grade_id)
             ->whereHas('groups', fn($query) => $query->whereHas('students', fn($q) => $q->where('students.id', $student->id)
