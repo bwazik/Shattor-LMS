@@ -304,7 +304,7 @@ class StudentProfileController extends Controller
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
                     ->addColumn('teacher_name', fn($row) => $row->teacher->name ?? 'N/A')
-                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) : 'N/A')
+                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) . ' / ' . $row->score : 'N/A')
                     ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 0) . '%' : 'N/A')
                     ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlieQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
                     ->make(true);
@@ -420,9 +420,9 @@ class StudentProfileController extends Controller
                 return datatables()->eloquent($feesQuery)
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
-                    ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : 'N/A')
-                    ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? 'N/A') : 'N/A')
-                    ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : 'N/A')
+                    ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : 'لسا المصاريف متسجلتش')
+                    ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? 'لسا مدفعش') : 'لسا مدفعش')
+                    ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : 'لسا مدفعش')
                     ->rawColumns(['payment_method'])
                     ->make(true);
             }
