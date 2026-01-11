@@ -132,9 +132,7 @@ class SendParentsAnnouncement extends Command
             $this->whatsappService->sendMessage(
                 $parent->phone,
                 'parent_portal_announcement',
-                [
-                    'parent_name' => $parent->getTranslation('name', 'ar'),
-                ],
+                [],
                 false // Not urgent
             );
         }
