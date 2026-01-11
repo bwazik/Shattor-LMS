@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\WhatsappMessage;
-use App\Services\GeminiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
