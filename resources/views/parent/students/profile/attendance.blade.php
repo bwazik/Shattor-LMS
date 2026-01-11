@@ -88,11 +88,10 @@
         <th></th>
         <th>#</th>
         <th width="30%">{{ trans('main.title') }}</th>
-        <th>{{ trans('admin/teachers.teacher') }}</th>
-        <th>{{ trans('admin/attendance.status') }}</th>
+        <th>{{ trans('main.teacher') }}</th>
+        <th>{{ trans('main.status') }}</th>
         <th>{{ trans('admin/compensatories.makeup_lesson') }}</th>
         <th>{{ trans('main.description') }}</th>
-        <th>{{ trans('main.created_at') }}</th>
     </x-datatable>
 
     <x-datatable id="compensatories-datatable" cardClasses="mb-6"
@@ -108,21 +107,16 @@
 
 @section('profile-js')
     <script>
-        var lessonsColumns = [
-            { data: "", orderable: false, searchable: false },
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'title', name: 'title' },
-        ];
-        lessonsColumns.push({ data: 'teacher_name', name: 'group.teacher.name' });
-        lessonsColumns.push(
-            { data: 'attendance_status', name: 'attendance_status' },
-            { data: 'makeup_status', name: 'makeup_status' },
-            { data: 'attendance_note', name: 'attendance_note' },
-            { data: 'attendance_created_at', name: 'attendance_created_at' },
-        );
-
         initializeDataTable('#lessonsDatatable', "{{ route('parent.students.profile.attendance', $student->uuid) }}", [1, 2],
-            lessonsColumns,
+            [
+                { data: "", orderable: false, searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'title', name: 'title' },
+                { data: 'teacher_name', name: 'group.teacher.name' },
+                { data: 'attendance_status', name: 'attendance_status' },
+                { data: 'makeup_status', name: 'makeup_status' },
+                { data: 'attendance_note', name: 'attendance_note' },
+            ],
             { table: 'lessons' }
         );
 

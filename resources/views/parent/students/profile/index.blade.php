@@ -42,27 +42,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-lg-6">
-            <div class="card card-border-shadow-primary">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div class="me-1">
-                            <p class="text-heading mb-1">{{ trans('profile.avgAssignmentPercentage') }}</p>
-                            <div class="d-flex align-items-center">
-                                <h4 class="mb-1 me-2">{{ $stats['avgAssignmentPercentage'] }}%</h4>
-                            </div>
-                            <small class="mb-0">{{ trans('profile.avgAssignmentPercentageDesc') }}</small>
-                        </div>
-                        <div class="avatar">
-                            <div class="avatar-initial bg-label-primary rounded-3">
-                                <div class="ri-file-copy-2-line ri-28px"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-6">
+        <div class="col-sm-12 col-lg-12">
             <div class="card card-border-shadow-warning">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -87,23 +67,20 @@
     <x-datatable cardClasses="mb-6" datatableTitle="{{ trans('admin/groups.groups') }}">
         <th></th>
         <th>#</th>
-        <th width="80%">{{ trans('main.name') }}</th>
-        <th>{{ trans('admin/teachers.teacher') }}</th>
+        <th>{{ trans('main.name') }}</th>
+        <th>{{ trans('main.teacher') }}</th>
     </x-datatable>
 @endsection
 
 @section('profile-js')
     <script>
-        var columns = [
-            { data: "", orderable: false, searchable: false },
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'name', name: 'name' },
-        ];
-
-        columns.push({ data: 'teacher_name', name: 'teacher_name' });
-
         initializeDataTable('#datatable', "{{ route('parent.students.profile.index', $student->uuid) }}", [1, 2],
-            columns,
+            [
+                { data: "", orderable: false, searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'name', name: 'name' },
+                { data: 'teacher_name', name: 'teacher_name' },
+            ],
         );
     </script>
 @endsection
