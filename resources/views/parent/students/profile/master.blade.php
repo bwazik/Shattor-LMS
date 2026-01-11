@@ -17,8 +17,7 @@
 
     <!-- Details -->
     <div class="row">
-        @include('parent.students.profile.details')
-        <div class="col-xl-8 col-lg-7 col-md-7">
+        <div class="col-xl-12 col-lg-12 col-md-12">
             @yield('profile-content')
         </div>
     </div>
