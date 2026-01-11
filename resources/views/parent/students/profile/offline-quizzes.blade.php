@@ -3,46 +3,6 @@
 @section('profile-content')
     <div class="row g-6 mb-6">
         <div class="col-sm-6 col-lg-6">
-            <div class="card card-border-shadow-info">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div class="me-1">
-                            <p class="text-heading mb-1">{{ trans('profile.avgQuizScore') }}</p>
-                            <div class="d-flex align-items-center">
-                                <h4 class="mb-1 me-2">{{ $stats['avgScore'] }}</h4>
-                            </div>
-                            <small class="mb-0">{{ trans('profile.avgQuizScoreDesc') }}</small>
-                        </div>
-                        <div class="avatar">
-                            <div class="avatar-initial bg-label-info rounded-3">
-                                <div class="ri-brain-line ri-28px"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-6">
-            <div class="card card-border-shadow-primary">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div class="me-1">
-                            <p class="text-heading mb-1">{{ trans('profile.avgQuizPercentage') }}</p>
-                            <div class="d-flex align-items-center">
-                                <h4 class="mb-1 me-2">{{ $stats['avgPercentage'] }}%</h4>
-                            </div>
-                            <small class="mb-0">{{ trans('profile.avgQuizPercentageDesc') }}</small>
-                        </div>
-                        <div class="avatar">
-                            <div class="avatar-initial bg-label-primary rounded-3">
-                                <div class="ri-percent-line ri-28px"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-6">
             <div class="card card-border-shadow-success">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">

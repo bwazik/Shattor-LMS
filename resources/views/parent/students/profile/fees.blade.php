@@ -91,7 +91,6 @@
         <th>{{ trans('main.created_at') }}</th>
         <th>{{ trans('main.paymentDate') }}</th>
         <th>{{ trans('main.paymentMethod') }}</th>
-        <th>{{ trans('admin/transactions.transactions') }}</th>
     </x-datatable>
 @endsection
 
@@ -105,7 +104,6 @@
                 { data: 'date', name: 'date', orderable: false, searchable: false },
                 { data: 'paymentDate', name: 'paymentDate', orderable: false, searchable: false },
                 { data: 'payment_method', name: 'payment_method', orderable: false, searchable: false },
-                { data: 'transactions', name: 'transactions', orderable: false, searchable: false },
             ],
         );
     </script>
