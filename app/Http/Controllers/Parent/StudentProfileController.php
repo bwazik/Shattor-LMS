@@ -147,20 +147,19 @@ class StudentProfileController extends Controller
         $stats = $this->getAttendanceStats($student);
 
         $lessonsQuery = Lesson::query()
-            ->join('groups', 'lessons.group_id', '=', 'groups.id')
-            ->join('student_group', 'groups.id', '=', 'student_group.group_id')
             ->with([
                 'group' => fn($query) => $query->select('id', 'name', 'teacher_id')->with('teacher:id,name'),
                 'attendances' => fn($query) => $query->where('student_id', $student->id)
                     ->select('attendances.student_id', 'attendances.lesson_id', 'attendances.status', 'attendances.is_compensatory', 'attendances.note', 'attendances.created_at')
             ])
             ->select('lessons.id', 'lessons.uuid', 'lessons.title', 'lessons.group_id', 'lessons.date')
-            ->where('student_group.student_id', $student->id)
-            ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
-            ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))')
+            ->whereHas('group.students', function ($query) use ($student) {
+                $query->where('students.id', $student->id)
+                    ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
+                    ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
+            })
             ->where('lessons.date', '<=', now()->toDateString())
-            ->orderBy('lessons.date', 'desc')
-            ->distinct();
+            ->orderBy('lessons.date', 'desc');
 
         $compensatoriesQuery = Compensatory::query()->with(['originalLesson:id,title,group_id', 'makeupLesson:id,title,group_id'])
             ->select('id', 'uuid', 'student_id', 'original_lesson_id', 'makeup_lesson_id', 'reason', 'status')
@@ -304,7 +303,7 @@ class StudentProfileController extends Controller
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
                     ->addColumn('teacher_name', fn($row) => $row->teacher->name ?? 'N/A')
-                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) . ' / ' . $row->score  : 'N/A')
+                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) . ' / ' . number_format($row->score, 2) : 'N/A')
                     ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 0) . '%' : 'N/A')
                     ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlieQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
                     ->make(true);
