@@ -74,7 +74,7 @@ class StudentProfileController extends Controller
                 ->make(true);
         }
 
-        return view('teacher.users.students.profile.index', [
+        return view('parent.students.profile.index', [
             'student' => $student,
             'stats' => $stats,
             'layout' => 'layouts.parent.master',
@@ -192,7 +192,7 @@ class StudentProfileController extends Controller
                 ->make(true);
         }
 
-        return view('teacher.users.students.profile.attendance', [
+        return view('parent.students.profile.attendance', [
             'student' => $student,
             'stats' => $stats,
             'layout' => 'layouts.parent.master',
@@ -308,7 +308,7 @@ class StudentProfileController extends Controller
             }
         }
 
-        return view('teacher.users.students.profile.quizzes', [
+        return view('parent.students.profile.quizzes', [
             'student' => $student,
             'stats' => $stats,
             'layout' => 'layouts.parent.master',
@@ -389,7 +389,7 @@ class StudentProfileController extends Controller
             }
         }
 
-        return view('teacher.users.students.profile.offline-quizzes', [
+        return view('parent.students.profile.offline-quizzes', [
             'student' => $student,
             'stats' => $stats,
             'layout' => 'layouts.parent.master',
@@ -462,7 +462,7 @@ class StudentProfileController extends Controller
             }
         }
 
-        return view('teacher.users.students.profile.assignments', [
+        return view('parent.students.profile.assignments', [
             'student' => $student,
             'stats' => $stats,
             'layout' => 'layouts.parent.master',
@@ -600,7 +600,7 @@ class StudentProfileController extends Controller
             }
         }
 
-        return view('teacher.users.students.profile.fees', [
+        return view('parent.students.profile.fees', [
             'student' => $student,
             'stats' => $stats,
             'layout' => 'layouts.parent.master',
@@ -662,7 +662,7 @@ class StudentProfileController extends Controller
         $sessions = $this->sessionService->getUserSessions('student', $student->id);
         $devices = $this->sessionService->getUserDevices('student', $student->id);
 
-        return view('teacher.users.students.profile.security', [
+        return view('parent.students.profile.security', [
             'student' => $student,
             'sessions' => $sessions,
             'devices' => $devices,

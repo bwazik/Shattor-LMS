@@ -23,9 +23,9 @@ if (config('app.env') === 'production') {
         ->dailyAt('00:00')
         ->timezone('Africa/Cairo');
 
-    Schedule::command('students:send-birthday-messages')
-        ->dailyAt('00:00')
-        ->timezone('Africa/Cairo');
+    // Schedule::command('students:send-birthday-messages')
+    //     ->dailyAt('00:00')
+    //     ->timezone('Africa/Cairo');
 
     Schedule::command('attendance:auto-mark-absent')
         ->everyThirtyMinutes()
