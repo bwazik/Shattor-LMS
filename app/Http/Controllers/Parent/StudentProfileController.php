@@ -153,8 +153,12 @@ class StudentProfileController extends Controller
                     ->select('attendances.student_id', 'attendances.lesson_id', 'attendances.status', 'attendances.is_compensatory', 'attendances.note', 'attendances.created_at')
             ])
             ->select('lessons.id', 'lessons.uuid', 'lessons.title', 'lessons.group_id', 'lessons.date')
-            ->whereHas('group.students', function ($query) use ($student) {
-                $query->where('students.id', $student->id)
+            ->whereExists(function ($query) use ($student) {
+                $query->selectRaw(1)
+                    ->from('student_group')
+                    ->join('groups', 'student_group.group_id', '=', 'groups.id')
+                    ->whereColumn('groups.id', 'lessons.group_id')
+                    ->where('student_group.student_id', $student->id)
                     ->whereRaw('DATE(student_group.created_at) <= DATE(lessons.date)')
                     ->whereRaw('(student_group.ended_at IS NULL OR DATE(student_group.ended_at) >= DATE(lessons.date))');
             })
