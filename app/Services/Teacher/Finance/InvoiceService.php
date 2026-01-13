@@ -278,20 +278,20 @@ class InvoiceService
             if ($netPaid >= $invoice->amount) {
                 $invoice->update(['status' => 2]);
 
-                $feeName = $invoice->fee->getTranslation('name', 'ar');
-                $isOctOrNov = str_contains($feeName, '(10)') || str_contains($feeName, '(11)');
+                // $feeName = $invoice->fee->getTranslation('name', 'ar');
+                // $isOctOrNov = str_contains($feeName, '(10)') || str_contains($feeName, '(11)');
 
-                if ($invoice->student->parent && !$isOctOrNov) {
-                    $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
-                        [
-                            'student_name' => $invoice->student->getTranslation('name', 'ar'),
-                            'fee_name' => $invoice->fee->name,
-                            'paid_amount' => formatCurrency((int) $invoice->studentFee->amount) . ' ' . trans('main.currency'),
-                            'date' => now()->translatedFormat('l j F Y'),
-                            'time' => now()->translatedFormat('h:i A'),
-                            'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
-                        ], false);
-                }
+                // if ($invoice->student->parent && !$isOctOrNov) {
+                //     $this->WhatsappService->sendMessage($invoice->student->parent->phone, 'fees_paid',
+                //         [
+                //             'student_name' => $invoice->student->getTranslation('name', 'ar'),
+                //             'fee_name' => $invoice->fee->name,
+                //             'paid_amount' => formatCurrency((int) $invoice->studentFee->amount) . ' ' . trans('main.currency'),
+                //             'date' => now()->translatedFormat('l j F Y'),
+                //             'time' => now()->translatedFormat('h:i A'),
+                //             'teacher_name' => 'مستر ' . $invoice->fee->teacher->name,
+                //         ], false);
+                // }
             }
 
             return $this->successResponse(trans('main.added', ['item' => trans('main.payment')]));

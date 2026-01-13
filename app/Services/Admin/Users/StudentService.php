@@ -178,14 +178,14 @@ class StudentService
                 }
             }
 
-            $this->whatsappService->sendMessage($student->phone, 'student_credentials', [
-                'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
-                'username'     => $student->username,
-                'password'     => $request['password'],
-                'teacher_name' => $teacherName,
-                'login_url'    => "https://shattor.com/ar/student/login",
-                'settings_url' => "https://shattor.com/ar/student/account/personal",
-            ]);
+            // $this->whatsappService->sendMessage($student->phone, 'student_credentials', [
+            //     'student_name' => explode(' ', trim($student->getTranslation('name', 'ar')))[0],
+            //     'username'     => $student->username,
+            //     'password'     => $request['password'],
+            //     'teacher_name' => $teacherName,
+            //     'login_url'    => "https://shattor.com/ar/student/login",
+            //     'settings_url' => "https://shattor.com/ar/student/account/personal",
+            // ]);
 
             return $this->successResponse(trans('main.added', ['item' => trans('admin/students.student')]));
         });
