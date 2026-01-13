@@ -84,7 +84,7 @@ class RequeueFailedWhatsappMessages extends Command
                 $message->delete();
 
                 // Use the service to send again (this creates a new message record)
-                $this->whatsappService->sendMessage($phone, $template, $data, $isUrgent);
+                $this->whatsappService->sendMessage($phone, $template, $data, true);
 
                 $requeued++;
                 
