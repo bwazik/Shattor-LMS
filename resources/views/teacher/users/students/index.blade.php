@@ -50,7 +50,7 @@
             modalId: '#add-modal',
             fields: {
                 name_en: () => 'default',
-                password: () => generateStrongPassword(12),
+                password: () => '',
                 gender: () => 1,
                 grade_id: () => '',
                 parent_id: () => '',
@@ -104,6 +104,6 @@
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
         fetchMultipleDataByAjax('#add-form #grade_id', "{{ route('teacher.fetch.grade.groups', '__ID__') }}", '#add-form #groups', 'grade_id', 'GET')
-        generateRandomUsername('s');
+        bindPhoneToCredentials();
     </script>
 @endsection

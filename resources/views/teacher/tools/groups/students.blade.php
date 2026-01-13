@@ -93,7 +93,7 @@
             modalId: '#add-modal',
             fields: {
                 name_en: () => 'default',
-                password: () => generateStrongPassword(12),
+                password: () => '',
                 gender: () => 1,
                 grade_id: () => '{{ $group->grade->id }}',
                 parent_id: () => '',
@@ -146,6 +146,6 @@
         handleFormSubmit('#edit-form', fields, '#edit-modal', 'modal', '#datatable');
         handleDeletionFormSubmit('#delete-form', '#delete-modal', '#datatable')
         handleDeletionFormSubmit('#delete-selected-form', '#delete-selected-modal', '#datatable')
-        generateRandomUsername('s');
+        bindPhoneToCredentials();
     </script>
 @endsection

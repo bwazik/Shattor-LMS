@@ -226,6 +226,14 @@ function generateRandomUsername(suffix) {
     });
 }
 
+function bindPhoneToCredentials() {
+    $('#add-form #phone').on('input', function() {
+        const phone = $(this).val();
+        $('#add-form #username').val(phone);
+        $('#add-form #password').val(phone);
+    });
+}
+
 function generateStrongPassword(length = 12) {
     const numbers = '0123456789';
     let password = '';
