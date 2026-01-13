@@ -15,7 +15,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ isActiveRoute('parent.students.profile.offline-quizzes') ? 'active' : '' }}"
                         href="{{ route('parent.students.profile.offline-quizzes', $student->uuid) }}"><i
-                            class="ri-brain-line me-2"></i>{{ trans('admin/offlineQuizzes.offlineQuizzes') }}</a>
+                            class="ri-brain-line me-2"></i>الإمتحانات</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ isActiveRoute('parent.students.profile.fees') ? 'active' : '' }}"

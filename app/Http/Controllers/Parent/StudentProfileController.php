@@ -235,7 +235,7 @@ class StudentProfileController extends Controller
             case 4:
                 return '<span data-bs-toggle="tooltip" title="تعويض" class="badge rounded-pill bg-label-info text-capitalize">تعويض</span>';
             default:
-                return '<span class="badge rounded-pill bg-label-secondary text-capitalize">لم يسجل</span>';
+                return '<span class="badge rounded-pill bg-label-secondary text-capitalize">لم تسجل</span>';
         }
     }
 
@@ -303,9 +303,26 @@ class StudentProfileController extends Controller
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
                     ->addColumn('teacher_name', fn($row) => $row->teacher->name ?? 'N/A')
-                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) . ' / ' . number_format($row->score, 2) : 'N/A')
-                    ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 0) . '%' : 'N/A')
-                    ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlieQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
+                    ->addColumn('score', function ($row) {
+                        $result = $row->offlineQuizResults->first();
+
+                        if (!$result) {
+                            return '<span class="badge rounded-pill bg-label-secondary">لم تسجل</span>';
+                        }
+
+                        $percentage = $result->percentage;
+
+                        $color = $percentage >= 85 ? 'success'
+                            : ($percentage >= 70 ? 'primary'
+                            : ($percentage >= 50 ? 'warning' : 'danger'));
+
+                        return '<span class="badge rounded-pill bg-label-' . $color . '">
+                            ' . number_format($result->total_score, 2) . ' / ' . number_format($row->score, 2) . '
+                        </span>';
+                    })                 
+                    ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 0) . '%' : 'لم تسجل')
+                    ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank($row->id, $row->offlineQuizResults->first()->total_score) : 'لم تسجل')
+                    ->rawColumns(['score'])
                     ->make(true);
             }
         }
@@ -347,29 +364,13 @@ class StudentProfileController extends Controller
         ];
     }
 
-    private function getRank($model, $id, $score)
+    private function getRank($offlineQuizId, $score)
     {
-        if ($model === 'quiz') {
-            $scores = StudentResult::where('quiz_id', $id)
-                ->orderBy('total_score', 'desc')
-                ->pluck('total_score')
-                ->values()
-                ->toArray();
-        } elseif ($model === 'assignment') {
-            $scores = AssignmentSubmission::where('assignment_id', $id)
-                ->orderBy('score', 'desc')
-                ->pluck('score')
-                ->values()
-                ->toArray();
-        } elseif ($model === 'offlineQuiz') {
-            $scores = OfflineQuizResult::where('offline_quiz_id', $id)
-                ->orderBy('total_score', 'desc')
-                ->pluck('total_score')
-                ->values()
-                ->toArray();
-        } else {
-            $scores = [];
-        }
+        $scores = OfflineQuizResult::where('offline_quiz_id', $offlineQuizId)
+            ->orderBy('total_score', 'desc')
+            ->pluck('total_score')
+            ->values()
+            ->toArray();
 
         $uniqueScores = array_values(array_unique($scores));
         $rank = array_search($score, $uniqueScores) + 1;
@@ -379,7 +380,15 @@ class StudentProfileController extends Controller
 
         $formattedRank = app()->getLocale() === 'ar'
             ? getArabicOrdinal($rank, $isLastRank)
-            : ($isLastRank ? trans("admin/{$model}s.lastRank") : $rank . (($rank % 10 == 1 && $rank % 100 != 11) ? 'st' : (($rank % 10 == 2 && $rank % 100 != 12) ? 'nd' : (($rank % 10 == 3 && $rank % 100 != 13) ? 'rd' : 'th'))));
+            : ($isLastRank 
+                ? trans('admin/quizzes.lastRank') 
+                : $rank . (($rank % 10 == 1 && $rank % 100 != 11) 
+                    ? 'st' 
+                    : (($rank % 10 == 2 && $rank % 100 != 12) 
+                        ? 'nd' 
+                        : (($rank % 10 == 3 && $rank % 100 != 13) 
+                            ? 'rd' 
+                            : 'th'))));
 
         return $formattedRank;
     }
@@ -420,9 +429,24 @@ class StudentProfileController extends Controller
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
                     ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : 'لسا المصاريف متسجلتش')
-                    ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? 'لسا مدفعش') : 'لسا مدفعش')
+                    ->addColumn('paymentDate', function ($row) {
+                        $paidDate = (
+                            $row->invoices->isNotEmpty() &&
+                            $row->invoices->first()->status == 2
+                        )
+                            ? $row->invoices->first()->transactions->max('created_at')
+                            : null;
+
+                        if (!$paidDate) {
+                            return '<span class="badge rounded-pill bg-label-secondary">لسا مدفعش</span>';
+                        }
+
+                        return '<span class="badge rounded-pill bg-label-success">
+                            ' . isoFormat($paidDate) . '
+                        </span>';
+                    })
                     ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : 'لسا مدفعش')
-                    ->rawColumns(['payment_method'])
+                    ->rawColumns(['paymentDate', 'payment_method'])
                     ->make(true);
             }
         }

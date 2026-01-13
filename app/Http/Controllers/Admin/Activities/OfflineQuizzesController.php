@@ -226,7 +226,7 @@ class OfflineQuizzesController extends Controller
                         'uuid' => $item->student->uuid ?? 'N/A',
                         'name' => $item->student->name ?? 'N/A',
                         'phone' => $item->student->phone ?? 'N/A',
-                        'profile_pic' => $item->student->profile_pic,
+                        'profile_pic' => $item->student->profile_pic ?? null,
                         'quiz_score' => number_format($item->total_score, 2),
                     ];
                 });

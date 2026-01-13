@@ -356,7 +356,7 @@ class StudentsProfileController extends Controller
                 'offlineQuizResults' => fn($query) => $query->where('student_id', $student->id)
                     ->select('offline_quiz_results.student_id', 'offline_quiz_results.offline_quiz_id', 'offline_quiz_results.total_score', 'offline_quiz_results.percentage')
             ])
-            ->select('id', 'uuid', 'name', 'conducted_at')
+            ->select('id', 'uuid', 'name', 'score', 'conducted_at')
             ->where('grade_id', $student->grade_id)
             ->where('teacher_id', $this->teacherId)
             ->whereHas('groups', function ($query) use ($student) {
@@ -378,9 +378,26 @@ class StudentsProfileController extends Controller
                 return datatables()->eloquent($offlineQuizzesQuery)
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
-                    ->addColumn('score', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->total_score, 2) : 'N/A')
+                    ->addColumn('score', function ($row) {
+                        $result = $row->offlineQuizResults->first();
+
+                        if (!$result) {
+                            return '<span class="badge rounded-pill bg-label-secondary">لم تسجل</span>';
+                        }
+
+                        $percentage = $result->percentage;
+
+                        $color = $percentage >= 85 ? 'success'
+                            : ($percentage >= 70 ? 'primary'
+                            : ($percentage >= 50 ? 'warning' : 'danger'));
+                            
+                        return '<span class="badge rounded-pill bg-label-' . $color . '">
+                            ' . number_format($result->total_score, 2) . ' / ' . number_format($row->score, 2) . '
+                        </span>';
+                    })                       
                     ->addColumn('percentage', fn($row) => $row->offlineQuizResults->first() ? number_format($row->offlineQuizResults->first()->percentage, 2) : 'N/A')
-                    ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlieQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
+                    ->addColumn('rank', fn($row) => $row->offlineQuizResults->first() ? $this->getRank('offlineQuiz', $row->id, $row->offlineQuizResults->first()->total_score) : 'N/A')
+                    ->rawColumns(['score'])
                     ->make(true);
             }
         }
@@ -538,7 +555,15 @@ class StudentsProfileController extends Controller
 
         $formattedRank = app()->getLocale() === 'ar'
             ? getArabicOrdinal($rank, $isLastRank)
-            : ($isLastRank ? trans("admin/{$model}s.lastRank") : $rank . (($rank % 10 == 1 && $rank % 100 != 11) ? 'st' : (($rank % 10 == 2 && $rank % 100 != 12) ? 'nd' : (($rank % 10 == 3 && $rank % 100 != 13) ? 'rd' : 'th'))));
+            : ($isLastRank 
+                ? trans('admin/quizzes.lastRank') 
+                : $rank . (($rank % 10 == 1 && $rank % 100 != 11) 
+                    ? 'st' 
+                    : (($rank % 10 == 2 && $rank % 100 != 12) 
+                        ? 'nd' 
+                        : (($rank % 10 == 3 && $rank % 100 != 13) 
+                            ? 'rd' 
+                            : 'th'))));
 
         return $formattedRank;
     }
@@ -583,10 +608,25 @@ class StudentsProfileController extends Controller
                     ->addIndexColumn()
                     ->editColumn('name', fn($row) => $row->name)
                     ->addColumn('date', fn($row) => $row->invoices->isNotEmpty() ? formatDate($row->invoices->first()->date) : 'N/A')
-                    ->addColumn('paymentDate', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? isoFormat($row->invoices->first()->transactions->max('created_at') ?? 'N/A') : 'N/A')
+                    ->addColumn('paymentDate', function ($row) {
+                        $paidDate = (
+                            $row->invoices->isNotEmpty() &&
+                            $row->invoices->first()->status == 2
+                        )
+                            ? $row->invoices->first()->transactions->max('created_at')
+                            : null;
+
+                        if (!$paidDate) {
+                            return '<span class="badge rounded-pill bg-label-secondary">لسا مدفعش</span>';
+                        }
+
+                        return '<span class="badge rounded-pill bg-label-success">
+                            ' . isoFormat($paidDate) . '
+                        </span>';
+                    })                    
                     ->addColumn('payment_method', fn($row) => $row->invoices->isNotEmpty() && $row->invoices->first()->status == 2 ? formatPaymentMethod($row->invoices->first()->transactions->max('payment_method') ?? null) : 'N/A')
                     ->addColumn('transactions', fn($row) => $row->invoices->isNotEmpty() ? formatSpanUrl(route('teacher.invoices.transactions', $row->invoices->first()->uuid), trans('admin/transactions.transactions')) : 'N/A')
-                    ->rawColumns(['payment_method', 'transactions'])
+                    ->rawColumns(['paymentDate', 'payment_method', 'transactions'])
                     ->make(true);
             }
         }

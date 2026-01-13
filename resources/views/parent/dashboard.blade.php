@@ -10,7 +10,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-4">
                             <div class="avatar avatar-lg me-3">
-                                <img src="{{ $student->profile_pic ? asset('storage/' . $student->profile_pic) : asset('assets/img/avatars/default.jpg') }}"
+                                <img src="{{ $student->profile_pic ? asset('storage/profiles/students/' . $student->profile_pic) : asset('assets/img/avatars/default.jpg') }}"
                                      alt="{{ $student->name }}" class="rounded-circle">
                             </div>
                             <div class="flex-grow-1">
