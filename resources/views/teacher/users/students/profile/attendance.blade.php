@@ -88,16 +88,13 @@
         <th></th>
         <th>#</th>
         <th width="30%">{{ trans('main.title') }}</th>
-        @if(isset($isParent) && $isParent)
-            <th>{{ trans('admin/teachers.teacher') }}</th>
-        @endif
-        <th>{{ trans('admin/attendance.status') }}</th>
+        <th>{{ trans('main.status') }}</th>
         <th>{{ trans('admin/compensatories.makeup_lesson') }}</th>
         <th>{{ trans('main.description') }}</th>
         <th>{{ trans('main.created_at') }}</th>
     </x-datatable>
 
-    <x-datatable id="compensatories-datatable" cardClasses="mb-6"
+    <x-datatable id="compensatoriesDatatable" cardClasses="mb-6"
         datatableTitle="{{ trans('admin/compensatories.compensatories') }}">
         <th></th>
         <th>#</th>
@@ -110,28 +107,21 @@
 
 @section('profile-js')
     <script>
-        var lessonsColumns = [
-            { data: "", orderable: false, searchable: false },
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'title', name: 'title' },
-        ];
-        @if(isset($isParent) && $isParent)
-            lessonsColumns.push({ data: 'teacher_name', name: 'group.teacher.name' });
-        @endif
-        lessonsColumns.push(
-            { data: 'attendance_status', name: 'attendance_status' },
-            { data: 'makeup_status', name: 'makeup_status' },
-            { data: 'attendance_note', name: 'attendance_note' },
-            { data: 'attendance_created_at', name: 'attendance_created_at' },
-        );
-
-        initializeDataTable('#lessonsDatatable', "{{ route( ($isParent ?? false) ? 'parent.students.profile.attendance' : 'teacher.students.profile.attendance', $student->uuid) }}", [1, 2],
-            lessonsColumns,
-            { table: 'lessons' }
-        );
-
-        initializeDataTable('#compensatoriesDatatable', "{{ route( ($isParent ?? false) ? 'parent.students.profile.attendance' : 'teacher.students.profile.attendance', $student->uuid) }}", [1, 2],
+        initializeDataTable('#lessonsDatatable', "{{ route('teacher.students.profile.attendance', $student->uuid) }}?table=lessons", [1, 2],
             [
+                { data: "", orderable: false, searchable: false },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'title', name: 'title' },
+                { data: 'attendance_status', name: 'attendance_status' },
+                { data: 'makeup_status', name: 'makeup_status' },
+                { data: 'attendance_note', name: 'attendance_note' },
+                { data: 'attendance_created_at', name: 'attendance_created_at' },
+            ],
+        );
+
+        initializeDataTable('#compensatoriesDatatable', "{{ route('teacher.students.profile.attendance', $student->uuid) }}", [1, 2],
+            [
+                {
                     data: "",
                     orderable: false,
                     searchable: false
